@@ -1,71 +1,90 @@
 import {
-  Injectable,
-  UnauthorizedException,
-  Logger,
+  HttpException,
+  HttpStatus,
   Inject,
+  Injectable,
+  Logger,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { IRefreshTokenDto } from 'src/application/dtos/auth/req.auth.dto';
+import { IResponseAuthDto } from 'src/application/dtos/auth/res.auth.dto';
+import { BaseUsecase } from 'src/common/base/base.usecase';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import { ResponseAuthDto } from 'src/application/dtos/auth/res.auth.dto';
+import { JwtTokenUsecase } from './jwt-token.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
-import { ConfigService } from '@nestjs/config';
-import { RefreshTokenDto } from 'src/application/dtos/auth/req.auth.dto';
+import { AppException } from 'src/common/exceptions/app.exception';
 
 @Injectable()
-export class RefreshTokenUseCase {
-  private readonly logger = new Logger(RefreshTokenUseCase.name);
-
+export class RefreshTokenUseCase extends BaseUsecase {
   constructor(
     @Inject('IUserRepository') private readonly userRepository: IUserRepository,
-    private readonly jwtService: JwtService,
+    private readonly jwtTokenService: JwtTokenUsecase,
     private readonly redis: RedisAdapter,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    super(new Logger(RefreshTokenUseCase.name));
+  }
 
-  async execute(dto: RefreshTokenDto): Promise<ResponseAuthDto> {
-    const decoded = this.jwtService.verify(dto.refreshToken, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-    });
+  async execute(dto: IRefreshTokenDto): Promise<IResponseAuthDto> {
+    try {
+      const decoded = await this.jwtTokenService.verifyRefreshToken(
+        dto.refreshToken,
+      );
 
-    if (!decoded || !decoded.sub) {
-      throw new UnauthorizedException(
-        ERROR_CODES.AUTH_INVALID_CREDENTIALS.message,
+      if (!decoded) {
+        throw new AppException(
+          ERROR_CODES.AUTH_REFRESH_TOKEN_INVALID_OR_EXPIRED,
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      const savedRefreshToken = await this.redis.getRefreshToken(decoded.id);
+      if (!savedRefreshToken || savedRefreshToken !== dto.refreshToken) {
+        throw new AppException(
+          ERROR_CODES.AUTH_REFRESH_TOKEN_INVALID_OR_EXPIRED,
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      const existingUser = await this.userRepository.findById(decoded.id);
+      if (!existingUser) {
+        throw new AppException(
+          ERROR_CODES.USER_NOT_FOUND,
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      // Tạo token mới
+      const { accessToken, refreshToken: newRefreshToken } =
+        await this.jwtTokenService.generateTokens({
+          id: existingUser.id,
+          email: existingUser.email,
+          roles: existingUser.role,
+        });
+
+      await this.redis.setRefreshToken(
+        existingUser.id,
+        newRefreshToken,
+        7 * 24 * 60 * 60,
+      );
+
+      return {
+        accessToken,
+        refreshToken: newRefreshToken,
+        user: {
+          id: existingUser.id,
+          role: existingUser.role,
+        },
+      };
+    } catch (error) {
+      if (error instanceof AppException || error instanceof HttpException)
+        throw error;
+      this.logger.error('[RefreshToken]:', error);
+      throw new AppException(
+        ERROR_CODES.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-
-    const savedRefreshToken = await this.redis.getRefreshToken(decoded.sub);
-    if (!savedRefreshToken || savedRefreshToken !== dto.refreshToken) {
-      throw new UnauthorizedException(
-        ERROR_CODES.AUTH_INVALID_CREDENTIALS.message,
-      );
-    }
-
-    const user = await this.userRepository.findById(decoded.sub);
-    if (!user) {
-      throw new UnauthorizedException(ERROR_CODES.USER_NOT_FOUND.message);
-    }
-
-    const payload = {
-      id: user.id,
-      email: user.email,
-      role_id: user.role_id,
-    };
-
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const newRefreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-    await this.redis.setRefreshToken(
-      user.id,
-      newRefreshToken,
-      7 * 24 * 60 * 60,
-    );
-
-    this.logger.log(`Token refreshed for user: ${user.email}`);
-
-    return {
-      accessToken,
-      refreshToken: newRefreshToken,
-    };
   }
 }

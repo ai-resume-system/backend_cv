@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { BaseUsecase } from 'src/common/base/base.usecase';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
-export class LogoutUseCase {
-  private readonly logger = new Logger(LogoutUseCase.name);
-
-  constructor(private readonly redis: RedisAdapter) {}
+export class LogoutUseCase extends BaseUsecase {
+  constructor(private readonly redis: RedisAdapter) {
+    super(new Logger(LogoutUseCase.name));
+  }
 
   async execute(userId: string): Promise<{ message: string }> {
     await this.redis.removeRefreshToken(userId);

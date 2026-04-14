@@ -1,15 +1,17 @@
-import { EUserStatus } from 'src/common/constants/enum/user.enum';
+import { EUserStatus, EUserRole } from 'src/common/constants/enum/user.enum';
 import {
   Column,
   Entity,
   JoinColumn,
-  ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { RoleOrmEntity } from './role.orm-entity';
+import { UserProfileOrmEntity } from './user_profile.orm-entity';
+import { CompanyOrmEntity } from './company.orm-entity';
+import { IUserEntity } from 'src/domain/entities/user.entity';
 
 @Entity({ name: 'users' })
-export class UserOrmEntity {
+export class UserOrmEntity implements IUserEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -30,8 +32,13 @@ export class UserOrmEntity {
   })
   status: EUserStatus;
 
-  @Column({ name: 'role_id' })
-  role_id: string;
+  @Column({
+    name: 'role',
+    type: 'enum',
+    enum: EUserRole,
+    default: EUserRole.JOB_SEEKER,
+  })
+  role: EUserRole;
 
   @Column({
     name: 'created_at',
@@ -51,8 +58,10 @@ export class UserOrmEntity {
   @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt?: Date;
 
-  // Từ User xem được thông tin Role của mình
-  @ManyToOne(() => RoleOrmEntity, (role) => role.users)
-  @JoinColumn({ name: 'role_id' })
-  role: RoleOrmEntity;
+  //relations
+  @OneToOne(() => UserProfileOrmEntity, (profile) => profile.user_profile)
+  user_profile: UserProfileOrmEntity;
+
+  @OneToOne(() => CompanyOrmEntity, (company) => company.user_company)
+  user_company: CompanyOrmEntity;
 }

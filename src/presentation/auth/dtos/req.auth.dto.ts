@@ -2,15 +2,18 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
   MinLength,
 } from 'class-validator';
+import { EOtpType } from 'src/common/constants/enum/otp.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 
-export class RegisterDto {
+export class RequestRegisterDto {
   @ApiProperty({ example: 'example@gmail.com' })
   @IsNotEmpty()
   @IsEmail()
@@ -19,20 +22,28 @@ export class RegisterDto {
   @ApiProperty({ example: '123456' })
   @IsNotEmpty()
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
+  @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/, ERROR_CODES.AUTH_PASSWORD_WEAK)
   password: string;
 }
 
-export class RegisterRecruiterDto extends RegisterDto {
+export class RequestRegisterJobSeekerDto extends RequestRegisterDto {
+  @ApiProperty({ example: 'Nguyen Van A' })
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
+  fullName: string;
+}
+
+export class RequestRegisterRecruiterDto extends RequestRegisterDto {
   @ApiProperty({ example: '0123456789' })
   @IsOptional()
   @IsString()
   @Matches(/^(\+84)(3|5|7|8|9)[0-9]{8}$/, ERROR_CODES.AUTH_PHONE_INVALID)
   @Transform(({ value }) => {
     if (!value) return value;
-    // Remove spaces
     let phone = value.replace(/\s+/g, '');
-    // Convert 0 -> +84
     if (phone.startsWith('0')) {
       phone = '+84' + phone.slice(1);
     }
@@ -40,20 +51,20 @@ export class RegisterRecruiterDto extends RegisterDto {
   })
   phone?: string;
 
-  // @ApiProperty({ example: 'Nguyen Van B' })
-  // @IsString()
-  // @MinLength(2)
-  // @MaxLength(100)
-  // fullName: string;
+  @ApiProperty({ example: 'Tech Company' })
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(200)
+  companyName: string;
 
-  // @ApiProperty({ example: 'Tech Company' })
-  // @IsString()
-  // @MinLength(2)
-  // @MaxLength(200)
-  // companyName: string;
+  @ApiProperty({ example: 'Hanoi' })
+  @IsNotEmpty()
+  @IsString()
+  location: string;
 }
 
-export class VerifyOtpDto {
+export class RequestVerifyOtpDto {
   @ApiProperty({ example: 'admin@edumarket.com' })
   @IsEmail()
   email: string;
@@ -62,10 +73,26 @@ export class VerifyOtpDto {
   @IsNotEmpty()
   @IsString()
   otp: string;
+
+  @ApiProperty({ example: Object.values(EOtpType).join(' | '), enum: EOtpType })
+  @IsNotEmpty()
+  @IsEnum(EOtpType)
+  type: EOtpType;
 }
 
-export class LoginDto {
+export class RequestSendOtpDto {
   @ApiProperty({ example: 'admin@edumarket.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: EOtpType.REGISTER, enum: EOtpType })
+  @IsNotEmpty()
+  @IsEnum(EOtpType)
+  type: EOtpType;
+}
+
+export class RequestLoginDto {
+  @ApiProperty({ example: 'admin@gmail.com' })
   @IsEmail()
   email: string;
 
@@ -75,17 +102,33 @@ export class LoginDto {
   password: string;
 }
 
-export class RefreshTokenDto {
+export class RequestRefreshTokenDto {
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
   @IsString()
   refreshToken: string;
 }
 
-export class ChangePasswordDto {
+export class RequestChangePasswordDto {
   @ApiProperty({ example: '123456' })
   @IsString()
   @MinLength(6)
   oldPassword: string;
+
+  @ApiProperty({ example: 'newpassword123' })
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
+}
+
+export class RequestForgotPasswordDto {
+  @ApiProperty({ example: 'admin@edumarket.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: 'abc-xyz-uuid' })
+  @IsNotEmpty()
+  @IsString()
+  signKey: string;
 
   @ApiProperty({ example: 'newpassword123' })
   @IsString()

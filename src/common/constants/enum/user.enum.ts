@@ -19,4 +19,5 @@ export enum EUserStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
   UNVERIFIED = 'unverified',
+  LOCKED = 'locked',
 }

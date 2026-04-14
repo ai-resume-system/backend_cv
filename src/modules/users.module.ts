@@ -1,22 +1,28 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RoleOrmEntity } from 'src/infrastructure/database/entities/role.orm-entity';
 import { UserOrmEntity } from 'src/infrastructure/database/entities/user.orm-entity';
+import { UserProfileOrmEntity } from 'src/infrastructure/database/entities/user_profile.orm-entity';
+import { CompanyOrmEntity } from 'src/infrastructure/database/entities/company.orm-entity';
 import { UserTypeormRepository } from 'src/infrastructure/database/repositories/user.typeorm-repository';
-import { UsersController } from 'src/presentation/users/controller/users.controller';
-import { RolesModule } from './roles.module';
-import { CreateUserUseCase } from 'src/application/use-cases/user/create-user.usecase';
+import { UserProfileTypeormRepository } from 'src/infrastructure/database/repositories/user-profile.typeorm-repository';
+import { CompanyTypeormRepository } from 'src/infrastructure/database/repositories/company.typeorm-repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserOrmEntity, RoleOrmEntity]),
-    RolesModule,
+    TypeOrmModule.forFeature([
+      UserOrmEntity,
+      UserProfileOrmEntity,
+      CompanyOrmEntity,
+    ]),
   ],
-  controllers: [UsersController],
   providers: [
-    CreateUserUseCase,
     { provide: 'IUserRepository', useClass: UserTypeormRepository },
+    {
+      provide: 'IUserProfileRepository',
+      useClass: UserProfileTypeormRepository,
+    },
+    { provide: 'ICompanyRepository', useClass: CompanyTypeormRepository },
   ],
-  exports: ['IUserRepository'],
+  exports: ['IUserRepository', 'IUserProfileRepository', 'ICompanyRepository'],
 })
 export class UsersModule {}

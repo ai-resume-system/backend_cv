@@ -6,17 +6,19 @@ export const ERROR_CODES = {
     code: 1001,
     message: 'Email đã tồn tại trên hệ thống.',
   },
-  AUTH_PASSWORD_WEAK: {
+  AUTH_PHONE_INVALID: {
     code: 1002,
-    message: 'Mật khẩu không đủ mạnh.',
+    message:
+      'Số điện thoại không hợp lệ. Định dạng: +84xxxxxxxxx hoặc 0xxxxxxxxx.',
+  },
+  AUTH_PASSWORD_WEAK: {
+    code: 1003,
+    message:
+      'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.',
   },
   AUTH_REGISTER_FAILED: {
-    code: 1003,
-    message: 'Đăng ký thất bại.',
-  },
-  AUTH_PHONE_INVALID: {
     code: 1004,
-    message: 'Số điện thoại không hợp lệ.',
+    message: 'Đăng ký thất bại.',
   },
 
   // ─────────────────────────────────────────
@@ -30,13 +32,33 @@ export const ERROR_CODES = {
     code: 1022,
     message: 'Mã OTP đã hết hạn.',
   },
-  AUTH_OTP_LOCKED: {
+  AUTH_ACCOUNT_NOT_FOUND: {
     code: 1023,
+    message: 'Tài khoản không tồn tại.',
+  },
+  AUTH_OTP_LOCKED: {
+    code: 1024,
     message: 'Tài khoản bị khóa do nhập sai OTP quá nhiều lần.',
   },
+  AUTH_OTP_RESEND_LIMIT_EXCEEDED: {
+    code: 1025,
+    message: 'Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau.',
+  },
+  AUTH_OTP_COOLDOWN: {
+    code: 1026,
+    message: 'Vui lòng đợi 60 giây trước khi yêu cầu OTP mới.',
+  },
   AUTH_USER_UNVERIFIED: {
-    code: 1024,
+    code: 1027,
     message: 'Tài khoản chưa được xác thực.',
+  },
+  AUTH_USER_ALREADY_VERIFIED: {
+    code: 1027,
+    message: 'Tài khoản đã được xác thực từ trước.',
+  },
+  AUTH_SIGN_KEY_INVALID: {
+    code: 1028,
+    message: 'Khoá xác thực (sign key) không hợp lệ hoặc đã hết hạn.',
   },
 
   // ─────────────────────────────────────────
@@ -62,13 +84,13 @@ export const ERROR_CODES = {
     code: 1061,
     message: 'Token không hợp lệ hoặc đã hết hạn.',
   },
-  AUTH_REFRESH_TOKEN_INVALID: {
+  ACCESS_TOKEN_INVALID_OR_EXPIRED: {
     code: 1062,
-    message: 'Refresh token không hợp lệ.',
+    message: 'Access token không hợp lệ hoặc đã hết hạn.',
   },
-  AUTH_REFRESH_TOKEN_EXPIRED: {
+  AUTH_REFRESH_TOKEN_INVALID_OR_EXPIRED: {
     code: 1063,
-    message: 'Refresh token đã hết hạn.',
+    message: 'Refresh token không hợp lệ hoặc đã hết hạn.',
   },
 
   // ─────────────────────────────────────────
@@ -96,6 +118,33 @@ export const ERROR_CODES = {
   },
 
   // ─────────────────────────────────────────
+  // CAREER CATEGORY (2100 – 2199)
+  // ─────────────────────────────────────────
+  CAREER_CATEGORY_NOT_FOUND: {
+    code: 2101,
+    message: 'Không tìm thấy ngành nghề.',
+  },
+  CAREER_CATEGORY_ALREADY_EXISTS: {
+    code: 2102,
+    message: 'Ngành nghề đã tồn tại.',
+  },
+
+  CAREER_CATEGORY_CREATE_FAILED: {
+    code: 2103,
+    message: 'Tạo ngành nghề thất bại.',
+  },
+
+  CAREER_CATEGORY_UPDATE_FAILED: {
+    code: 2104,
+    message: 'Cập nhật ngành nghề thất bại.',
+  },
+
+  CAREER_CATEGORY_DELETE_FAILED: {
+    code: 2105,
+    message: 'Xóa ngành nghề thất bại.',
+  },
+
+  // ─────────────────────────────────────────
   // ROLE (3000 – 3099)
   // ─────────────────────────────────────────
   ROLE_NOT_FOUND: {
@@ -105,6 +154,14 @@ export const ERROR_CODES = {
   ROLE_INVALID: {
     code: 3002,
     message: 'Quyền hạn không hợp lệ.',
+  },
+  ROLE_UNABLE_TO_DETERMINE: {
+    code: 3003,
+    message: 'Không xác định được quyền hạn của người dùng.',
+  },
+  ROLE_INSUFFICIENT_PERMISSIONS: {
+    code: 3004,
+    message: 'Bạn không có quyền thực hiện thao tác này.',
   },
 
   // ─────────────────────────────────────────

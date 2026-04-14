@@ -1,5 +1,4 @@
-import { EUserStatus } from 'src/common/constants/enum/user.enum';
-import { IRoleEntity } from './role.entity';
+import { EUserStatus, EUserRole } from 'src/common/constants/enum/user.enum';
 
 export interface IUserEntity {
   id: string;
@@ -7,8 +6,7 @@ export interface IUserEntity {
   phone?: string;
   password: string;
   status: EUserStatus;
-  role_id: string;
-  role?: IRoleEntity;
+  role: EUserRole;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;

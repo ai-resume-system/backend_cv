@@ -21,7 +21,6 @@ export class UserTypeormRepository implements IUserRepository {
   async findByIdWithRole(id: string): Promise<IUserEntity | null> {
     const orm = await this.ormRepository.findOne({
       where: { id },
-      relations: ['role'],
     });
     return orm ? this.toDomain(orm) : null;
   }
@@ -31,13 +30,23 @@ export class UserTypeormRepository implements IUserRepository {
     return orm ? this.toDomain(orm) : null;
   }
 
+  // Method đặc biệt dùng cho authentication
   async findByEmailWithPassword(email: string): Promise<IUserEntity | null> {
-    const orm = await this.ormRepository
-      .createQueryBuilder('user')
-      .addSelect('user.password')
-      .leftJoinAndSelect('user.role', 'role')
-      .where('user.email = :email', { email })
-      .getOne();
+    const orm = await this.ormRepository.findOne({
+      where: { email },
+      relations: ['user_profile', 'user_company'],
+      select: [
+        'id',
+        'email',
+        'phone',
+        'password',
+        'status',
+        'role',
+        'createdAt',
+        'updatedAt',
+        'deletedAt',
+      ],
+    });
     return orm ? this.toDomain(orm) : null;
   }
 
@@ -85,17 +94,7 @@ export class UserTypeormRepository implements IUserRepository {
       phone: orm.phone || '',
       password: orm.password,
       status: orm.status,
-      role_id: orm.role_id,
-      role: orm.role
-        ? {
-            id: orm.role.id,
-            roleName: orm.role.roleName,
-            status: orm.role.status,
-            createdAt: orm.role.createdAt,
-            updatedAt: orm.role.updatedAt,
-            deletedAt: orm.role.deletedAt,
-          }
-        : undefined,
+      role: orm.role,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
       deletedAt: orm.deletedAt,

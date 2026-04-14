@@ -1,41 +1,49 @@
+import { EOtpType } from 'src/common/constants/enum/otp.enum';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 
-export class RegisterDto {
+export interface IBaseRegisterDto {
   email: string;
   password: string;
   role: EUserRole;
 }
 
-export class RegisterJobSeekerDto {
-  email: string;
-  password: string;
-  phone?: string;
+export interface IRegisterJobSeekerDto extends IBaseRegisterDto {
   fullName: string;
 }
 
-export class RegisterRecruiterDto {
-  email: string;
-  password: string;
+export interface IRegisterRecruiterDto extends IBaseRegisterDto {
   phone?: string;
-  fullName: string;
   companyName: string;
+  location: string;
 }
 
-export class VerifyOtpDto {
+export interface IVerifyOtpDto {
   email: string;
   otp: string;
+  type: EOtpType;
 }
 
-export class LoginDto {
+export interface ISendOtpDto {
+  email: string;
+  type: EOtpType;
+}
+
+export interface ILoginDto {
   email: string;
   password: string;
 }
 
-export class RefreshTokenDto {
+export interface IRefreshTokenDto {
   refreshToken: string;
 }
 
-export class ChangePasswordDto {
+export interface IChangePasswordDto {
   oldPassword: string;
+  newPassword: string;
+}
+
+export interface IForgotPasswordDto {
+  email: string;
+  signKey: string;
   newPassword: string;
 }

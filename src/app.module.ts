@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { ConfigModule } from '@nestjs/config';
+import { JwtAuthModule } from './common/guards/jwt-auth.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
-import { RedisModule } from './infrastructure/redis/redis.module';
 import { MailModule } from './infrastructure/mail/mail.module';
-import { JwtAuthModule } from './infrastructure/auth/jwt-auth.module';
+import { RedisModule } from './infrastructure/redis/redis.module';
 import { AuthModule } from './modules/auth.module';
-import { RolesModule } from './modules/roles.module';
 import { UsersModule } from './modules/users.module';
+import { CareerCategoriesModule } from './modules/career-categories.module';
 
 @Module({
   imports: [
@@ -19,9 +19,10 @@ import { UsersModule } from './modules/users.module';
     MailModule,
     JwtAuthModule,
     AuthModule,
-    RolesModule,
     UsersModule,
+    CareerCategoriesModule,
   ],
+  controllers: [],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

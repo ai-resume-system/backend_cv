@@ -22,7 +22,7 @@
     "migration:generate": "npm run typeorm -- migration:generate -d src/infrastructure/database/data-source.ts src/infrastructure/database/migrations/$npm_config_name",
     "migration:run": "npm run typeorm -- migration:run -d src/infrastructure/database/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/infrastructure/database/data-source.ts",
-    "seed": "ts-node -r tsconfig-paths/register src/infrastructure/database/seeders/seed.runner.ts"
+    "seed": "ts-node -r tsconfig-paths/register src/infrastructure/database/seeders/seed_runner.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^9.3.4",

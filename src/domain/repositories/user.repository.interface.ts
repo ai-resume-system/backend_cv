@@ -1,5 +1,5 @@
 import { IUserEntity } from '../entities/user.entity';
-import { EUserStatus } from 'src/common/constants/enum/user.enum';
+import { EUserStatus, EUserRole } from 'src/common/constants/enum/user.enum';
 
 export interface IUserRepository {
   findById(id: string): Promise<IUserEntity | null>;

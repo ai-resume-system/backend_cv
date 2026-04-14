@@ -1,38 +1,17 @@
-import {
-  IsEmail,
-  IsString,
-  IsEnum,
-  IsOptional,
-  MinLength,
-} from 'class-validator';
-import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
-
-export class CreateUserDto {
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  @MinLength(6)
-  password: string;
-
-  @IsString()
-  @IsOptional()
-  phone?: string;
-
-  @IsEnum(EUserRole)
-  role: EUserRole;
+export interface IUpdateProfileDto {
+  full_name?: string;
+  avatar_url?: string;
+  bio?: string;
 }
 
-export class UpdateUserDto {
-  @IsEmail()
-  @IsOptional()
-  email?: string;
-
-  @IsString()
-  @IsOptional()
-  phone?: string;
-
-  @IsEnum(EUserStatus)
-  @IsOptional()
-  status?: EUserStatus;
+export interface IUpdateCompanyDto {
+  career_categories_id?: string;
+  company_name?: string;
+  tax_code?: string;
+  logo_url?: string;
+  location?: string;
+  description?: string;
+  website_url?: string;
+  company_size_min?: number;
+  company_size_max?: number;
 }

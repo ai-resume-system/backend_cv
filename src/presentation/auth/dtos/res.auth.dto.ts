@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { EUserRole } from 'src/common/constants/enum/user.enum';
 
 export class ResponseAuthDto {
   @ApiProperty({
@@ -12,4 +13,14 @@ export class ResponseAuthDto {
     example: 'dGhpc2lzYXJlZnJlc2h0b2tlbg==',
   })
   refreshToken: string;
+
+  @ApiProperty({
+    description: 'User info after login',
+    example: { id: 'uuid', role: EUserRole.JOB_SEEKER },
+    required: false,
+  })
+  user?: {
+    id: string;
+    role: EUserRole;
+  };
 }

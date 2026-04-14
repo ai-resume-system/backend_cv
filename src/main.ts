@@ -8,6 +8,10 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { GlobalExceptionFilter } from './common/exceptions/global-exception.filter';
+import { ERROR_CODES } from './common/constants/error-codes.constants';
+import { AppException } from './common/exceptions/app.exception';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 // Hàm cấu hình global prefix (thêm /api vào đầu mỗi route)
 function setGlobalPrefix(app: INestApplication<any>, logger: Logger) {
@@ -61,15 +65,32 @@ function setSwagger(app: INestApplication<any>, logger: Logger) {
   logger.debug(`[setSwagger] Finish set swagger.`);
 }
 
+// Cấu hình global interceptors - giúp log thời gian request và response
+function setGlobalInterceptors(app: INestApplication<any>, logger: Logger) {
+  logger.debug(`[setGlobalInterceptors] Start set global interceptors ...`);
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  logger.debug(`[setGlobalInterceptors] Finish set global interceptors.`);
+}
+
 // Bật ValidationPipe toàn cục (tự validate DTO bằng class-validator)
-async function setGlobalPipes(app: INestApplication<any>, logger: Logger) {
+function setGlobalPipes(app: INestApplication<any>, logger: Logger) {
   logger.debug(`[setGlobalPipes] Start set global pipes ...`);
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true, // Enable transformation of query parameters
-      // transformOptions: {
-      //   enableImplicitConversion: false, //If set true, it will convert strings to appropriate types
-      // },
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      errorHttpStatusCode: 422,
+      exceptionFactory: (errors) => {
+        const firstError = errors[0];
+        const message =
+          Object.values(firstError.constraints ?? {})[0] ??
+          ERROR_CODES.VALIDATION_ERROR.message;
+        return new AppException(
+          { code: ERROR_CODES.VALIDATION_ERROR.code, message },
+          422,
+        );
+      },
     }),
   );
   logger.debug(`[setGlobalPipes] Finish set global pipes.`);
@@ -86,7 +107,10 @@ async function bootstrap() {
   setGlobalPrefix(app, logger);
   setCors(app, logger);
   setVersioning(app, logger);
+  setGlobalInterceptors(app, logger);
   setGlobalPipes(app, logger);
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   if (process.env.APP_ENV !== 'production') {
     setSwagger(app, logger);

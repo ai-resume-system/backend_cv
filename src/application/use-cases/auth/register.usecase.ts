@@ -1,66 +1,95 @@
 import {
-  Injectable,
-  ConflictException,
-  Logger,
-  Inject,
   HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
 } from '@nestjs/common';
-import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
-import type { IRoleRepository } from 'src/domain/repositories/role.repository.interface';
-import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import { MailService } from 'src/infrastructure/mail/mail.service';
 import * as bcrypt from 'bcrypt';
-import { EUserStatus } from 'src/common/constants/enum/user.enum';
+import {
+  IRegisterJobSeekerDto,
+  IRegisterRecruiterDto,
+} from 'src/application/dtos/auth/req.auth.dto';
+import { BaseUsecase } from 'src/common/base/base.usecase';
+import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
-import { RegisterDto } from 'src/application/dtos/auth/req.auth.dto';
+import { AppException } from 'src/common/exceptions/app.exception';
+import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import { MailService } from 'src/infrastructure/mail/mail.service';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+
+type IRegisterDto = IRegisterJobSeekerDto | IRegisterRecruiterDto;
 
 @Injectable()
-export class RegisterUseCase {
-  private readonly logger = new Logger(RegisterUseCase.name);
-
+export class RegisterUseCase extends BaseUsecase {
   constructor(
     @Inject('IUserRepository')
     private readonly userRepository: IUserRepository,
-    @Inject('IRoleRepository')
-    private readonly roleRepository: IRoleRepository,
     private readonly redis: RedisAdapter,
     private readonly mailService: MailService,
-  ) {}
+  ) {
+    super(new Logger(RegisterUseCase.name));
+  }
 
-  async execute(dto: RegisterDto) {
+  async execute(dto: IRegisterDto) {
+    const { email, role } = dto;
+
+    function isJobSeeker(dto: IRegisterDto): dto is IRegisterJobSeekerDto {
+      return dto.role === EUserRole.JOB_SEEKER;
+    }
+    function isRecruiter(dto: IRegisterDto): dto is IRegisterRecruiterDto {
+      return dto.role === EUserRole.RECRUITER;
+    }
+
     try {
-      const existing = await this.userRepository.findByEmail(dto.email);
+      const existing = await this.userRepository.findByEmail(email);
       if (existing) {
-        throw new ConflictException(ERROR_CODES.AUTH_EMAIL_ALREADY_EXISTS);
-      }
-
-      const role = await this.roleRepository.findByName(dto.role);
-      if (!role) {
-        throw new ConflictException(ERROR_CODES.ROLE_NOT_FOUND);
+        throw new AppException(
+          ERROR_CODES.AUTH_EMAIL_ALREADY_EXISTS,
+          HttpStatus.CONFLICT,
+        );
       }
 
       const hashedPassword = await bcrypt.hash(dto.password, 10);
-      const user = await this.userRepository.create({
-        email: dto.email,
+      const result = await this.userRepository.create({
+        email,
         password: hashedPassword,
-        role_id: role.id,
+        role,
         status: EUserStatus.UNVERIFIED,
       });
 
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      await this.redis.setOtp(dto.email, otp, 300);
-      await this.mailService.sendOtp(dto.email, otp);
+      this.logger.log(`[Register]: User created successfully`, { result });
 
-      this.logger.log(`User registered: ${dto.email}`);
+      let tempPayload;
+      if (isJobSeeker(dto)) {
+        tempPayload = { fullName: dto.fullName };
+      } else if (isRecruiter(dto)) {
+        tempPayload = {
+          phone: dto.phone,
+          companyName: dto.companyName,
+          location: dto.location,
+        };
+      } else {
+        tempPayload = null;
+      }
+
+      await this.redis.setTempProfile(email, tempPayload, 300);
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      await this.redis.setOtp(email, otp, 300);
+      await this.mailService.sendOtp(email, otp);
+
       return {
         message: 'Đăng ký thành công, vui lòng kiểm tra email để lấy OTP.',
       };
     } catch (error) {
-      if (error instanceof HttpException) throw error;
+      if (error instanceof AppException || error instanceof HttpException) {
+        throw error;
+      }
       this.logger.error(`[Register]: ${error}`);
-      throw new HttpException(
+      throw new AppException(
         ERROR_CODES.AUTH_REGISTER_FAILED,
-        ERROR_CODES.AUTH_REGISTER_FAILED.code,
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
