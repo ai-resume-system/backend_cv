@@ -56,7 +56,7 @@ export class RequestRegisterRecruiterDto extends RequestRegisterDto {
   @IsString()
   @MinLength(2)
   @MaxLength(200)
-  companyName: string;
+  company_name: string;
 
   @ApiProperty({ example: 'Hanoi' })
   @IsNotEmpty()
@@ -85,10 +85,17 @@ export class RequestSendOtpDto {
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: EOtpType.REGISTER, enum: EOtpType })
+  @ApiProperty({ example: Object.values(EOtpType).join(' | '), enum: EOtpType })
   @IsNotEmpty()
   @IsEnum(EOtpType)
   type: EOtpType;
+
+  @ApiProperty({
+    example: '0.0.0.0',
+  })
+  @IsString()
+  @IsNotEmpty()
+  ip: string;
 }
 
 export class RequestLoginDto {

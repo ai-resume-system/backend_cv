@@ -1,6 +1,5 @@
 import { DataSource } from 'typeorm';
 import { CareerCategoryOrmEntity } from '../entities/career-category.orm-entity';
-import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 
 export async function seedCareerCategories(dataSource: DataSource) {
   const categoryRepo = dataSource.getRepository(CareerCategoryOrmEntity);
@@ -60,10 +59,7 @@ export async function seedCareerCategories(dataSource: DataSource) {
       where: { name: cat.name },
     });
     if (!existing) {
-      await categoryRepo.save({
-        ...cat,
-        is_active: true,
-      });
+      await categoryRepo.save(cat);
     }
   }
 

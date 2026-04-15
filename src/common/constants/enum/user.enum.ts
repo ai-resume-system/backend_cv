@@ -7,11 +7,6 @@ export enum EUserRole {
   RECRUITER = 'recruiter',
 }
 
-export enum ERoleStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-}
-
 // ─────────────────────────────────────────
 // USER STATUS
 // ─────────────────────────────────────────

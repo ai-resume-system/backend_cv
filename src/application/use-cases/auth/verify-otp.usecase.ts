@@ -31,14 +31,14 @@ export class VerifyOtpUseCase extends BaseUsecase {
 
   async execute(dto: IVerifyOtpDto) {
     try {
-      const isLocked = await this.redis.isLocked(dto.email);
-      if (isLocked) {
+      if (await this.redis.isLocked(dto.email)) {
         throw new AppException(
           ERROR_CODES.AUTH_OTP_LOCKED,
           HttpStatus.FORBIDDEN,
         );
       }
 
+      // Verify OTP
       const savedOtp = await this.redis.getOtp(dto.email);
       if (!savedOtp || savedOtp !== dto.otp) {
         const failCount = await this.redis.increaseOtpFailCount(dto.email);
@@ -63,57 +63,57 @@ export class VerifyOtpUseCase extends BaseUsecase {
         );
       }
 
-      if (dto.type === EOtpType.REGISTER) {
-        if (user.status !== EUserStatus.UNVERIFIED) {
-          throw new AppException(
-            ERROR_CODES.AUTH_USER_ALREADY_VERIFIED,
-            HttpStatus.BAD_REQUEST,
-          );
-        }
-        await this.userRepository.updateStatus(user.id, EUserStatus.ACTIVE);
-
-        const tempProfile = await this.redis.getTempProfile(dto.email);
-        if (tempProfile) {
-          if (tempProfile.role === EUserRole.JOB_SEEKER) {
-            await this.userProfileRepository.create({
-              user_id: user.id,
-              full_name: tempProfile.fullName,
-            });
-          } else if (tempProfile.role === EUserRole.RECRUITER) {
-            await this.companyRepository.create({
-              user_id: user.id,
-              company_name: tempProfile.companyName || 'Unknown Company',
-              location: tempProfile.location,
-            });
-            await this.userProfileRepository.create({
-              user_id: user.id,
-              full_name: tempProfile.fullName,
-            });
+      switch (dto.type) {
+        case EOtpType.REGISTER:
+          if (user.status !== EUserStatus.UNVERIFIED) {
+            throw new AppException(
+              ERROR_CODES.AUTH_USER_ALREADY_VERIFIED,
+              HttpStatus.BAD_REQUEST,
+            );
           }
-          await this.redis.clearTempProfile(dto.email);
-        }
+          await this.userRepository.updateStatus(user.id, EUserStatus.ACTIVE);
 
-        await this.redis.clearOtpFlow(dto.email);
-        return {
-          message: 'Xác thực thành công. Tài khoản đã được kích hoạt.',
-        };
-      }
+          // đang chưa transaction kiểu sai nhưng vẫn thêm được tài khoản mà dám cập nhật với thêm vào db
+          const tempProfile = await this.redis.getTempProfile(dto.email);
+          if (tempProfile) {
+            if (tempProfile.role === EUserRole.JOB_SEEKER) {
+              await this.userProfileRepository.create({
+                user_id: user.id,
+                full_name: tempProfile.fullName,
+              });
+            } else if (tempProfile.role === EUserRole.RECRUITER) {
+              await this.companyRepository.create({
+                user_id: user.id,
+                company_name: tempProfile.company_name,
+                location: tempProfile.location,
+              });
+            }
+            await this.redis.clearTempProfile(dto.email);
+          }
+          await this.redis.clearOtpFlow(dto.email);
+          return {
+            message: 'Xác thực thành công. Tài khoản đã được kích hoạt.',
+          };
+        case EOtpType.FORGOT_PASSWORD:
+          if (user.status !== EUserStatus.ACTIVE) {
+            throw new AppException(
+              ERROR_CODES.AUTH_USER_UNVERIFIED,
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+          const signKey = crypto.randomUUID();
+          await this.redis.setSignKey(dto.email, signKey, 600);
+          await this.redis.clearOtpFlow(dto.email);
 
-      if (dto.type === EOtpType.FORGOT_PASSWORD) {
-        if (user.status !== EUserStatus.ACTIVE) {
+          return {
+            signKey,
+            message: 'Xác thực OTP thành công. Vui lòng đặt lại mật khẩu.',
+          };
+        default:
           throw new AppException(
-            ERROR_CODES.AUTH_USER_UNVERIFIED,
+            ERROR_CODES.INVALID_OTP_TYPE,
             HttpStatus.BAD_REQUEST,
           );
-        }
-        const signKey = crypto.randomUUID();
-        await this.redis.setSignKey(dto.email, signKey, 600);
-        await this.redis.clearOtpFlow(dto.email);
-
-        return {
-          signKey,
-          message: 'Xác thực OTP thành công. Vui lòng đặt lại mật khẩu.',
-        };
       }
     } catch (error) {
       if (error instanceof AppException || error instanceof HttpException)

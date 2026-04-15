@@ -13,7 +13,7 @@ export interface IRegisterJobSeekerDto extends IBaseRegisterDto {
 
 export interface IRegisterRecruiterDto extends IBaseRegisterDto {
   phone?: string;
-  companyName: string;
+  company_name: string;
   location: string;
 }
 
@@ -26,6 +26,7 @@ export interface IVerifyOtpDto {
 export interface ISendOtpDto {
   email: string;
   type: EOtpType;
+  ip: string;
 }
 
 export interface ILoginDto {

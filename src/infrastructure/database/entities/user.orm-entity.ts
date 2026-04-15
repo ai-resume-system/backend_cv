@@ -1,14 +1,8 @@
-import { EUserStatus, EUserRole } from 'src/common/constants/enum/user.enum';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { UserProfileOrmEntity } from './user_profile.orm-entity';
-import { CompanyOrmEntity } from './company.orm-entity';
+import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { IUserEntity } from 'src/domain/entities/user.entity';
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { CompanyOrmEntity } from './company.orm-entity';
+import { UserProfileOrmEntity } from './user_profile.orm-entity';
 
 @Entity({ name: 'users' })
 export class UserOrmEntity implements IUserEntity {

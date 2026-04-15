@@ -10,18 +10,17 @@ export class RedisAdapter extends BaseUsecase {
   ) {
     super(new Logger(RedisAdapter.name));
   }
-
   // =======================
-  // 🔑 KEY BUILDER
+  // KEY BUILDER
   // =======================
   private buildKey(prefix: string, key: string): string {
     return `${prefix}:${key}`;
   }
 
   // =======================
-  // 🔐 OTP VALUE
+  // OTP VALUE
   // =======================
-  async setOtp(key: string, otp: string, ttl = 300): Promise<void> {
+  async setOtp(key: string, otp: string, ttl: number): Promise<void> {
     await this.redis.set(this.buildKey('otp_value', key), otp, 'EX', ttl);
   }
 
@@ -30,7 +29,7 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   // =======================
-  // ❌ OTP FAIL COUNT (NO BUSINESS LOGIC)
+  // OTP FAIL COUNT (NO BUSINESS LOGIC)
   // =======================
   async increaseOtpFailCount(key: string): Promise<number> {
     const redisKey = this.buildKey('otp_fail_count', key);
@@ -48,9 +47,9 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   // =======================
-  // 🔒 LOCK
+  // LOCK
   // =======================
-  async lock(key: string, ttl = 600): Promise<void> {
+  async lock(key: string, ttl: number): Promise<void> {
     await this.redis.set(this.buildKey('otp_lock', key), 'locked', 'EX', ttl);
   }
 
@@ -63,9 +62,9 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   // =======================
-  // ⏱️ COOLDOWN
+  // COOLDOWN
   // =======================
-  async setCooldown(key: string, ttl = 60): Promise<void> {
+  async setCooldown(key: string, ttl: number): Promise<void> {
     await this.redis.set(this.buildKey('otp_cooldown', key), '1', 'EX', ttl);
   }
 
@@ -74,7 +73,7 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   // =======================
-  // 🔁 RESEND COUNT
+  // RESEND COUNT
   // =======================
   async getResendCount(key: string): Promise<number> {
     const count = await this.redis.get(this.buildKey('otp_resend_count', key));
@@ -97,7 +96,7 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   // =======================
-  // 🧹 CLEAR OTP FLOW
+  // CLEAR OTP FLOW
   // =======================
   async clearOtpFlow(key: string): Promise<void> {
     await this.redis.del(
@@ -110,9 +109,9 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   // =======================
-  // 👤 TEMP PROFILE
+  // TEMP PROFILE
   // =======================
-  async setTempProfile(key: string, payload: any, ttl = 300): Promise<void> {
+  async setTempProfile(key: string, payload: any, ttl: number): Promise<void> {
     await this.redis.set(
       this.buildKey('temp_profile', key),
       JSON.stringify(payload),
@@ -131,9 +130,9 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   // =======================
-  // 🔑 RESET PASSWORD TOKEN
+  // RESET PASSWORD TOKEN
   // =======================
-  async setSignKey(key: string, signKey: string, ttl = 600): Promise<void> {
+  async setSignKey(key: string, signKey: string, ttl: number): Promise<void> {
     await this.redis.set(this.buildKey('reset_token', key), signKey, 'EX', ttl);
   }
 
@@ -146,7 +145,7 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   // =======================
-  // 🔄 REFRESH TOKEN
+  // REFRESH TOKEN
   // =======================
   async setRefreshToken(userId: string, token: string, ttl: number) {
     await this.redis.set(
@@ -163,5 +162,16 @@ export class RedisAdapter extends BaseUsecase {
 
   async removeRefreshToken(userId: string): Promise<void> {
     await this.redis.del(this.buildKey('refresh_token', userId));
+  }
+
+  async increaseIpRequest(ip: string): Promise<number> {
+    const redisKey = this.buildKey('ip_request', ip);
+    const count = await this.redis.incr(redisKey);
+
+    if (count === 1) {
+      await this.redis.expire(redisKey, 60);
+    }
+
+    return count;
   }
 }

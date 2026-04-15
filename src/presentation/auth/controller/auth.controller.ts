@@ -55,7 +55,7 @@ export class AuthController extends BaseController {
     super(new Logger(AuthController.name));
   }
 
-  @Post('register/job-seeker')
+  @Post('register/job-seeker') //
   @ApiOperation({ summary: 'Register account with role job seeker' })
   @ApiResponse({
     status: 201,
@@ -68,7 +68,7 @@ export class AuthController extends BaseController {
     });
   }
 
-  @Post('register/recruiter')
+  @Post('register/recruiter') //
   @ApiOperation({ summary: 'Register account with role recruiter' })
   @ApiResponse({
     status: 201,

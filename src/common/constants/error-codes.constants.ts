@@ -50,15 +50,20 @@ export const ERROR_CODES = {
   },
   AUTH_USER_UNVERIFIED: {
     code: 1027,
-    message: 'Tài khoản chưa được xác thực.',
+    message: 'Tài khoản chưa được xác thực. Không thể thực hiện hành động này',
   },
   AUTH_USER_ALREADY_VERIFIED: {
-    code: 1027,
-    message: 'Tài khoản đã được xác thực từ trước.',
+    code: 1028,
+    message: 'Tài khoản đã được xác thực. Không thể thực hiện hành động này',
   },
   AUTH_SIGN_KEY_INVALID: {
-    code: 1028,
+    code: 1029,
     message: 'Khoá xác thực (sign key) không hợp lệ hoặc đã hết hạn.',
+  },
+  AUTH_USER_LOCKED: {
+    code: 1030,
+    message:
+      'Tài khoản người dùng đã bị khóa. Không thể thực hiện hành động này. Vui lòng liên hệ bộ phân hỗ trợ!',
   },
 
   // ─────────────────────────────────────────
@@ -147,14 +152,6 @@ export const ERROR_CODES = {
   // ─────────────────────────────────────────
   // ROLE (3000 – 3099)
   // ─────────────────────────────────────────
-  ROLE_NOT_FOUND: {
-    code: 3001,
-    message: 'Không tìm thấy quyền hạn yêu cầu.',
-  },
-  ROLE_INVALID: {
-    code: 3002,
-    message: 'Quyền hạn không hợp lệ.',
-  },
   ROLE_UNABLE_TO_DETERMINE: {
     code: 3003,
     message: 'Không xác định được quyền hạn của người dùng.',
@@ -167,12 +164,16 @@ export const ERROR_CODES = {
   // ─────────────────────────────────────────
   // SYSTEM (9000 – 9999)
   // ─────────────────────────────────────────
-  INTERNAL_SERVER_ERROR: {
+  INVALID_OTP_TYPE: {
     code: 9000,
+    message: 'Loại OTP không hợp lệ.',
+  },
+  INTERNAL_SERVER_ERROR: {
+    code: 9001,
     message: 'Lỗi hệ thống, vui lòng thử lại sau.',
   },
   VALIDATION_ERROR: {
-    code: 9001,
+    code: 9002,
     message: 'Dữ liệu không hợp lệ.',
   },
 };

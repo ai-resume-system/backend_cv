@@ -22,7 +22,12 @@ export class CompanyOrmEntity implements ICompanyEntity {
   @Column({ name: 'career_categories_id', type: 'uuid', nullable: true })
   career_categories_id?: string;
 
-  @Column({ name: 'company_name', type: 'varchar', length: 255 })
+  @Column({
+    name: 'company_name',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
   company_name?: string;
 
   @Column({ name: 'logo_url', type: 'text', nullable: true })

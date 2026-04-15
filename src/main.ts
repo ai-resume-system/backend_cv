@@ -119,6 +119,8 @@ async function bootstrap() {
   const port = process.env.WEB_PORT || 3000;
   await app.listen(port);
   logger.log(`[PORT] Running on port ${port}`);
-  logger.log(`[DOCS] Documentation: http://localhost:${port}/api/docs`);
+  logger.log(
+    `[DOCS] Documentation: http://${process.env.IP_ADDRESS}:${port}/api/docs`,
+  );
 }
 bootstrap();
