@@ -1,7 +1,14 @@
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { IUserEntity } from 'src/domain/entities/user.entity';
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { CompanyOrmEntity } from './company.orm-entity';
+import { CVOrmEntity } from './cv.orm-entity';
 import { UserProfileOrmEntity } from './user_profile.orm-entity';
 
 @Entity({ name: 'users' })
@@ -52,10 +59,12 @@ export class UserOrmEntity implements IUserEntity {
   @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt?: Date;
 
-  //relations
-  @OneToOne(() => UserProfileOrmEntity, (profile) => profile.user_profile)
-  user_profile: UserProfileOrmEntity;
+  @OneToOne(() => UserProfileOrmEntity, (profile) => profile.userProfile)
+  userProfile: UserProfileOrmEntity;
 
-  @OneToOne(() => CompanyOrmEntity, (company) => company.user_company)
-  user_company: CompanyOrmEntity;
+  @OneToOne(() => CompanyOrmEntity, (company) => company.userCompany)
+  userCompany: CompanyOrmEntity;
+
+  @OneToMany(() => CVOrmEntity, (cv) => cv.user)
+  cvs: CVOrmEntity[];
 }

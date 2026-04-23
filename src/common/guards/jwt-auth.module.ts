@@ -3,7 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { RolesGuard } from './role.guard';
-import { JwtTokenUsecase } from 'src/application/use-cases/auth/jwt-token.usecase';
+import { JwtTokenUsecase } from 'src/common/guards/jwt-token.usecase';
 import { AuthenticationGuard } from './auth.guard';
 
 @Module({

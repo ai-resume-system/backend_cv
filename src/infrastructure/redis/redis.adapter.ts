@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { OTP_TTL_10M, OTP_TTL_1M } from 'src/common/constants/ttl.constants';
 
 @Injectable()
 export class RedisAdapter extends BaseUsecase {
@@ -10,15 +11,13 @@ export class RedisAdapter extends BaseUsecase {
   ) {
     super(new Logger(RedisAdapter.name));
   }
-  // =======================
-  // KEY BUILDER
-  // =======================
+
   private buildKey(prefix: string, key: string): string {
     return `${prefix}:${key}`;
   }
 
   // =======================
-  // OTP VALUE
+  // OTP
   // =======================
   async setOtp(key: string, otp: string, ttl: number): Promise<void> {
     await this.redis.set(this.buildKey('otp_value', key), otp, 'EX', ttl);
@@ -28,27 +27,15 @@ export class RedisAdapter extends BaseUsecase {
     return this.redis.get(this.buildKey('otp_value', key));
   }
 
-  // =======================
-  // OTP FAIL COUNT (NO BUSINESS LOGIC)
-  // =======================
   async increaseOtpFailCount(key: string): Promise<number> {
     const redisKey = this.buildKey('otp_fail_count', key);
     const count = await this.redis.incr(redisKey);
-
     if (count === 1) {
-      await this.redis.expire(redisKey, 600); // 10 phút
+      await this.redis.expire(redisKey, OTP_TTL_10M);
     }
-
     return count;
   }
 
-  async clearOtpFailCount(key: string): Promise<void> {
-    await this.redis.del(this.buildKey('otp_fail_count', key));
-  }
-
-  // =======================
-  // LOCK
-  // =======================
   async lock(key: string, ttl: number): Promise<void> {
     await this.redis.set(this.buildKey('otp_lock', key), 'locked', 'EX', ttl);
   }
@@ -57,12 +44,18 @@ export class RedisAdapter extends BaseUsecase {
     return !!(await this.redis.get(this.buildKey('otp_lock', key)));
   }
 
-  async clearLock(key: string): Promise<void> {
-    await this.redis.del(this.buildKey('otp_lock', key));
+  async clearOtpFlow(key: string): Promise<void> {
+    await this.redis.del(
+      this.buildKey('otp_value', key),
+      this.buildKey('otp_fail_count', key),
+      this.buildKey('otp_lock', key),
+      this.buildKey('otp_cooldown', key),
+      this.buildKey('otp_resend_count', key),
+    );
   }
 
   // =======================
-  // COOLDOWN
+  // OTP RESEND / COOLDOWN
   // =======================
   async setCooldown(key: string, ttl: number): Promise<void> {
     await this.redis.set(this.buildKey('otp_cooldown', key), '1', 'EX', ttl);
@@ -72,9 +65,6 @@ export class RedisAdapter extends BaseUsecase {
     return !!(await this.redis.get(this.buildKey('otp_cooldown', key)));
   }
 
-  // =======================
-  // RESEND COUNT
-  // =======================
   async getResendCount(key: string): Promise<number> {
     const count = await this.redis.get(this.buildKey('otp_resend_count', key));
     return count ? parseInt(count, 10) : 0;
@@ -83,29 +73,10 @@ export class RedisAdapter extends BaseUsecase {
   async increaseResendCount(key: string): Promise<number> {
     const redisKey = this.buildKey('otp_resend_count', key);
     const count = await this.redis.incr(redisKey);
-
     if (count === 1) {
-      await this.redis.expire(redisKey, 3600); // 1 giờ
+      await this.redis.expire(redisKey, 3600);
     }
-
     return count;
-  }
-
-  async clearResendCount(key: string): Promise<void> {
-    await this.redis.del(this.buildKey('otp_resend_count', key));
-  }
-
-  // =======================
-  // CLEAR OTP FLOW
-  // =======================
-  async clearOtpFlow(key: string): Promise<void> {
-    await this.redis.del(
-      this.buildKey('otp_value', key),
-      this.buildKey('otp_fail_count', key),
-      this.buildKey('otp_lock', key),
-      this.buildKey('otp_cooldown', key),
-      this.buildKey('otp_resend_count', key),
-    );
   }
 
   // =======================
@@ -164,14 +135,102 @@ export class RedisAdapter extends BaseUsecase {
     await this.redis.del(this.buildKey('refresh_token', userId));
   }
 
+  // =======================
+  // IP REQUEST (OTP)
+  // =======================
+  async getIpRequestCount(ip: string): Promise<number> {
+    const count = await this.redis.get(this.buildKey('ip_request', ip));
+    return count ? parseInt(count, 10) : 0;
+  }
+
   async increaseIpRequest(ip: string): Promise<number> {
     const redisKey = this.buildKey('ip_request', ip);
     const count = await this.redis.incr(redisKey);
-
     if (count === 1) {
-      await this.redis.expire(redisKey, 60);
+      await this.redis.expire(redisKey, OTP_TTL_1M);
     }
-
     return count;
+  }
+
+  // =======================
+  // LOGIN IP
+  // =======================
+  async increaseLoginFailCountByIp(ip: string): Promise<number> {
+    const redisKey = this.buildKey('login_fail_ip', ip);
+    const count = await this.redis.incr(redisKey);
+    if (count === 1) {
+      await this.redis.expire(redisKey, OTP_TTL_10M);
+    }
+    return count;
+  }
+
+  async clearLoginFailCountByIp(ip: string): Promise<void> {
+    await this.redis.del(this.buildKey('login_fail_ip', ip));
+  }
+
+  async lockLoginByIp(ip: string, ttl: number): Promise<void> {
+    await this.redis.set(
+      this.buildKey('login_lock_ip', ip),
+      'locked',
+      'EX',
+      ttl,
+    );
+  }
+
+  async isLoginLockedByIp(ip: string): Promise<boolean> {
+    return !!(await this.redis.get(this.buildKey('login_lock_ip', ip)));
+  }
+
+  async clearLoginLockByIp(ip: string): Promise<void> {
+    await this.redis.del(this.buildKey('login_lock_ip', ip));
+  }
+
+  // =======================
+  // LOGIN EMAIL + IP
+  // =======================
+  async increaseLoginFailCountEmailAndIp(
+    email: string,
+    ip: string,
+  ): Promise<number> {
+    const redisKey = this.buildKey('login_fail_email_ip', `${email}:${ip}`);
+    const count = await this.redis.incr(redisKey);
+    if (count === 1) {
+      await this.redis.expire(redisKey, OTP_TTL_10M);
+    }
+    return count;
+  }
+
+  async clearLoginFailCountEmailAndIp(
+    email: string,
+    ip: string,
+  ): Promise<void> {
+    await this.redis.del(
+      this.buildKey('login_fail_email_ip', `${email}:${ip}`),
+    );
+  }
+
+  async lockLoginEmailAndIp(
+    email: string,
+    ip: string,
+    ttl: number,
+  ): Promise<void> {
+    await this.redis.set(
+      this.buildKey('login_lock_email_ip', `${email}:${ip}`),
+      'locked',
+      'EX',
+      ttl,
+    );
+  }
+
+  async isLoginLockedEmailAndIp(email: string, ip: string): Promise<boolean> {
+    return !!(await this.redis.get(
+      this.buildKey('login_lock_email_ip', `${email}:${ip}`),
+    ));
+  }
+
+  async clearLoginLockEmailAndIp(email: string, ip: string): Promise<void> {
+    await this.redis.del(
+      this.buildKey('login_lock_email_ip', `${email}:${ip}`),
+    );
   }
 }

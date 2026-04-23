@@ -9,8 +9,9 @@ export class LogoutUseCase extends BaseUsecase {
   }
 
   async execute(userId: string): Promise<{ message: string }> {
-    await this.redis.removeRefreshToken(userId);
-    this.logger.log(`User logged out: ${userId}`);
-    return { message: 'Đăng xuất thành công' };
+    return this.runSafe('[Logout]:', async () => {
+      await this.redis.removeRefreshToken(userId);
+      return { message: 'Đăng xuất thành công' };
+    });
   }
 }

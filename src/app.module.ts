@@ -8,6 +8,7 @@ import { MailModule } from './infrastructure/mail/mail.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { AuthModule } from './modules/auth.module';
 import { UsersModule } from './modules/users.module';
+import { AccountModule } from './modules/account.module';
 import { CareerCategoriesModule } from './modules/career-categories.module';
 
 @Module({
@@ -19,8 +20,9 @@ import { CareerCategoriesModule } from './modules/career-categories.module';
     MailModule,
     JwtAuthModule,
     AuthModule,
-    UsersModule,
+    AccountModule,
     CareerCategoriesModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

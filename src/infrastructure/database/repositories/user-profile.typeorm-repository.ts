@@ -4,34 +4,42 @@ import { Repository } from 'typeorm';
 import { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import { UserProfileOrmEntity } from '../entities/user_profile.orm-entity';
 import { IUserProfileEntity } from 'src/domain/entities/user_profile.entity';
+import { BaseTypeormRepository } from './base.typeorm-repository';
 
 @Injectable()
-export class UserProfileTypeormRepository implements IUserProfileRepository {
-  private readonly logger = new Logger(UserProfileTypeormRepository.name);
-
+export class UserProfileTypeormRepository
+  extends BaseTypeormRepository<UserProfileOrmEntity, IUserProfileEntity>
+  implements IUserProfileRepository
+{
   constructor(
     @InjectRepository(UserProfileOrmEntity)
-    private readonly repository: Repository<UserProfileOrmEntity>,
-  ) {}
+    ormRepository: Repository<UserProfileOrmEntity>,
+  ) {
+    super(ormRepository);
+  }
 
   async findByUserId(userId: string): Promise<IUserProfileEntity | null> {
-    return await this.repository.findOne({ where: { user_id: userId } });
+    return await this.ormRepository.findOne({ where: { userId: userId } });
   }
 
-  async create(
-    profile: Partial<IUserProfileEntity>,
-  ): Promise<IUserProfileEntity> {
-    const newProfile = this.repository.create(profile);
-    const saved = await this.repository.save(newProfile);
-    this.logger.log(`Created profile for user: ${profile.user_id}`);
-    return saved;
-  }
-
-  async update(
+  async updateWithUserId(
     userId: string,
     data: Partial<IUserProfileEntity>,
   ): Promise<IUserProfileEntity> {
-    await this.repository.update({ user_id: userId }, data);
+    await this.ormRepository.update({ userId: userId }, data);
     return this.findByUserId(userId) as Promise<IUserProfileEntity>;
+  }
+
+  protected toDomain(orm: UserProfileOrmEntity): IUserProfileEntity {
+    return {
+      id: orm.id,
+      userId: orm.userId,
+      fullName: orm.fullName,
+      avatarUrl: orm.avatarUrl,
+      bio: orm.bio,
+      createdAt: orm.createdAt,
+      updatedAt: orm.updatedAt,
+      deletedAt: orm.deletedAt,
+    };
   }
 }

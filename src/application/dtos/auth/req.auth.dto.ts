@@ -26,7 +26,6 @@ export interface IVerifyOtpDto {
 export interface ISendOtpDto {
   email: string;
   type: EOtpType;
-  ip: string;
 }
 
 export interface ILoginDto {

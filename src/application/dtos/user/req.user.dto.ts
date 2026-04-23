@@ -1,17 +1,30 @@
+import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
+
+export interface IRequestGetUsersDto {
+  page: number;
+  limit: number;
+  role?: EUserRole;
+  status?: EUserStatus;
+}
+
+export interface IUpdateUserStatusDto {
+  status: EUserStatus;
+}
+
 export interface IUpdateProfileDto {
-  full_name?: string;
-  avatar_url?: string;
+  fullName?: string;
+  avatarUrl?: string;
   bio?: string;
 }
 
 export interface IUpdateCompanyDto {
-  career_categories_id?: string;
-  company_name?: string;
-  tax_code?: string;
-  logo_url?: string;
+  careerCategoriesId?: string;
+  companyName?: string;
+  taxCode?: string;
+  logoUrl?: string;
   location?: string;
   description?: string;
-  website_url?: string;
-  company_size_min?: number;
-  company_size_max?: number;
+  websiteUrl?: string;
+  companySizeMin?: number;
+  companySizeMax?: number;
 }

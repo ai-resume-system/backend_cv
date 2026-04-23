@@ -1,10 +1,9 @@
-import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
-import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
-import { UpdateCareerCategoryDto } from '../../dtos/career-category/req.career-category.dto';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
-import { HttpStatus } from '@nestjs/common';
-import { BaseUsecase } from 'src/common/base/base.usecase';
+import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
+import { IRequestUpdateCareerCategoryDto } from '../../dtos/career-category/req.career-category.dto';
 
 @Injectable()
 export class UpdateCareerCategoryUseCase extends BaseUsecase {
@@ -15,8 +14,8 @@ export class UpdateCareerCategoryUseCase extends BaseUsecase {
     super(new Logger(UpdateCareerCategoryUseCase.name));
   }
 
-  async execute(id: string, dto: UpdateCareerCategoryDto) {
-    try {
+  async execute(id: string, dto: IRequestUpdateCareerCategoryDto) {
+    return this.runSafe('[Update Career Category]:', async () => {
       const existing = await this.careerCategoryRepository.findById(id);
       if (!existing) {
         throw new AppException(
@@ -39,13 +38,6 @@ export class UpdateCareerCategoryUseCase extends BaseUsecase {
 
       const updated = await this.careerCategoryRepository.update(id, dto);
       return updated;
-    } catch (error) {
-      if (error instanceof HttpException) throw error;
-      this.logger.error('[Update Career]:', error);
-      throw new AppException(
-        ERROR_CODES.CAREER_CATEGORY_UPDATE_FAILED,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    });
   }
 }

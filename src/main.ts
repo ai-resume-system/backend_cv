@@ -86,10 +86,11 @@ function setGlobalPipes(app: INestApplication<any>, logger: Logger) {
         const message =
           Object.values(firstError.constraints ?? {})[0] ??
           ERROR_CODES.VALIDATION_ERROR.message;
-        return new AppException(
-          { code: ERROR_CODES.VALIDATION_ERROR.code, message },
-          422,
-        );
+        return new AppException({
+          code: ERROR_CODES.VALIDATION_ERROR.code,
+          message,
+          status: 422,
+        });
       },
     }),
   );
@@ -118,7 +119,6 @@ async function bootstrap() {
 
   const port = process.env.WEB_PORT || 3000;
   await app.listen(port);
-  logger.log(`[PORT] Running on port ${port}`);
   logger.log(
     `[DOCS] Documentation: http://${process.env.IP_ADDRESS}:${port}/api/docs`,
   );

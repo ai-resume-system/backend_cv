@@ -15,16 +15,17 @@ export class DeleteCareerCategoryUseCase extends BaseUsecase {
   }
 
   async execute(id: string) {
-    const existing = await this.careerCategoryRepository.findById(id);
-    if (!existing) {
-      throw new AppException(
-        ERROR_CODES.CAREER_CATEGORY_NOT_FOUND,
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    return this.runSafe('[Delete Career Category]:', async () => {
+      const existing = await this.careerCategoryRepository.findById(id);
+      if (!existing) {
+        throw new AppException(
+          ERROR_CODES.CAREER_CATEGORY_NOT_FOUND,
+          HttpStatus.NOT_FOUND,
+        );
+      }
 
-    await this.careerCategoryRepository.delete(id);
-    this.logger.log(`Career category deleted: ${existing.name}`);
-    return { message: 'Xóa ngành nghề thành công.' };
+      await this.careerCategoryRepository.delete(id);
+      return { message: 'Xóa ngành nghề thành công.' };
+    });
   }
 }

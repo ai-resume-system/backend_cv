@@ -89,13 +89,6 @@ export class RequestSendOtpDto {
   @IsNotEmpty()
   @IsEnum(EOtpType)
   type: EOtpType;
-
-  @ApiProperty({
-    example: '0.0.0.0',
-  })
-  @IsString()
-  @IsNotEmpty()
-  ip: string;
 }
 
 export class RequestLoginDto {

@@ -4,12 +4,14 @@ import {
   JoinColumn,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserOrmEntity } from './user.orm-entity';
 import { ICompanyEntity } from 'src/domain/entities/company.entity';
 import { CareerCategoryOrmEntity } from './career-category.orm-entity';
+import { JobOrmEntity } from './job.orm-entity';
 
 @Entity({ name: 'companies' })
 export class CompanyOrmEntity implements ICompanyEntity {
@@ -17,10 +19,10 @@ export class CompanyOrmEntity implements ICompanyEntity {
   id: string;
 
   @Column({ name: 'user_id', type: 'uuid', unique: true })
-  user_id: string;
+  userId: string;
 
   @Column({ name: 'career_categories_id', type: 'uuid', nullable: true })
-  career_categories_id?: string;
+  careerCategoriesId?: string;
 
   @Column({
     name: 'company_name',
@@ -28,10 +30,10 @@ export class CompanyOrmEntity implements ICompanyEntity {
     length: 255,
     nullable: true,
   })
-  company_name?: string;
+  companyName?: string;
 
   @Column({ name: 'logo_url', type: 'text', nullable: true })
-  logo_url?: string;
+  logoUrl?: string;
 
   @Column({ name: 'location', type: 'text', nullable: true })
   location?: string;
@@ -40,16 +42,10 @@ export class CompanyOrmEntity implements ICompanyEntity {
   description?: string;
 
   @Column({ name: 'tax_code', type: 'varchar', length: 20, nullable: true })
-  tax_code?: string;
+  taxCode?: string;
 
   @Column({ name: 'website_url', type: 'varchar', length: 255, nullable: true })
-  website_url?: string;
-
-  @Column({ name: 'company_size_min', type: 'int', nullable: true })
-  company_size_min?: number;
-
-  @Column({ name: 'company_size_max', type: 'int', nullable: true })
-  company_size_max?: number;
+  websiteUrl?: string;
 
   @Column({
     name: 'created_at',
@@ -69,12 +65,14 @@ export class CompanyOrmEntity implements ICompanyEntity {
   @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt?: Date;
 
-  //relation
   @ManyToOne(() => CareerCategoryOrmEntity, (career) => career.company)
   @JoinColumn({ name: 'career_categories_id' })
-  career_categories: CareerCategoryOrmEntity;
+  careerCategories: CareerCategoryOrmEntity;
 
-  @OneToOne(() => UserOrmEntity, (user) => user.user_company)
+  @OneToOne(() => UserOrmEntity, (user) => user.userCompany)
   @JoinColumn({ name: 'user_id' })
-  user_company: UserOrmEntity;
+  userCompany: UserOrmEntity;
+
+  @OneToMany(() => JobOrmEntity, (job) => job.company)
+  jobs: JobOrmEntity[];
 }

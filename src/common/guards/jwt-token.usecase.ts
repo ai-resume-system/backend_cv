@@ -7,8 +7,7 @@ import type { StringValue } from 'ms';
 
 export interface IGenerateTokensPayload {
   id: string;
-  email: string;
-  roles: EUserRole;
+  role: EUserRole;
   [key: string]: any;
 }
 
@@ -84,7 +83,7 @@ export class JwtTokenUsecase extends BaseUsecase {
   decodeToken(token: string): IGenerateTokensPayload | null {
     try {
       const payload = this.jwtService.decode(token);
-      return (payload?.[0] as IGenerateTokensPayload | null) ?? null;
+      return payload as IGenerateTokensPayload;
     } catch {
       return null;
     }

@@ -13,7 +13,6 @@ export const AuthCurrentUser = () => {
   return createParamDecorator(
     (_data: unknown, context: ExecutionContext): ICurrentUser => {
       const request = context.switchToHttp().getRequest<Request>();
-      console.log('request', request);
       return request[REQUEST_RESULT_USER] as ICurrentUser;
     },
   )();

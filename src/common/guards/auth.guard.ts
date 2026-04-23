@@ -6,10 +6,10 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { JwtTokenUsecase } from 'src/application/use-cases/auth/jwt-token.usecase';
 import { ERROR_CODES } from '../constants/error-codes.constants';
 import { BaseUsecase } from '../base/base.usecase';
 import { ICurrentUser } from '../decorators/current-user.decorator';
+import { JwtTokenUsecase } from './jwt-token.usecase';
 
 export interface AuthRequest extends Request {
   user: ICurrentUser;
@@ -29,8 +29,6 @@ export class AuthenticationGuard extends BaseUsecase implements CanActivate {
         request,
         'Authorization',
       );
-
-      this.logger.log('[canActivate] Authorization header', authHeader);
 
       if (!authHeader) {
         this.logger.error('[canActivate] Authorization header is missing');
@@ -64,10 +62,6 @@ export class AuthenticationGuard extends BaseUsecase implements CanActivate {
         email: decodedToken.email,
         role: decodedToken.role,
       };
-
-      this.logger.debug(
-        `[canActivate] Authenticated user: ${decodedToken.email}`,
-      );
       return true;
     } catch (error) {
       if (error instanceof HttpException) throw error;

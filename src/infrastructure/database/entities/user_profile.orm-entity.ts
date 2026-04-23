@@ -14,13 +14,13 @@ export class UserProfileOrmEntity implements IUserProfileEntity {
   id: string;
 
   @Column({ name: 'user_id', type: 'uuid', unique: true })
-  user_id: string;
+  userId: string;
 
   @Column({ name: 'full_name', type: 'varchar', length: 255, nullable: true })
-  full_name?: string;
+  fullName?: string;
 
   @Column({ name: 'avatar_url', type: 'text', nullable: true })
-  avatar_url?: string;
+  avatarUrl?: string;
 
   @Column({ name: 'bio', type: 'text', nullable: true })
   bio?: string;
@@ -43,7 +43,7 @@ export class UserProfileOrmEntity implements IUserProfileEntity {
   @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt?: Date;
 
-  @OneToOne(() => UserOrmEntity, (user) => user.user_profile)
+  @OneToOne(() => UserOrmEntity, (user) => user.userProfile)
   @JoinColumn({ name: 'user_id' })
-  user_profile: UserOrmEntity;
+  userProfile: UserOrmEntity;
 }

@@ -1,12 +1,14 @@
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
 
-export interface CreateCareerCategoryDto {
+export interface IRequestCreateCareerCategoryDto {
   name: string;
+  slug: string;
   description?: string;
 }
 
-export interface UpdateCareerCategoryDto {
+export interface IRequestUpdateCareerCategoryDto {
   name?: string;
+  slug?: string;
   description?: string;
   status?: ECareerCategoriesStatus;
 }

@@ -11,8 +11,8 @@ async function bootstrap() {
 
   console.log('Start seeding...');
 
-  await seedCareerCategories(dataSource);
   await seedAdmin(dataSource);
+  await seedCareerCategories(dataSource);
 
   console.log('Seeding done');
 

@@ -11,7 +11,9 @@ export class GetAllCareerCategoriesUseCase extends BaseUsecase {
     super(new Logger(GetAllCareerCategoriesUseCase.name));
   }
 
-  async execute() {
-    return this.careerCategoryRepository.findAll();
+  async execute(page: number, limit: number) {
+    return this.runSafe('[Get Career Categories]:', async () => {
+      return this.careerCategoryRepository.findAll(page, limit);
+    });
   }
 }

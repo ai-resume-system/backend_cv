@@ -1,12 +1,6 @@
-import {
-  Column,
-  Entity,
-  OneToMany,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { ICareerCategoryEntity } from 'src/domain/entities/career-category.entity';
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
+import { ICareerCategoryEntity } from 'src/domain/entities/career-category.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { CompanyOrmEntity } from './company.orm-entity';
 
 @Entity({ name: 'career_categories' })
@@ -16,6 +10,9 @@ export class CareerCategoryOrmEntity implements ICareerCategoryEntity {
 
   @Column({ name: 'name', type: 'varchar', length: 255 })
   name: string;
+
+  @Column({ name: 'slug', type: 'varchar', length: 255, unique: true })
+  slug: string;
 
   @Column({ name: 'description', type: 'text', nullable: true })
   description?: string;
@@ -46,6 +43,6 @@ export class CareerCategoryOrmEntity implements ICareerCategoryEntity {
   @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt?: Date;
 
-  @OneToMany(() => CompanyOrmEntity, (company) => company.career_categories)
-  company: CompanyOrmEntity;
+  @OneToMany(() => CompanyOrmEntity, (company) => company.careerCategories)
+  company: CompanyOrmEntity[];
 }

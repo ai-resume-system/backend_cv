@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
@@ -7,14 +9,8 @@ import type { ICompanyRepository } from 'src/domain/repositories/company.reposit
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import { IVerifyOtpDto } from 'src/application/dtos/auth/req.auth.dto';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
-import {
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { OTP_TTL_10M } from 'src/common/constants/ttl.constants';
 
 @Injectable()
 export class VerifyOtpUseCase extends BaseUsecase {
@@ -30,99 +26,76 @@ export class VerifyOtpUseCase extends BaseUsecase {
   }
 
   async execute(dto: IVerifyOtpDto) {
-    try {
-      if (await this.redis.isLocked(dto.email)) {
-        throw new AppException(
-          ERROR_CODES.AUTH_OTP_LOCKED,
-          HttpStatus.FORBIDDEN,
-        );
-      }
-
-      // Verify OTP
-      const savedOtp = await this.redis.getOtp(dto.email);
-      if (!savedOtp || savedOtp !== dto.otp) {
-        const failCount = await this.redis.increaseOtpFailCount(dto.email);
-        if (failCount >= 6) {
-          await this.redis.clearOtpFlow(dto.email);
-          throw new AppException(
-            ERROR_CODES.AUTH_OTP_LOCKED,
-            HttpStatus.FORBIDDEN,
-          );
+    return this.runSafe(
+      'VerifyOtp',
+      async () => {
+        if (await this.redis.isLocked(dto.email)) {
+          throw new AppException(ERROR_CODES.AUTH_OTP_LOCKED);
         }
-        throw new AppException(
-          ERROR_CODES.AUTH_OTP_INVALID,
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
 
-      const user = await this.userRepository.findByEmailWithPassword(dto.email);
-      if (!user) {
-        throw new AppException(
-          ERROR_CODES.USER_NOT_FOUND,
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      switch (dto.type) {
-        case EOtpType.REGISTER:
-          if (user.status !== EUserStatus.UNVERIFIED) {
-            throw new AppException(
-              ERROR_CODES.AUTH_USER_ALREADY_VERIFIED,
-              HttpStatus.BAD_REQUEST,
-            );
+        const savedOtp = await this.redis.getOtp(dto.email);
+        if (!savedOtp) {
+          throw new AppException(ERROR_CODES.AUTH_OTP_EXPIRED);
+        }
+        if (savedOtp !== dto.otp) {
+          const failCount = await this.redis.increaseOtpFailCount(dto.email);
+          if (failCount >= 5) {
+            await this.redis.lock(dto.email, OTP_TTL_10M);
+            await this.redis.clearOtpFlow(dto.email);
+            throw new AppException(ERROR_CODES.AUTH_OTP_LOCKED);
           }
-          await this.userRepository.updateStatus(user.id, EUserStatus.ACTIVE);
+          throw new AppException(ERROR_CODES.AUTH_OTP_INVALID);
+        }
 
-          // đang chưa transaction kiểu sai nhưng vẫn thêm được tài khoản mà dám cập nhật với thêm vào db
-          const tempProfile = await this.redis.getTempProfile(dto.email);
-          if (tempProfile) {
-            if (tempProfile.role === EUserRole.JOB_SEEKER) {
-              await this.userProfileRepository.create({
-                user_id: user.id,
-                full_name: tempProfile.fullName,
-              });
-            } else if (tempProfile.role === EUserRole.RECRUITER) {
-              await this.companyRepository.create({
-                user_id: user.id,
-                company_name: tempProfile.company_name,
-                location: tempProfile.location,
-              });
+        const user = await this.userRepository.findByEmail(dto.email);
+        if (!user) {
+          throw new AppException(ERROR_CODES.USER_NOT_FOUND);
+        }
+
+        switch (dto.type) {
+          case EOtpType.REGISTER:
+            if (user.status !== EUserStatus.UNVERIFIED) {
+              throw new AppException(ERROR_CODES.AUTH_USER_ALREADY_VERIFIED);
             }
-            await this.redis.clearTempProfile(dto.email);
-          }
-          await this.redis.clearOtpFlow(dto.email);
-          return {
-            message: 'Xác thực thành công. Tài khoản đã được kích hoạt.',
-          };
-        case EOtpType.FORGOT_PASSWORD:
-          if (user.status !== EUserStatus.ACTIVE) {
-            throw new AppException(
-              ERROR_CODES.AUTH_USER_UNVERIFIED,
-              HttpStatus.BAD_REQUEST,
-            );
-          }
-          const signKey = crypto.randomUUID();
-          await this.redis.setSignKey(dto.email, signKey, 600);
-          await this.redis.clearOtpFlow(dto.email);
+            await this.userRepository.updateStatus(user.id, EUserStatus.ACTIVE);
 
-          return {
-            signKey,
-            message: 'Xác thực OTP thành công. Vui lòng đặt lại mật khẩu.',
-          };
-        default:
-          throw new AppException(
-            ERROR_CODES.INVALID_OTP_TYPE,
-            HttpStatus.BAD_REQUEST,
-          );
-      }
-    } catch (error) {
-      if (error instanceof AppException || error instanceof HttpException)
-        throw error;
-      this.logger.error('[VerifyOtp]:', error);
-      throw new AppException(
-        ERROR_CODES.INTERNAL_SERVER_ERROR,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+            const tempProfile = await this.redis.getTempProfile(dto.email);
+            if (tempProfile) {
+              if (tempProfile.role === EUserRole.JOB_SEEKER) {
+                await this.userProfileRepository.create({
+                  userId: user.id,
+                  fullName: tempProfile.fullName,
+                });
+              } else if (tempProfile.role === EUserRole.RECRUITER) {
+                await this.companyRepository.create({
+                  userId: user.id,
+                  companyName: tempProfile.company_name,
+                  location: tempProfile.location,
+                });
+              }
+              await this.redis.clearTempProfile(dto.email);
+            }
+            await this.redis.clearOtpFlow(dto.email);
+            return {
+              message: 'Xác thực thành công. Tài khoản đã được kích hoạt.',
+            };
+          case EOtpType.FORGOT_PASSWORD:
+            if (user.status !== EUserStatus.ACTIVE) {
+              throw new AppException(ERROR_CODES.AUTH_USER_UNVERIFIED);
+            }
+            const signKey = randomUUID();
+            await this.redis.setSignKey(dto.email, signKey, 600);
+            await this.redis.clearOtpFlow(dto.email);
+
+            return {
+              signKey,
+              message: 'Xác thực OTP thành công. Vui lòng đặt lại mật khẩu.',
+            };
+          default:
+            throw new AppException(ERROR_CODES.INVALID_OTP_TYPE);
+        }
+      },
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+    );
   }
 }

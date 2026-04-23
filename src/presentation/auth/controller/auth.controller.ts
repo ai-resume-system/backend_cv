@@ -1,15 +1,6 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Logger,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Logger, Post, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ChangePasswordUseCase } from 'src/application/use-cases/auth/change-password.usecase';
-import { GetProfileUseCase } from 'src/application/use-cases/auth/get-profile.usecase';
 import { LoginUseCase } from 'src/application/use-cases/auth/login.usecase';
 import { LogoutUseCase } from 'src/application/use-cases/auth/logout.usecase';
 import { RefreshTokenUseCase } from 'src/application/use-cases/auth/refresh-token.usecase';
@@ -20,7 +11,6 @@ import { ForgotPasswordUseCase } from 'src/application/use-cases/auth/forgot-pas
 import { BaseController } from 'src/common/base/base.controller';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import {
-  RequestChangePasswordDto,
   RequestLoginDto,
   RequestRefreshTokenDto,
   RequestRegisterJobSeekerDto,
@@ -47,15 +37,13 @@ export class AuthController extends BaseController {
     private readonly sendOtpUseCase: SendOtpUseCase,
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
-    private readonly changePasswordUseCase: ChangePasswordUseCase,
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly logoutUseCase: LogoutUseCase,
-    private readonly getProfileUseCase: GetProfileUseCase,
   ) {
     super(new Logger(AuthController.name));
   }
 
-  @Post('register/job-seeker') //
+  @Post('register/job-seeker')
   @ApiOperation({ summary: 'Register account with role job seeker' })
   @ApiResponse({
     status: 201,
@@ -68,7 +56,7 @@ export class AuthController extends BaseController {
     });
   }
 
-  @Post('register/recruiter') //
+  @Post('register/recruiter')
   @ApiOperation({ summary: 'Register account with role recruiter' })
   @ApiResponse({
     status: 201,
@@ -87,8 +75,12 @@ export class AuthController extends BaseController {
     status: 200,
     description: 'OTP sent successfully',
   })
-  async sendOtp(@Body() dto: RequestSendOtpDto) {
-    return await this.sendOtpUseCase.execute(dto);
+  async sendOtp(@Body() dto: RequestSendOtpDto, @Req() req: Request) {
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress;
+    console.log('ip', ip);
+    return await this.sendOtpUseCase.execute(dto, ip!);
   }
 
   @Post('verify-otp')
@@ -108,8 +100,11 @@ export class AuthController extends BaseController {
     description: 'Login successfully',
     type: ResponseAuthDto,
   })
-  async login(@Body() dto: RequestLoginDto) {
-    return await this.loginUseCase.execute(dto);
+  async login(@Body() dto: RequestLoginDto, @Req() req: Request) {
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress;
+    return await this.loginUseCase.execute(dto, ip!);
   }
 
   @Post('refresh-token')
@@ -132,34 +127,10 @@ export class AuthController extends BaseController {
     return this.forgotPasswordUseCase.execute(dto);
   }
 
-  @Post('change-password')
-  @ApiOperation({
-    summary: 'Change password dont use OTP',
-  })
-  @AuthRequired()
-  @ApiResponse({ status: 201, description: 'Password changed successfully' })
-  async changePassword(
-    @AuthCurrentUser() user: ICurrentUser,
-    @Body() dto: RequestChangePasswordDto,
-  ) {
-    return this.changePasswordUseCase.execute(user.id, dto);
-  }
-
   @Post('logout')
   @ApiOperation({ summary: 'Logout account' })
   @AuthRequired()
   async logout(@AuthCurrentUser() user: ICurrentUser) {
     return await this.logoutUseCase.execute(user.id);
-  }
-
-  @Get('profile')
-  @ApiOperation({ summary: 'Get profile account' })
-  @AuthRequired()
-  @ApiResponse({
-    status: 200,
-    description: 'Get profile successfully',
-  })
-  async getProfile(@AuthCurrentUser() user: ICurrentUser) {
-    return await this.getProfileUseCase.execute(user.id);
   }
 }

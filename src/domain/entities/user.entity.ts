@@ -4,10 +4,13 @@ export interface IUserEntity {
   id: string;
   email: string;
   phone?: string;
-  password: string;
   status: EUserStatus;
   role: EUserRole;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
+}
+
+export interface IUserWithPasswordEntity extends IUserEntity {
+  password: string;
 }

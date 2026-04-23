@@ -30,14 +30,14 @@ export class RolesGuard extends BaseUsecase implements CanActivate {
       const request = context.switchToHttp().getRequest();
       const user = request.user;
 
-      if (!user || !user.roles) {
+      if (!user || !user.role) {
         throw new HttpException(
           ERROR_CODES.ROLE_UNABLE_TO_DETERMINE,
           HttpStatus.FORBIDDEN,
         );
       }
 
-      const hasRole = roles.includes(user.roles);
+      const hasRole = roles.includes(user.role);
 
       if (!hasRole) {
         throw new HttpException(

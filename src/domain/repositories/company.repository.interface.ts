@@ -1,9 +1,10 @@
 import { ICompanyEntity } from '../entities/company.entity';
+import { IBaseRepository } from './base.repository.interface';
 
-export interface ICompanyRepository {
+export interface ICompanyRepository extends IBaseRepository<ICompanyEntity> {
+  findById(id: string): Promise<ICompanyEntity | null>;
   findByUserId(userId: string): Promise<ICompanyEntity | null>;
-  create(company: Partial<ICompanyEntity>): Promise<ICompanyEntity>;
-  update(
+  updateWithUserId(
     userId: string,
     data: Partial<ICompanyEntity>,
   ): Promise<ICompanyEntity>;
