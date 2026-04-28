@@ -1,17 +1,19 @@
+import { ICompanyEntity } from 'src/domain/entities/company.entity';
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
-  ManyToMany,
   ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { UserOrmEntity } from './user.orm-entity';
-import { ICompanyEntity } from 'src/domain/entities/company.entity';
 import { CareerCategoryOrmEntity } from './career-category.orm-entity';
 import { JobOrmEntity } from './job.orm-entity';
+import { UserOrmEntity } from './user.orm-entity';
 
 @Entity({ name: 'companies' })
 export class CompanyOrmEntity implements ICompanyEntity {
@@ -47,14 +49,14 @@ export class CompanyOrmEntity implements ICompanyEntity {
   @Column({ name: 'website_url', type: 'varchar', length: 255, nullable: true })
   websiteUrl?: string;
 
-  @Column({
+  @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
-  @Column({
+  @UpdateDateColumn({
     name: 'updated_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
@@ -62,7 +64,11 @@ export class CompanyOrmEntity implements ICompanyEntity {
   })
   updatedAt: Date;
 
-  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  @DeleteDateColumn({
+    name: 'deleted_at',
+    type: 'timestamp',
+    nullable: true,
+  })
   deletedAt?: Date;
 
   @ManyToOne(() => CareerCategoryOrmEntity, (career) => career.company)

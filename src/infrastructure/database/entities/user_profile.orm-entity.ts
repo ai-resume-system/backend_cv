@@ -1,9 +1,12 @@
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { UserOrmEntity } from './user.orm-entity';
 import { IUserProfileEntity } from 'src/domain/entities/user_profile.entity';
@@ -25,14 +28,14 @@ export class UserProfileOrmEntity implements IUserProfileEntity {
   @Column({ name: 'bio', type: 'text', nullable: true })
   bio?: string;
 
-  @Column({
+  @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
-  @Column({
+  @UpdateDateColumn({
     name: 'updated_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
@@ -40,7 +43,11 @@ export class UserProfileOrmEntity implements IUserProfileEntity {
   })
   updatedAt: Date;
 
-  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  @DeleteDateColumn({
+    name: 'deleted_at',
+    type: 'timestamp',
+    nullable: true,
+  })
   deletedAt?: Date;
 
   @OneToOne(() => UserOrmEntity, (user) => user.userProfile)

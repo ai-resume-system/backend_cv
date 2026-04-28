@@ -3,22 +3,25 @@ import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 
-export class RequestGetCareerCategoriesQueryDto extends RequestPaginationDto {
-  @ApiPropertyOptional()
+export class RequestGetCareerCategoriesDto extends RequestPaginationDto {
+  @ApiPropertyOptional({ description: 'Tìm kiếm theo từ khóa' })
   @IsString()
+  @IsOptional()
   q?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({ description: 'Cột để sort', example: 'createdAt' })
   @IsString()
   @IsOptional()
   sortBy?: string;
 
-  @IsEnumFieldOptional({ ASC: 'asc', DESC: 'desc' } as const)
-  sortOrder?: 'asc' | 'desc';
+  @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'DESC' })
+  @IsEnum(['ASC', 'DESC'])
+  @IsOptional()
+  sortOrder?: 'ASC' | 'DESC';
 
-  @IsStringFieldOptional({
-    description: 'Filter by id',
-  })
+  @ApiPropertyOptional({ description: 'Lọc theo ID' })
+  @IsString()
+  @IsOptional()
   id?: string;
 }
 

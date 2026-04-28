@@ -11,7 +11,7 @@ export interface IApplicationEntity {
   scheduleTime?: Date;
   scheduleLocation?: string;
   scheduleLink?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }

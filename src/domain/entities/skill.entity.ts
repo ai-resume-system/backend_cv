@@ -3,7 +3,7 @@ export interface ISkillEntity {
   careerCategoriesId?: string;
   parentId?: string;
   name: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }

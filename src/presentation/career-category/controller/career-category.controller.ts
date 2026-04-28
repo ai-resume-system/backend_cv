@@ -19,9 +19,13 @@ import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import {
   RequestCreateCareerCategoryDto,
+  RequestGetCareerCategoriesDto,
   RequestUpdateCareerCategoryDto,
 } from '../dtos/req.career-category.dto';
-import { ResponseApiCareerCategoryDto, ResponseListApiCareerCategoryDto } from '../dtos/res.career-category.dto';
+import {
+  ResponseApiCareerCategoryDto,
+  ResponseListApiCareerCategoryDto,
+} from '../dtos/res.career-category.dto';
 
 @Controller({ path: 'career-categories', version: '1' })
 @ApiTags('Career Categories')
@@ -42,8 +46,11 @@ export class CareerCategoryController extends BaseController {
     description: 'Get all career categories successfully',
     type: ResponseListApiCareerCategoryDto,
   })
-  async getAllCareerCategories(@Query query: ): Promise<ResponseListApiCareerCategoryDto> {
-    return this.getAllCareerCategoriesUseCase.execute();
+  async getAllCareerCategories(
+    @Query() query: RequestGetCareerCategoriesDto,
+  ): Promise<ResponseListApiCareerCategoryDto> {
+    const result = await this.getAllCareerCategoriesUseCase.execute(query);
+    return result;
   }
 
   @Post()
@@ -52,10 +59,13 @@ export class CareerCategoryController extends BaseController {
   @ApiResponse({
     status: 201,
     description: 'Career category created successfully',
-        type: ResponseApiCareerCategoryDto,
+    type: ResponseApiCareerCategoryDto,
   })
-  async createCareerCategory(@Body() dto: RequestCreateCareerCategoryDto): Promise<ResponseApiCareerCategoryDto>   {
-    return this.createCareerCategoryUseCase.execute(dto);
+  async createCareerCategory(
+    @Body() dto: RequestCreateCareerCategoryDto,
+  ): Promise<ResponseApiCareerCategoryDto> {
+    const result = await this.createCareerCategoryUseCase.execute(dto);
+    return { data: result as unknown as ResponseApiCareerCategoryDto['data'] };
   }
 
   @Patch(':id')
@@ -64,12 +74,14 @@ export class CareerCategoryController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Career category updated successfully',
+    type: ResponseApiCareerCategoryDto,
   })
   async updateCareerCategory(
     @Param('id') id: string,
     @Body() dto: RequestUpdateCareerCategoryDto,
-  ) {
-    return this.updateCareerCategoryUseCase.execute(id, dto);
+  ): Promise<ResponseApiCareerCategoryDto> {
+    const result = await this.updateCareerCategoryUseCase.execute(id, dto);
+    return { data: result as unknown as ResponseApiCareerCategoryDto['data'] };
   }
 
   @Delete(':id')
@@ -79,7 +91,10 @@ export class CareerCategoryController extends BaseController {
     status: 200,
     description: 'Career category deleted successfully',
   })
-  async deleteCareerCategory(@Param('id') id: string) {
-    return this.deleteCareerCategoryUseCase.execute(id);
+  async deleteCareerCategory(
+    @Param('id') id: string,
+  ): Promise<{ message: string }> {
+    await this.deleteCareerCategoryUseCase.execute(id);
+    return { message: 'Career category deleted successfully' };
   }
 }

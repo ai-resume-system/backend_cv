@@ -18,14 +18,19 @@ export class GetAllJobsUseCase extends BaseUsecase {
 
   async execute(
     dto: IGetJobsDto,
-  ): Promise<{ data: IJobResponseDto[]; total: number }> {
+  ): Promise<any> {
     return this.runSafe('[Get Jobs]:', async () => {
       const page = dto.page || 1;
       const limit = dto.limit || 10;
-      const result = await this.jobRepository.findAll(page, limit);
+      const result = await this.jobRepository.find({ pagination: { page, limit } });
       return {
         data: result.data as IJobResponseDto[],
-        total: result.total,
+        pagination: {
+          totalItems: result.total,
+          totalPages: Math.ceil(result.total / limit),
+          page,
+          limit,
+        },
       };
     });
   }

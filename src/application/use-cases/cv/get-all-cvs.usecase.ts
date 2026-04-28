@@ -12,11 +12,16 @@ export class GetAllCVsUseCase extends BaseUsecase {
   async execute(
     page: number = 1,
     limit: number = 10,
-  ): Promise<{ data: ICVResponseDto[]; total: number }> {
-    const result = await this.cvRepository.findAll(page, limit);
+  ): Promise<any> {
+    const result = await this.cvRepository.find({ pagination: { page, limit } });
     return {
       data: result.data as ICVResponseDto[],
-      total: result.total,
+      pagination: {
+        totalItems: result.total,
+        totalPages: Math.ceil(result.total / limit),
+        page,
+        limit,
+      },
     };
   }
 }

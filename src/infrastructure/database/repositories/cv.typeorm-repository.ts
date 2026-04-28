@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
+import { IFindOptions } from 'src/domain/repositories/base.repository.interface';
 import type { ICVEntity } from 'src/domain/entities/cv.entity';
 import { CVOrmEntity } from '../entities/cv.orm-entity';
 
@@ -26,10 +27,11 @@ export class CVTypeormRepository implements ICVRepository {
     return orms.map((orm) => this.toDomain(orm));
   }
 
-  async findAll(
-    page: number,
-    limit: number,
+  async find(
+    options?: IFindOptions,
   ): Promise<{ data: ICVEntity[]; total: number }> {
+    const page = options?.pagination?.page || 1;
+    const limit = options?.pagination?.limit || 10;
     const [data, total] = await this.ormRepository.findAndCount({
       where: { deletedAt: IsNull() },
       skip: (page - 1) * limit,

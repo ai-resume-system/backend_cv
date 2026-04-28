@@ -12,7 +12,7 @@ export interface ICVEntity {
   isDefault?: boolean;
   summary?: string;
   status: ECVStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }

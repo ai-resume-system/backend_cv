@@ -3,7 +3,7 @@ export interface IJobSkillEntity {
   jobId: string;
   skillId: string;
   weight?: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }

@@ -4,7 +4,7 @@ export interface IJobMatchEntity {
   jobId: string;
   matchScore: number;
   matchedSkills?: Record<string, unknown>;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }

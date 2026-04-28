@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import { IFindOptions } from 'src/domain/repositories/base.repository.interface';
 import type { IJobEntity } from 'src/domain/entities/job.entity';
 import { JobOrmEntity } from '../entities/job.orm-entity';
 
@@ -26,10 +27,11 @@ export class JobTypeormRepository implements IJobRepository {
     return orms.map((orm) => this.toDomain(orm));
   }
 
-  async findAll(
-    page: number,
-    limit: number,
+  async find(
+    options?: IFindOptions,
   ): Promise<{ data: IJobEntity[]; total: number }> {
+    const page = options?.pagination?.page || 1;
+    const limit = options?.pagination?.limit || 10;
     const [data, total] = await this.ormRepository.findAndCount({
       where: { deletedAt: IsNull() },
       skip: (page - 1) * limit,

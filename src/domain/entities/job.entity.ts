@@ -11,9 +11,10 @@ export interface IJobEntity {
   salaryMax?: number;
   experienceYears?: number;
   jobType: EJobType;
+  expiredAt?: Date;
   rejectReason?: string;
   status: EJobStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }

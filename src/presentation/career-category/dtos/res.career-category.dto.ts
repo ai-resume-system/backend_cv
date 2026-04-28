@@ -1,5 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
 import { ApiResponseDto } from 'src/common/dto/response.dto';
 import { ICareerCategoryEntity } from 'src/domain/entities/career-category.entity';
@@ -29,13 +28,13 @@ export class ResponseCareerCategoryDto implements ICareerCategoryEntity {
   @ApiProperty()
   updatedAt: Date;
 
-  @ApiProperty()
-  deletedAt: Date;
+  @ApiPropertyOptional()
+  deletedAt?: Date;
 }
 
-export class ResponseApiCareerCategoryDto {
+export class ResponseApiCareerCategoryDto extends ApiResponseDto<ResponseCareerCategoryDto> {
   @ApiProperty({ type: ResponseCareerCategoryDto })
-  data: ResponseCareerCategoryDto;
+  declare data: ResponseCareerCategoryDto;
 }
 
 export class ResponseListApiCareerCategoryDto extends ApiResponseDto<

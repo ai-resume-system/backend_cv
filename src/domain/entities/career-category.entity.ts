@@ -6,7 +6,7 @@ export interface ICareerCategoryEntity {
   slug: string;
   description?: string;
   status: ECareerCategoriesStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }

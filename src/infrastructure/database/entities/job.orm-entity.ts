@@ -26,13 +26,13 @@ export class JobOrmEntity implements IJobEntity {
   @Column({ name: 'career_category_id', type: 'uuid', nullable: true })
   careerCategoryId?: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ name: 'title', type: 'varchar', length: 255 })
   title: string;
 
-  @Column({ type: 'text', nullable: true })
-  description: string;
+  @Column({ name: 'description', type: 'text', nullable: true })
+  description?: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ name: 'location', type: 'varchar', length: 255, nullable: true })
   location?: string;
 
   @Column({ name: 'salary_min', type: 'int', nullable: true })
@@ -52,22 +52,41 @@ export class JobOrmEntity implements IJobEntity {
   })
   jobType: EJobType;
 
+  @Column({ name: 'expired_at', type: 'timestamptz', nullable: true })
+  expiredAt?: Date;
+
+  @Column({ name: 'reject_reason', type: 'text', nullable: true })
+  rejectReason?: string;
+
   @Column({
+    name: 'status',
     type: 'enum',
     enum: EJobStatus,
     default: EJobStatus.PENDING,
   })
   status: EJobStatus;
 
-  @Index()
-  @DeleteDateColumn()
-  deletedAt?: Date;
-
-  @CreateDateColumn()
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
+
+  @DeleteDateColumn({
+    name: 'deleted_at',
+    type: 'timestamp',
+    nullable: true,
+  })
+  deletedAt?: Date;
 
   @ManyToOne(() => CompanyOrmEntity, (company) => company.jobs, {
     onDelete: 'CASCADE',

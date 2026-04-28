@@ -1,6 +1,14 @@
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
 import { ICareerCategoryEntity } from 'src/domain/entities/career-category.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { CompanyOrmEntity } from './company.orm-entity';
 
 @Entity({ name: 'career_categories' })
@@ -25,14 +33,14 @@ export class CareerCategoryOrmEntity implements ICareerCategoryEntity {
   })
   status: ECareerCategoriesStatus;
 
-  @Column({
+  @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
-  @Column({
+  @UpdateDateColumn({
     name: 'updated_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
@@ -40,7 +48,11 @@ export class CareerCategoryOrmEntity implements ICareerCategoryEntity {
   })
   updatedAt: Date;
 
-  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  @DeleteDateColumn({
+    name: 'deleted_at',
+    type: 'timestamp',
+    nullable: true,
+  })
   deletedAt?: Date;
 
   @OneToMany(() => CompanyOrmEntity, (company) => company.careerCategories)

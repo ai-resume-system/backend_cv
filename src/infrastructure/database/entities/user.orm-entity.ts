@@ -2,10 +2,13 @@ import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { IUserEntity } from 'src/domain/entities/user.entity';
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { CompanyOrmEntity } from './company.orm-entity';
 import { CVOrmEntity } from './cv.orm-entity';
@@ -41,14 +44,14 @@ export class UserOrmEntity implements IUserEntity {
   })
   role: EUserRole;
 
-  @Column({
+  @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
-  @Column({
+  @UpdateDateColumn({
     name: 'updated_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
@@ -56,7 +59,11 @@ export class UserOrmEntity implements IUserEntity {
   })
   updatedAt: Date;
 
-  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  @DeleteDateColumn({
+    name: 'deleted_at',
+    type: 'timestamp',
+    nullable: true,
+  })
   deletedAt?: Date;
 
   @OneToOne(() => UserProfileOrmEntity, (profile) => profile.userProfile)

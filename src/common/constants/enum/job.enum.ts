@@ -3,6 +3,7 @@ export enum EJobStatus {
   OPEN = 'open',
   CLOSED = 'closed',
   REJECTED = 'rejected',
+  EXPIRED = 'expired',
 }
 
 export enum EJobType {

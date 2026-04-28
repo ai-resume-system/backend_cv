@@ -4,7 +4,7 @@ export interface ICVParsedDataEntity {
   rawText?: string;
   parsedJson?: Record<string, unknown>;
   score: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }

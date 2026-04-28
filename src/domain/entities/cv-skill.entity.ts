@@ -3,7 +3,7 @@ export interface ICVSkillEntity {
   cvId: string;
   skillId: string;
   confidenceScore?: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }

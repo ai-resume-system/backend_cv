@@ -4,7 +4,7 @@ export interface IUserProfileEntity {
   fullName?: string;
   avatarUrl?: string;
   bio?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt?: Date;
 }
