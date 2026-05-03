@@ -59,7 +59,6 @@ export class AuthenticationGuard extends BaseUsecase implements CanActivate {
 
       request.user = {
         id: decodedToken.id,
-        email: decodedToken.email,
         role: decodedToken.role,
       };
       return true;

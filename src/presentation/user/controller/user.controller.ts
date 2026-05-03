@@ -8,8 +8,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { GetAllUsersUseCase } from 'src/application/use-cases/user/get-all-users.usecase';
-import { GetUserByIdUseCase } from 'src/application/use-cases/user/get-user-by-id.usecase';
+import { GetUserByIdQuery } from 'src/application/queries/user/get-user-by-id.query';
+import { GetUsersQuery } from 'src/application/queries/user/get-users.query';
 import { UpdateUserStatusUseCase } from 'src/application/use-cases/user/update-user-status.usecase';
 import { BaseController } from 'src/common/base/base.controller';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
@@ -27,8 +27,8 @@ import {
 @ApiTags('Users')
 export class UserController extends BaseController {
   constructor(
-    private readonly getAllUsersUseCase: GetAllUsersUseCase,
-    private readonly getUserByIdUseCase: GetUserByIdUseCase,
+    private readonly getUsersQuery: GetUsersQuery,
+    private readonly getUserByIdQuery: GetUserByIdQuery,
     private readonly updateUserStatusUseCase: UpdateUserStatusUseCase,
   ) {
     super(new Logger(UserController.name));
@@ -45,7 +45,7 @@ export class UserController extends BaseController {
   async getAllUsers(
     @Query() dto: RequestGetAllUsersDto,
   ): Promise<ResponseApiArrayUserDto> {
-    return await this.getAllUsersUseCase.execute(dto);
+    return await this.getUsersQuery.execute(dto);
   }
 
   @Get(':id')
@@ -57,7 +57,7 @@ export class UserController extends BaseController {
     type: ResponseApiUserDto,
   })
   async getUserById(@Param('id') id: string) {
-    return await this.getUserByIdUseCase.execute(id);
+    return await this.getUserByIdQuery.execute(id);
   }
 
   @Patch(':id/status')

@@ -1,50 +1,43 @@
-import { EJobType, EJobStatus } from '../../../common/constants/enum/job.enum';
+import { IApiRequestPagination } from 'src/common/interface/api-request.interface';
+import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+
+export interface IGetJobsDto extends IApiRequestPagination {
+  q?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  location?: string;
+  jobType?: EJobType;
+  companyId?: string;
+  careerCategoryId?: string;
+  status?: EJobStatus;
+}
 
 export interface ICreateJobDto {
   title: string;
-  description: string;
-  requirements?: string;
+  description?: string;
+  shortDescription?: string;
   location?: string;
   salaryMin?: number;
   salaryMax?: number;
+  experienceYears?: number;
   jobType: EJobType;
-  status?: EJobStatus;
   companyId: string;
   careerCategoryId?: string;
+  expiredAt?: Date;
 }
 
 export interface IUpdateJobDto {
   title?: string;
   description?: string;
-  requirements?: string;
   location?: string;
   salaryMin?: number;
   salaryMax?: number;
+  experienceYears?: number;
   jobType?: EJobType;
-  status?: EJobStatus;
   careerCategoryId?: string;
+  expiredAt?: Date;
 }
 
-export interface IGetJobsDto {
-  page?: number;
-  limit?: number;
-  companyId?: string;
-  status?: EJobStatus;
-  careerCategoryId?: string;
-}
-
-export interface IJobResponseDto {
-  id: string;
-  title: string;
-  description: string;
-  requirements?: string;
-  location?: string;
-  salaryMin?: number;
-  salaryMax?: number;
-  jobType: EJobType;
-  status: EJobStatus;
-  companyId: string;
-  careerCategoryId?: string;
-  createdAt: Date;
-  updatedAt: Date;
+export interface IRejectJobDto {
+  rejectReason: string;
 }

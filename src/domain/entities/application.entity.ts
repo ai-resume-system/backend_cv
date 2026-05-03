@@ -8,9 +8,9 @@ export interface IApplicationEntity {
   matchingScore?: number;
   notes?: string;
   status: EApplicationStatus;
-  scheduleTime?: Date;
-  scheduleLocation?: string;
-  scheduleLink?: string;
+  // scheduleTime?: Date;
+  // scheduleLocation?: string;
+  // scheduleLink?: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;

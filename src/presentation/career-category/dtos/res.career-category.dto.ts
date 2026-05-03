@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
-import { ApiResponseDto } from 'src/common/dto/response.dto';
+import { ApiResponseDto, MetaDto } from 'src/common/dto/response.dto';
 import { ICareerCategoryEntity } from 'src/domain/entities/career-category.entity';
 
 export class ResponseCareerCategoryDto implements ICareerCategoryEntity {
@@ -32,7 +32,10 @@ export class ResponseCareerCategoryDto implements ICareerCategoryEntity {
   deletedAt?: Date;
 }
 
-export class ResponseApiCareerCategoryDto extends ApiResponseDto<ResponseCareerCategoryDto> {
+export class ResponseApiCareerCategoryDto {
+  @ApiProperty({ type: MetaDto })
+  meta?: MetaDto;
+
   @ApiProperty({ type: ResponseCareerCategoryDto })
   declare data: ResponseCareerCategoryDto;
 }
@@ -40,6 +43,9 @@ export class ResponseApiCareerCategoryDto extends ApiResponseDto<ResponseCareerC
 export class ResponseListApiCareerCategoryDto extends ApiResponseDto<
   ResponseCareerCategoryDto[]
 > {
+  @ApiProperty({ type: MetaDto })
+  meta?: MetaDto;
+
   @ApiProperty({ type: [ResponseCareerCategoryDto] })
   declare data: ResponseCareerCategoryDto[];
 }

@@ -8,6 +8,7 @@ export interface ICVEntity {
   userId: string;
   title?: string;
   fileUrl?: string;
+  fileExtension?: string;
   processingStatus?: EProcessingStatus;
   isDefault?: boolean;
   summary?: string;

@@ -8,9 +8,9 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { BaseTypeormRepository } from './base.typeorm-repository';
 
 @Injectable()
-export class CareerCategoryTypeormRepository 
+export class CareerCategoryTypeormRepository
   extends BaseTypeormRepository<CareerCategoryOrmEntity, ICareerCategoryEntity>
-  implements ICareerCategoryRepository 
+  implements ICareerCategoryRepository
 {
   constructor(
     @InjectRepository(CareerCategoryOrmEntity)
@@ -19,17 +19,8 @@ export class CareerCategoryTypeormRepository
     super(ormRepository);
   }
 
-  protected toDomain(orm: CareerCategoryOrmEntity): ICareerCategoryEntity {
-    return {
-      id: orm.id,
-      name: orm.name,
-      slug: orm.slug,
-      description: orm.description,
-      status: orm.status,
-      createdAt: orm.createdAt,
-      updatedAt: orm.updatedAt,
-      deletedAt: orm.deletedAt,
-    };
+  protected getSearchableColumns(): string[] {
+    return ['name', 'slug'];
   }
 
   async findByName(name: string): Promise<ICareerCategoryEntity | null> {
@@ -46,25 +37,16 @@ export class CareerCategoryTypeormRepository
     return orm ? this.toDomain(orm) : null;
   }
 
-  async update(
-    id: string,
-    data: Partial<ICareerCategoryEntity>,
-  ): Promise<ICareerCategoryEntity> {
-    await super.update(id, data);
-    const updated = await this.findById(id);
-    if (!updated)
-      throw new NotFoundException(
-        ERROR_CODES.CAREER_CATEGORY_NOT_FOUND.message,
-      );
-    return updated;
-  }
-
-  async delete(id: string): Promise<void> {
-    const exists = await this.findById(id);
-    if (!exists)
-      throw new NotFoundException(
-        ERROR_CODES.CAREER_CATEGORY_NOT_FOUND.message,
-      );
-    await super.delete(id);
+  protected toDomain(orm: CareerCategoryOrmEntity): ICareerCategoryEntity {
+    return {
+      id: orm.id,
+      name: orm.name,
+      slug: orm.slug,
+      description: orm.description,
+      status: orm.status,
+      createdAt: orm.createdAt,
+      updatedAt: orm.updatedAt,
+      deletedAt: orm.deletedAt,
+    };
   }
 }

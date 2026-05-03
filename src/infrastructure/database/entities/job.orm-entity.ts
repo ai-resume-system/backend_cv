@@ -32,6 +32,13 @@ export class JobOrmEntity implements IJobEntity {
   @Column({ name: 'description', type: 'text', nullable: true })
   description?: string;
 
+  @Column({
+    name: 'short_description',
+    type: 'text',
+    nullable: true,
+  })
+  shortDescription?: string;
+
   @Column({ name: 'location', type: 'varchar', length: 255, nullable: true })
   location?: string;
 

@@ -14,7 +14,7 @@ export class DeleteCareerCategoryUseCase extends BaseUsecase {
     super(new Logger(DeleteCareerCategoryUseCase.name));
   }
 
-  async execute(id: string) {
+  async execute(id: string): Promise<{ message: string }> {
     return this.runSafe('[Delete Career Category]:', async () => {
       const existing = await this.careerCategoryRepository.findById(id);
       if (!existing) {

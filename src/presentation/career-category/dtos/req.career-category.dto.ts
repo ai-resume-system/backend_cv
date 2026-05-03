@@ -4,12 +4,12 @@ import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_catego
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 
 export class RequestGetCareerCategoriesDto extends RequestPaginationDto {
-  @ApiPropertyOptional({ description: 'Tìm kiếm theo từ khóa' })
+  @ApiPropertyOptional({ description: 'Search by name, slug' })
   @IsString()
   @IsOptional()
   q?: string;
 
-  @ApiPropertyOptional({ description: 'Cột để sort', example: 'createdAt' })
+  @ApiPropertyOptional({ description: 'Column to sort' })
   @IsString()
   @IsOptional()
   sortBy?: string;
@@ -18,11 +18,6 @@ export class RequestGetCareerCategoriesDto extends RequestPaginationDto {
   @IsEnum(['ASC', 'DESC'])
   @IsOptional()
   sortOrder?: 'ASC' | 'DESC';
-
-  @ApiPropertyOptional({ description: 'Lọc theo ID' })
-  @IsString()
-  @IsOptional()
-  id?: string;
 }
 
 export class RequestCreateCareerCategoryDto {

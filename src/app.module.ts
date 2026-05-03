@@ -6,10 +6,14 @@ import { JwtAuthModule } from './common/guards/jwt-auth.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { MailModule } from './infrastructure/mail/mail.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
-import { AuthModule } from './modules/auth.module';
-import { UsersModule } from './modules/users.module';
-import { AccountModule } from './modules/account.module';
-import { CareerCategoriesModule } from './modules/career-categories.module';
+
+import { QueueModule } from './infrastructure/queue/queue.module';
+import { AuthModule } from './presentation/auth/auth.module';
+import { AccountModule } from './presentation/account/account.module';
+import { CareerCategoriesModule } from './presentation/career-category/career-categories.module';
+import { UsersModule } from './presentation/user/users.module';
+import { CVModule } from './presentation/cv/cv.module';
+import { JobsModule } from './presentation/job/jobs.module';
 
 @Module({
   imports: [
@@ -19,10 +23,13 @@ import { CareerCategoriesModule } from './modules/career-categories.module';
     RedisModule,
     MailModule,
     JwtAuthModule,
+    QueueModule,
     AuthModule,
     AccountModule,
     CareerCategoriesModule,
     UsersModule,
+    CVModule,
+    JobsModule,
   ],
   controllers: [],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

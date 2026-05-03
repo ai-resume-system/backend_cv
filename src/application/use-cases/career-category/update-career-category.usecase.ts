@@ -4,6 +4,7 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import { IRequestUpdateCareerCategoryDto } from '../../dtos/career-category/req.career-category.dto';
+import { ResponseApiCareerCategoryDto } from 'src/presentation/career-category/dtos/res.career-category.dto';
 
 @Injectable()
 export class UpdateCareerCategoryUseCase extends BaseUsecase {
@@ -14,7 +15,10 @@ export class UpdateCareerCategoryUseCase extends BaseUsecase {
     super(new Logger(UpdateCareerCategoryUseCase.name));
   }
 
-  async execute(id: string, dto: IRequestUpdateCareerCategoryDto) {
+  async execute(
+    id: string,
+    dto: IRequestUpdateCareerCategoryDto,
+  ): Promise<ResponseApiCareerCategoryDto> {
     return this.runSafe('[Update Career Category]:', async () => {
       const existing = await this.careerCategoryRepository.findById(id);
       if (!existing) {
@@ -37,7 +41,7 @@ export class UpdateCareerCategoryUseCase extends BaseUsecase {
       }
 
       const updated = await this.careerCategoryRepository.update(id, dto);
-      return updated;
+      return { data: updated };
     });
   }
 }

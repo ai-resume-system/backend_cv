@@ -15,7 +15,6 @@ export interface ISortOptions {
 
 export interface IFilterOptions {
   q?: string;
-  id?: string | string[];
   [key: string]: any;
 }
 
@@ -31,4 +30,5 @@ export interface IBaseRepository<T> {
   create(data: Partial<T>): Promise<T>;
   update(id: string, data: Partial<T>): Promise<T>;
   delete(id: string): Promise<void>;
+  softDelete(id: string): Promise<void>;
 }

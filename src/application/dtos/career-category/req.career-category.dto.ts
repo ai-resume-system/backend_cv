@@ -5,7 +5,6 @@ export interface IRequestGetCareerCategoriesDto extends IApiRequestPagination {
   q?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
-  id?: string;
 }
 
 export interface IRequestCreateCareerCategoryDto {

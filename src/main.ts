@@ -12,6 +12,7 @@ import { GlobalExceptionFilter } from './common/exceptions/global-exception.filt
 import { ERROR_CODES } from './common/constants/error-codes.constants';
 import { AppException } from './common/exceptions/app.exception';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 // Hàm cấu hình global prefix (thêm /api vào đầu mỗi route)
 function setGlobalPrefix(app: INestApplication<any>, logger: Logger) {
@@ -68,7 +69,10 @@ function setSwagger(app: INestApplication<any>, logger: Logger) {
 // Cấu hình global interceptors - giúp log thời gian request và response
 function setGlobalInterceptors(app: INestApplication<any>, logger: Logger) {
   logger.debug(`[setGlobalInterceptors] Start set global interceptors ...`);
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new TransformInterceptor(),
+  );
   logger.debug(`[setGlobalInterceptors] Finish set global interceptors.`);
 }
 
@@ -79,7 +83,7 @@ function setGlobalPipes(app: INestApplication<any>, logger: Logger) {
     new ValidationPipe({
       transform: true,
       whitelist: true,
-      forbidNonWhitelisted: true,
+      // forbidNonWhitelisted: true, //reject toàn bộ fields không được khai báo trong DTO, kể cả khi đã thêm vào
       errorHttpStatusCode: 422,
       exceptionFactory: (errors) => {
         const firstError = errors[0];

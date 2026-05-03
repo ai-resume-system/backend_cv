@@ -22,6 +22,7 @@ export class BaseUsecase {
         throw error;
       }
       this.logger.error(`[${context}]:`, error);
+      // Cuối cùng mới trả về lỗi 500 để bảo mật
       throw new AppException(fallbackError);
     }
   }

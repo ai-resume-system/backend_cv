@@ -49,7 +49,9 @@ export class AuthController extends BaseController {
     status: 201,
     description: 'Register successfully',
   })
-  async registerJobSeeker(@Body() dto: RequestRegisterJobSeekerDto) {
+  async registerJobSeeker(
+    @Body() dto: RequestRegisterJobSeekerDto,
+  ): Promise<{ message: string }> {
     return await this.registerUseCase.execute({
       ...dto,
       role: EUserRole.JOB_SEEKER,
@@ -62,7 +64,9 @@ export class AuthController extends BaseController {
     status: 201,
     description: 'Register successfully',
   })
-  async registerRecruiter(@Body() dto: RequestRegisterRecruiterDto) {
+  async registerRecruiter(
+    @Body() dto: RequestRegisterRecruiterDto,
+  ): Promise<{ message: string }> {
     return await this.registerUseCase.execute({
       ...dto,
       role: EUserRole.RECRUITER,
@@ -75,7 +79,10 @@ export class AuthController extends BaseController {
     status: 200,
     description: 'OTP sent successfully',
   })
-  async sendOtp(@Body() dto: RequestSendOtpDto, @Req() req: Request) {
+  async sendOtp(
+    @Body() dto: RequestSendOtpDto,
+    @Req() req: Request,
+  ): Promise<{ message: string }> {
     const ip =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
@@ -89,7 +96,9 @@ export class AuthController extends BaseController {
     status: 200,
     description: 'OTP verified successfully',
   })
-  async verifyOtp(@Body() dto: RequestVerifyOtpDto) {
+  async verifyOtp(
+    @Body() dto: RequestVerifyOtpDto,
+  ): Promise<{ signKey?: string; message: string }> {
     return await this.verifyOtpUseCase.execute(dto);
   }
 
@@ -100,11 +109,15 @@ export class AuthController extends BaseController {
     description: 'Login successfully',
     type: ResponseAuthDto,
   })
-  async login(@Body() dto: RequestLoginDto, @Req() req: Request) {
+  async login(
+    @Body() dto: RequestLoginDto,
+    @Req() req: Request,
+  ): Promise<IResponseAuthDto> {
     const ip =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
-    return await this.loginUseCase.execute(dto, ip!);
+    const result = await this.loginUseCase.execute(dto, ip!);
+    return result;
   }
 
   @Post('refresh-token')
@@ -117,20 +130,25 @@ export class AuthController extends BaseController {
   async refreshToken(
     @Body() dto: RequestRefreshTokenDto,
   ): Promise<IResponseAuthDto> {
-    return await this.refreshTokenUseCase.execute(dto);
+    const result = await this.refreshTokenUseCase.execute(dto);
+    return result;
   }
 
   @Post('forgot-password')
   @ApiOperation({ summary: 'Reset password with email OTP signKey' })
   @ApiResponse({ status: 201, description: 'Password reset successfully' })
-  async forgotPassword(@Body() dto: RequestForgotPasswordDto) {
+  async forgotPassword(
+    @Body() dto: RequestForgotPasswordDto,
+  ): Promise<{ message: string }> {
     return this.forgotPasswordUseCase.execute(dto);
   }
 
   @Post('logout')
   @ApiOperation({ summary: 'Logout account' })
   @AuthRequired()
-  async logout(@AuthCurrentUser() user: ICurrentUser) {
-    return await this.logoutUseCase.execute(user.id);
+  async logout(
+    @AuthCurrentUser() user: ICurrentUser,
+  ): Promise<{ message: string }> {
+    return await this.logoutUseCase.execute({ userId: user.id });
   }
 }

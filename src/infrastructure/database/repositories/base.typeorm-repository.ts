@@ -11,13 +11,12 @@ export abstract class BaseTypeormRepository<
 > implements IBaseRepository<TDomainEntity> {
   constructor(protected readonly ormRepository: Repository<TOrmEntity>) {}
 
-  async findById(id: string): Promise<TDomainEntity | null> {
-    const orm = await this.ormRepository.findOne({ where: { id } as any });
-    return orm ? this.toDomain(orm) : null;
+  protected getSearchableColumns(): string[] {
+    return [];
   }
 
   async find(options?: IFindOptions): Promise<IPaginatedResult<TDomainEntity>> {
-    const { q, id, ...otherFilters } = options?.filter || {};
+    const { q, ...otherFilters } = options?.filter || {};
     const { page = 1, limit = 10 } = options?.pagination || {};
     const { sortBy = 'createdAt', sortOrder = 'DESC' } = options?.sort || {};
 
@@ -31,10 +30,6 @@ export abstract class BaseTypeormRepository<
 
     if (isUseQueryFunction) {
       const conditions: any = { deletedAt: IsNull() };
-      
-      if (id) {
-        conditions.id = Array.isArray(id) ? In(id) : id;
-      }
 
       // Xử lý các filter động khác
       Object.entries(otherFilters).forEach(([key, value]) => {
@@ -53,33 +48,35 @@ export abstract class BaseTypeormRepository<
       const queryBuilder = this.ormRepository.createQueryBuilder('entity');
       queryBuilder.where('entity.deletedAt IS NULL');
 
-      if (id) {
-        if (Array.isArray(id)) {
-          queryBuilder.andWhere('entity.id IN (:...id)', { id });
-        } else {
-          queryBuilder.andWhere('entity.id = :id', { id });
-        }
-      }
-
       Object.entries(otherFilters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           if (Array.isArray(value)) {
-            queryBuilder.andWhere(`entity.${key} IN (:...${key})`, { [key]: value });
+            queryBuilder.andWhere(`entity.${key} IN (:...${key})`, {
+              [key]: value,
+            });
           } else {
             queryBuilder.andWhere(`entity.${key} = :${key}`, { [key]: value });
           }
         }
       });
 
-      // q: Override method trong repo con nếu muốn search các field cụ thể, 
-      // ở Base chỉ ví dụ cơ bản search bằng id nếu q truyền vào.
       if (q) {
-         queryBuilder.andWhere('(entity.id = :q)', { q });
+        const searchableColumns = this.getSearchableColumns();
+
+        if (searchableColumns.length) {
+          const searchConditions = searchableColumns
+            .map((column) => `CAST(entity.${column} AS text) ILIKE :q`)
+            .join(' OR ');
+
+          queryBuilder.andWhere(`(${searchConditions})`, {
+            q: `%${q}%`,
+          });
+        }
       }
 
       queryBuilder.orderBy(`entity.${sortBy}`, sortOrder as 'ASC' | 'DESC');
       queryBuilder.skip(skip).take(take);
-      
+
       [data, totalItems] = await queryBuilder.getManyAndCount();
     }
 
@@ -87,6 +84,11 @@ export abstract class BaseTypeormRepository<
       data: data.map((d) => this.toDomain(d)),
       total: totalItems,
     };
+  }
+
+  async findById(id: string): Promise<TDomainEntity | null> {
+    const orm = await this.ormRepository.findOne({ where: { id } as any });
+    return orm ? this.toDomain(orm) : null;
   }
 
   async create(data: Partial<TDomainEntity>): Promise<TDomainEntity> {
@@ -105,6 +107,10 @@ export abstract class BaseTypeormRepository<
 
   async delete(id: string): Promise<void> {
     await this.ormRepository.delete(id);
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.ormRepository.softDelete(id);
   }
 
   protected abstract toDomain(orm: TOrmEntity): TDomainEntity;

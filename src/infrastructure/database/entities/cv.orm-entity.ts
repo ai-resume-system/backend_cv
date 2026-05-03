@@ -1,23 +1,24 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  DeleteDateColumn,
-  Index,
-} from 'typeorm';
-import {
   ECVStatus,
   EProcessingStatus,
 } from 'src/common/constants/enum/cv.enum';
-import { UserOrmEntity } from './user.orm-entity';
-import { CareerCategoryOrmEntity } from './career-category.orm-entity';
 import { ICVEntity } from 'src/domain/entities/cv.entity';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { UserOrmEntity } from './user.orm-entity';
 
 @Entity('cvs')
 @Index(['deletedAt', 'status'])
+@Index(['userId', 'isDefault'])
+@Index(['userId', 'createdAt'])
 export class CVOrmEntity implements ICVEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -31,11 +32,13 @@ export class CVOrmEntity implements ICVEntity {
   @Column({ name: 'file_url', type: 'text', nullable: true })
   fileUrl?: string;
 
+  @Column({ name: 'file_extension', type: 'varchar', length: 20, nullable: true })
+  fileExtension?: string;
+
   @Column({
     name: 'processing_status',
     type: 'enum',
     enum: EProcessingStatus,
-    default: EProcessingStatus.PENDING,
   })
   processingStatus?: EProcessingStatus;
 

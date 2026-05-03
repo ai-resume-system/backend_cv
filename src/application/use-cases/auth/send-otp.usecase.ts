@@ -1,25 +1,26 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { randomInt } from 'crypto';
+import { createHash } from 'crypto';
 import { ISendOtpDto } from 'src/application/dtos/auth/req.auth.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
 import { EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
-import {
-  OTP_TTL_10M,
-  OTP_TTL_1M,
-  OTP_TTL_30S,
-} from 'src/common/constants/ttl.constants';
+import { TTL_10M, TTL_1M, TTL_30S } from 'src/common/constants/ttl.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { MailService } from 'src/infrastructure/mail/mail.service';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.repository.interface';
+import { hashOtp } from 'src/common/utils/hash.utils';
 
 @Injectable()
 export class SendOtpUseCase extends BaseUsecase {
   constructor(
     @Inject('IUserRepository')
     private readonly userRepository: IUserRepository,
+    @Inject('IOtpCodeRepository')
+    private readonly otpCodeRepository: IOtpCodeRepository,
     private readonly redis: RedisAdapter,
     private readonly mailService: MailService,
   ) {
@@ -46,34 +47,45 @@ export class SendOtpUseCase extends BaseUsecase {
   }
 
   private async checkRateLimit(email: string, ip: string, type: EOtpType) {
-    const cooldownKey =
-      type === EOtpType.REGISTER
-        ? `cooldown:register:${email}`
-        : `cooldown:forgot:${email}`;
+    try {
+      const isCooldown = await this.redis.isCooldown(email);
 
-    const [isCooldown, ipCount, emailCount] = await Promise.all([
-      this.redis.isCooldown(cooldownKey),
-      this.redis.getIpRequestCount(ip),
-      this.redis.getResendCount(email),
-    ]);
+      if (isCooldown) {
+        throw new AppException(ERROR_CODES.AUTH_OTP_COOLDOWN);
+      }
 
-    if (isCooldown) {
-      throw new AppException(ERROR_CODES.AUTH_OTP_COOLDOWN);
+      const emailCount = await this.redis.getResendCount(email);
+      if (emailCount >= 5) {
+        await this.redis.lockOtp(email, TTL_10M * 3);
+        throw new AppException(ERROR_CODES.AUTH_OTP_RESEND_LIMIT_EXCEEDED);
+      }
+
+      const ipCount = await this.redis.getIpRequestCount(ip);
+      if (ipCount > 20) {
+        throw new AppException(ERROR_CODES.AUTH_OTP_RESEND_LIMIT_EXCEEDED);
+      }
+
+      await Promise.all([
+        this.redis.increaseIpRequest(ip),
+        this.redis.increaseResendCount(email),
+      ]);
+    } catch (error) {
+      if (error instanceof AppException) {
+        throw error;
+      }
+      const since = new Date(Date.now() - 60 * 60 * 1000);
+      const resendCount = await this.otpCodeRepository.countRecentByEmailType(
+        email,
+        type,
+        since,
+      );
+      if (resendCount >= 5) {
+        throw new AppException(ERROR_CODES.AUTH_OTP_RESEND_LIMIT_EXCEEDED);
+      }
+      this.logger.warn(
+        `Redis OTP rate-limit unavailable, using DB fallback for ${email}: ${error.message}`,
+      );
     }
-
-    if (emailCount >= 5) {
-      await this.redis.lock(email, OTP_TTL_10M * 3);
-      throw new AppException(ERROR_CODES.AUTH_OTP_RESEND_LIMIT_EXCEEDED);
-    }
-
-    if (ipCount > 20) {
-      throw new AppException(ERROR_CODES.AUTH_OTP_RESEND_LIMIT_EXCEEDED);
-    }
-
-    await Promise.all([
-      this.redis.increaseIpRequest(ip),
-      this.redis.increaseResendCount(email),
-    ]);
   }
 
   async execute(dto: ISendOtpDto, ip: string): Promise<{ message: string }> {
@@ -87,25 +99,47 @@ export class SendOtpUseCase extends BaseUsecase {
 
         this.validateUserForOtp(user, dto.type);
 
-        if (await this.redis.isLocked(dto.email)) {
-          throw new AppException(ERROR_CODES.AUTH_OTP_LOCKED);
+        try {
+          const isLocked = await this.redis.isOtpLocked(dto.email);
+          if (isLocked) {
+            throw new AppException(ERROR_CODES.AUTH_OTP_LOCKED);
+          }
+        } catch (error) {
+          if (error instanceof AppException) {
+            throw error;
+          }
+          this.logger.warn(
+            `Redis OTP lock unavailable for ${dto.email}: ${error.message}`,
+          );
         }
 
         await this.checkRateLimit(dto.email, ip, dto.type);
 
-        await this.redis.clearOtpFlow(dto.email);
-
         const otp = randomInt(100000, 1000000).toString();
-        await this.redis.setOtp(dto.email, otp, OTP_TTL_10M);
-        await this.redis.setCooldown(
-          dto.email,
-          dto.type === EOtpType.REGISTER ? OTP_TTL_30S : OTP_TTL_1M,
-        );
+        const codeHash = hashOtp(otp, dto.email);
+        const expiresAt = new Date(Date.now() + TTL_10M * 1000);
+
+        await this.otpCodeRepository.create({
+          email: dto.email,
+          codeHash,
+          type: dto.type,
+          expiresAt,
+        });
+
+        const cooldownTtl = dto.type === EOtpType.REGISTER ? TTL_30S : TTL_1M;
+        try {
+          await this.redis.setOtpCache(dto.email, codeHash, TTL_10M);
+          await this.redis.setCooldown(dto.email, cooldownTtl);
+        } catch (error) {
+          this.logger.warn(
+            `Redis OTP cache unavailable for ${dto.email}: ${error.message}`,
+          );
+        }
 
         await this.mailService.sendOtp(dto.email, otp);
 
         return {
-          message: 'Đã gửi lại mã xác thực, vui lòng kiểm tra email.',
+          message: 'Đã gửi mã xác thực, vui lòng kiểm tra email.',
         };
       },
       ERROR_CODES.INTERNAL_SERVER_ERROR,

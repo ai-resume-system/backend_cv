@@ -26,26 +26,30 @@ export class UserTypeormRepository
     super(ormRepository);
   }
 
-  async findWithPagination(params: {
-    skip: number;
-    take: number;
-    role?: EUserRole;
-    status?: EUserStatus;
-  }): Promise<IPaginatedResult<IUserEntity>> {
-    const { skip, take, role, status } = params;
-    const whereConditions: any = { deletedAt: IsNull() };
-    if (role) whereConditions.role = role;
-    if (status) whereConditions.status = status;
-
-    const [data, total] = await this.ormRepository.findAndCount({
-      where: whereConditions,
-      skip,
-      take,
-      order: { createdAt: 'DESC' },
-    });
-
-    return { data: data.map((d) => this.toDomain(d)), total };
+  protected getSearchableColumns(): string[] {
+    return ['email', 'phone'];
   }
+
+  // async findWithPagination(params: {
+  //   skip: number;
+  //   take: number;
+  //   role?: EUserRole;
+  //   status?: EUserStatus;
+  // }): Promise<IPaginatedResult<IUserEntity>> {
+  //   const { skip, take, role, status } = params;
+  //   const whereConditions: any = { deletedAt: IsNull() };
+  //   if (role) whereConditions.role = role;
+  //   if (status) whereConditions.status = status;
+
+  //   const [data, total] = await this.ormRepository.findAndCount({
+  //     where: whereConditions,
+  //     skip,
+  //     take,
+  //     order: { createdAt: 'DESC' },
+  //   });
+
+  //   return { data: data.map((d) => this.toDomain(d)), total };
+  // }
 
   async findByEmail(email: string): Promise<IUserEntity | null> {
     const orm = await this.ormRepository.findOne({ where: { email } });
@@ -112,10 +116,6 @@ export class UserTypeormRepository
     await this.ormRepository.update(id, { password });
   }
 
-  async softDelete(id: string): Promise<void> {
-    await this.ormRepository.softDelete(id);
-  }
-
   protected toDomain(orm: UserOrmEntity): IUserEntity {
     return {
       id: orm.id,
@@ -129,7 +129,7 @@ export class UserTypeormRepository
     };
   }
 
-  private toDomainWithPassword(orm: UserOrmEntity): IUserWithPasswordEntity {
+  protected toDomainWithPassword(orm: UserOrmEntity): IUserWithPasswordEntity {
     return {
       ...this.toDomain(orm),
       password: orm.password,

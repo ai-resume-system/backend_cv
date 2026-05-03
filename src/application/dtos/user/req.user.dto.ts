@@ -1,8 +1,10 @@
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
+import { IApiRequestPagination } from 'src/common/interface/api-request.interface';
 
-export interface IRequestGetUsersDto {
-  page: number;
-  limit: number;
+export interface IRequestGetUsersDto extends IApiRequestPagination {
+  q?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
   role?: EUserRole;
   status?: EUserStatus;
 }

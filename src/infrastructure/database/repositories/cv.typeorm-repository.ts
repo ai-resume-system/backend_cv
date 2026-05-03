@@ -1,23 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { FindOptionsWhere, ILike, IsNull, Repository } from 'typeorm';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import { IFindOptions } from 'src/domain/repositories/base.repository.interface';
 import type { ICVEntity } from 'src/domain/entities/cv.entity';
 import { CVOrmEntity } from '../entities/cv.orm-entity';
+import { BaseTypeormRepository } from './base.typeorm-repository';
 
 @Injectable()
-export class CVTypeormRepository implements ICVRepository {
+export class CVTypeormRepository
+  extends BaseTypeormRepository<CVOrmEntity, ICVEntity>
+  implements ICVRepository
+{
   constructor(
     @InjectRepository(CVOrmEntity)
-    private readonly ormRepository: Repository<CVOrmEntity>,
-  ) {}
+    ormRepository: Repository<CVOrmEntity>,
+  ) {
+    super(ormRepository);
+  }
 
-  async findById(id: string): Promise<ICVEntity | null> {
-    const orm = await this.ormRepository.findOne({
-      where: { id, deletedAt: IsNull() },
-    });
-    return orm ? this.toDomain(orm) : null;
+  protected getSearchableColumns(): string[] {
+    return ['title'];
   }
 
   async findByUserId(userId: string): Promise<ICVEntity[]> {
@@ -27,40 +30,52 @@ export class CVTypeormRepository implements ICVRepository {
     return orms.map((orm) => this.toDomain(orm));
   }
 
-  async find(
-    options?: IFindOptions,
-  ): Promise<{ data: ICVEntity[]; total: number }> {
-    const page = options?.pagination?.page || 1;
-    const limit = options?.pagination?.limit || 10;
-    const [data, total] = await this.ormRepository.findAndCount({
-      where: { deletedAt: IsNull() },
-      skip: (page - 1) * limit,
-      take: limit,
+  async countByUserId(userId: string): Promise<number> {
+    return this.ormRepository.count({
+      where: { userId: userId, deletedAt: IsNull() },
     });
-    return { data: data.map((d) => this.toDomain(d)), total };
   }
 
-  async create(cv: Partial<ICVEntity>): Promise<ICVEntity> {
-    const created = this.ormRepository.create(cv as CVOrmEntity);
-    const saved = await this.ormRepository.save(created);
-    return this.toDomain(saved);
+  async findDefaultByUserId(userId: string): Promise<ICVEntity | null> {
+    const orm = await this.ormRepository.findOne({
+      where: { userId, isDefault: true, deletedAt: IsNull() },
+    });
+    return orm ? this.toDomain(orm) : null;
   }
 
-  async update(id: string, cv: Partial<ICVEntity>): Promise<ICVEntity> {
-    await this.ormRepository.update(id, cv as CVOrmEntity);
+  async unsetDefaultByUserId(userId: string): Promise<void> {
+    await this.ormRepository.update(
+      { userId, isDefault: true, deletedAt: IsNull() },
+      { isDefault: false },
+    );
+  }
+
+  async setDefault(id: string, userId: string): Promise<ICVEntity> {
+    await this.ormRepository.manager.transaction(async (manager) => {
+      await manager.update(
+        CVOrmEntity,
+        { userId, isDefault: true, deletedAt: IsNull() },
+        { isDefault: false },
+      );
+      await manager.update(
+        CVOrmEntity,
+        { id, userId, deletedAt: IsNull() },
+        { isDefault: true },
+      );
+    });
     return (await this.findById(id)) as ICVEntity;
   }
 
-  async delete(id: string): Promise<void> {
-    await this.ormRepository.softDelete(id);
-  }
-
-  private toDomain(orm: CVOrmEntity): ICVEntity {
+  protected toDomain(orm: CVOrmEntity): ICVEntity {
     return {
       id: orm.id,
       userId: orm.userId,
       title: orm.title,
       fileUrl: orm.fileUrl,
+      fileExtension: orm.fileExtension,
+      processingStatus: orm.processingStatus,
+      isDefault: orm.isDefault,
+      summary: orm.summary,
       status: orm.status,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

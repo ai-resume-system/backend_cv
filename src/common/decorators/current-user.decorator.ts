@@ -3,7 +3,6 @@ import { EUserRole } from '../constants/enum/user.enum';
 
 export interface ICurrentUser {
   id: string;
-  email: string;
   role: EUserRole;
 }
 

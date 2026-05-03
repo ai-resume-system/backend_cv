@@ -47,3 +47,7 @@ export interface IForgotPasswordDto {
   signKey: string;
   newPassword: string;
 }
+
+export interface ILogoutDto {
+  userId: string;
+}

@@ -11,6 +11,6 @@ export async function handleOtpFlow(
 ) {
   await redis.setTempProfile(email, payload, OTP_TTL);
   const otp = randomInt(100000, 1000000).toString();
-  await redis.setOtp(email, otp, OTP_TTL);
+  await redis.setOtpCache(email, otp, OTP_TTL);
   await mailService.sendOtp(email, otp);
 }

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
@@ -16,17 +17,17 @@ export class RequestGetAllUsersDto extends RequestPaginationDto {
   @IsString()
   sortBy?: string;
 
-  @ApiPropertyOptional({ enum: ['asc', 'desc'], example: 'desc' })
+  @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'DESC' })
+  @IsEnum(['ASC', 'DESC'])
   @IsOptional()
-  @IsEnum({ ASC: 'asc', DESC: 'desc' } as const)
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: 'ASC' | 'DESC';
 
-  @ApiPropertyOptional({ enum: EUserRole, example: EUserRole.ADMIN })
+  @ApiPropertyOptional({ enum: EUserRole })
   @IsOptional()
   @IsEnum(EUserRole)
   role?: EUserRole;
 
-  @ApiPropertyOptional({ enum: EUserStatus, example: EUserStatus.ACTIVE })
+  @ApiPropertyOptional({ enum: EUserStatus })
   @IsOptional()
   @IsEnum(EUserStatus)
   status?: EUserStatus;
@@ -37,6 +38,7 @@ export class RequestUpdateUserStatusDto {
     enum: EUserStatus,
     example: Object.values(EUserStatus).join(' | '),
   })
+  @IsOptional()
   @IsEnum(EUserStatus)
   status: EUserStatus;
 }

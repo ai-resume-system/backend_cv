@@ -6,6 +6,7 @@ import { AppException } from 'src/common/exceptions/app.exception';
 import { HttpStatus } from '@nestjs/common';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
+import { ResponseApiCareerCategoryDto } from 'src/presentation/career-category/dtos/res.career-category.dto';
 
 @Injectable()
 export class CreateCareerCategoryUseCase extends BaseUsecase {
@@ -16,8 +17,10 @@ export class CreateCareerCategoryUseCase extends BaseUsecase {
     super(new Logger(CreateCareerCategoryUseCase.name));
   }
 
-  async execute(dto: IRequestCreateCareerCategoryDto) {
-    return this.runSafe('Create Career Category', async () => {
+  async execute(
+    dto: IRequestCreateCareerCategoryDto,
+  ): Promise<ResponseApiCareerCategoryDto> {
+    return this.runSafe('[Create Career Category]:', async () => {
       const existing = await this.careerCategoryRepository.findByName(dto.name);
       if (existing) {
         throw new AppException(
@@ -32,7 +35,7 @@ export class CreateCareerCategoryUseCase extends BaseUsecase {
         description: dto.description,
         status: ECareerCategoriesStatus.ACTIVE,
       });
-      return created;
+      return { data: created };
     });
   }
 }

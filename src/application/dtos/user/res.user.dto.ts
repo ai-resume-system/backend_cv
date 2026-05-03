@@ -1,4 +1,5 @@
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
+import { IApiResponse } from 'src/common/interface/api-response.interface';
 
 export interface IUserDto {
   id: string;
@@ -8,14 +9,6 @@ export interface IUserDto {
   status: EUserStatus;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface IGetAllUsersResponseDto {
-  data: IUserDto[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 }
 
 export interface IGetUserByIdResponseDto {
@@ -43,3 +36,5 @@ export interface IGetUserByIdResponseDto {
     websiteUrl?: string;
   };
 }
+
+export interface IResponseListApiUserDto extends IApiResponse<IUserDto[]> {}

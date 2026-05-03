@@ -6,6 +6,7 @@ export interface IJobEntity {
   careerCategoryId?: string;
   title: string;
   description?: string;
+  shortDescription?: string;
   location?: string;
   salaryMin?: number;
   salaryMax?: number;

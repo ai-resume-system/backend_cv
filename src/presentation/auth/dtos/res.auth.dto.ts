@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
+import { MetaDto } from 'src/common/dto/response.dto';
 
 export class ResponseAuthDto {
   @ApiProperty({
@@ -23,4 +24,12 @@ export class ResponseAuthDto {
     id: string;
     role: EUserRole;
   };
+}
+
+export class ResponseApiAuthDto {
+  @ApiProperty({ type: MetaDto })
+  meta?: MetaDto;
+
+  @ApiProperty({ type: ResponseAuthDto })
+  data: ResponseAuthDto;
 }

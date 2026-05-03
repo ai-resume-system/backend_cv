@@ -211,6 +211,26 @@ export const ERROR_CODES = {
     message: 'Xóa CV thất bại.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
+  CV_FILE_TOO_LARGE: {
+    code: 2206,
+    message: 'Dung lượng file CV tối đa 5MB.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  CV_FILE_TYPE_INVALID: {
+    code: 2207,
+    message: 'Định dạng file không hợp lệ. Chỉ chấp nhận PDF, DOC, DOCX.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  CV_ACCESS_DENIED: {
+    code: 2208,
+    message: 'Bạn không có quyền truy cập CV này.',
+    status: HttpStatus.FORBIDDEN,
+  },
+  RATE_LIMIT_EXCEEDED: {
+    code: 2209,
+    message: 'Đã vượt quá số lần tải file trong 1 phút. Vui lòng thử lại sau.',
+    status: HttpStatus.TOO_MANY_REQUESTS,
+  },
 
   // ─────────────────────────────────────────
   // CAREER CATEGORY (2300 – 2399)
@@ -272,5 +292,10 @@ export const ERROR_CODES = {
     code: 9002,
     message: 'Dữ liệu không hợp lệ.',
     status: HttpStatus.BAD_REQUEST,
+  },
+  SYSTEM_BUSY: {
+    code: 9003,
+    message: 'Hệ thống bận, vui lòng thử lại sau.',
+    status: HttpStatus.SERVICE_UNAVAILABLE,
   },
 };

@@ -7,7 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { GetMyProfileUseCase } from 'src/application/use-cases/account/get-my-profile.usecase';
+import { GetMyProfileQuery } from 'src/application/queries/account/get-my-profile.query';
 import { UpdateMyProfileUseCase } from 'src/application/use-cases/account/update-my-profile.usecase';
 import { UpdateMyCompanyUseCase } from 'src/application/use-cases/account/update-my-company.usecase';
 import { ChangePasswordUseCase } from 'src/application/use-cases/account/change-password.usecase';
@@ -25,12 +25,13 @@ import {
   ResponseMyProfileDto,
   ResponseProfileDto,
 } from '../dtos/res.account.dto';
+import { EUserRole } from 'src/common/constants/enum/user.enum';
 
 @Controller({ path: 'account', version: '1' })
 @ApiTags('Account')
 export class AccountController extends BaseController {
   constructor(
-    private readonly getMyProfileUseCase: GetMyProfileUseCase,
+    private readonly getMyProfileQuery: GetMyProfileQuery,
     private readonly updateMyProfileUseCase: UpdateMyProfileUseCase,
     private readonly updateMyCompanyUseCase: UpdateMyCompanyUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
@@ -49,12 +50,12 @@ export class AccountController extends BaseController {
   async getMyProfile(
     @AuthCurrentUser() user: ICurrentUser,
   ): Promise<ResponseMyProfileDto> {
-    return await this.getMyProfileUseCase.execute(user.id);
+    return await this.getMyProfileQuery.execute(user.id);
   }
 
   @Patch('me/profile')
   @ApiOperation({ summary: 'Update my profile (job seeker only)' })
-  @AuthRequired()
+  @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiResponse({
     status: 200,
     description: 'Profile updated successfully',
@@ -69,7 +70,7 @@ export class AccountController extends BaseController {
 
   @Patch('me/company')
   @ApiOperation({ summary: 'Update my company (recruiter only)' })
-  @AuthRequired()
+  @AuthRequired(EUserRole.RECRUITER)
   @ApiResponse({
     status: 200,
     description: 'Company updated successfully',
@@ -92,7 +93,7 @@ export class AccountController extends BaseController {
   async changePassword(
     @AuthCurrentUser() user: ICurrentUser,
     @Body() dto: RequestChangePasswordDto,
-  ) {
+  ): Promise<{ message: string }> {
     return await this.changePasswordUseCase.execute(user.id, dto);
   }
 }

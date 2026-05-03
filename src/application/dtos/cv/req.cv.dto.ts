@@ -1,61 +1,21 @@
-import { ECVStatus } from '../../../common/constants/enum/cv.enum';
+import { IApiRequestPagination } from 'src/common/interface/api-request.interface';
+import { ECVStatus } from 'src/common/constants/enum/cv.enum';
 
-export interface ICreateCVDto {
-  title: string;
-  fullName: string;
-  email: string;
-  phone?: string;
-  about?: string;
-  education?: string;
-  experience?: string;
-  skills?: string;
-  languages?: string;
-  certifications?: string;
-  fileUrl?: string;
+export interface IRequestGetCVsDto extends IApiRequestPagination {
+  q?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
   status?: ECVStatus;
-  careerCategoryId?: string;
-}
-
-export interface IUpdateCVDto {
-  title?: string;
-  fullName?: string;
-  email?: string;
-  phone?: string;
-  about?: string;
-  education?: string;
-  experience?: string;
-  skills?: string;
-  languages?: string;
-  certifications?: string;
-  fileUrl?: string;
-  status?: ECVStatus;
-  careerCategoryId?: string;
-}
-
-export interface IGetCVsDto {
-  page?: number;
-  limit?: number;
   userId?: string;
-  status?: ECVStatus;
-  careerCategoryId?: string;
 }
 
-export interface ICVResponseDto {
-  id: string;
-  title: string;
-  fullName: string;
-  email: string;
-  phone?: string;
-  about?: string;
-  education?: string;
-  experience?: string;
-  skills?: string;
-  languages?: string;
-  certifications?: string;
-  fileUrl?: string;
-  status: ECVStatus;
-  userId: string;
-  careerCategoryId?: string;
-  createdAt: Date;
-  updatedAt: Date;
+export interface IRequestCreateCVDto {
+  title?: string;
+  file: Express.Multer.File; //fileUrl
+}
+
+export interface IRequestUpdateCVDto {
+  title?: string;
+  file?: Express.Multer.File; //fileUrl
+  status?: ECVStatus;
 }
