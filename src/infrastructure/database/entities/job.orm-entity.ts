@@ -16,17 +16,38 @@ import { CareerCategoryOrmEntity } from './career-category.orm-entity';
 
 @Entity('jobs')
 @Index(['deletedAt', 'status'])
+@Index('idx_jobs_title_trgm', ['title'], {
+  unique: false,
+  where: `"deleted_at" IS NULL`,
+})
+@Index('idx_jobs_location_trgm', ['location'], {
+  unique: false,
+  where: `"deleted_at" IS NULL`,
+})
+@Index('idx_jobs_description_trgm', ['description'], {
+  unique: false,
+  where: `"deleted_at" IS NULL`,
+})
+@Index('idx_jobs_active_created', ['createdAt', 'id'], {
+  unique: false,
+  where: `"deleted_at" IS NULL`,
+})
+@Index('idx_jobs_company_status', ['companyId', 'status'], { unique: false })
+@Index('idx_jobs_career_category', ['careerCategoryId'], { unique: false })
+@Index('idx_jobs_expired_at', ['expiredAt'], { unique: false })
 export class JobOrmEntity implements IJobEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'company_id', type: 'uuid' })
+  @Index()
   companyId: string;
 
   @Column({ name: 'career_category_id', type: 'uuid', nullable: true })
   careerCategoryId?: string;
 
   @Column({ name: 'title', type: 'varchar', length: 255 })
+  @Index()
   title: string;
 
   @Column({ name: 'description', type: 'text', nullable: true })
@@ -40,6 +61,7 @@ export class JobOrmEntity implements IJobEntity {
   shortDescription?: string;
 
   @Column({ name: 'location', type: 'varchar', length: 255, nullable: true })
+  @Index()
   location?: string;
 
   @Column({ name: 'salary_min', type: 'int', nullable: true })

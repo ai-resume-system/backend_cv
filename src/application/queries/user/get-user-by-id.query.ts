@@ -6,6 +6,9 @@ import { EUserRole } from 'src/common/constants/enum/user.enum';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+
+const USER_DETAIL_CACHE_TTL_SECONDS = 900;
 
 @Injectable()
 export class GetUserByIdQuery extends BaseUsecase {
@@ -15,12 +18,18 @@ export class GetUserByIdQuery extends BaseUsecase {
     private readonly profileRepository: IUserProfileRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(GetUserByIdQuery.name));
   }
 
   async execute(userId: string): Promise<IGetUserByIdResponseDto> {
     return this.runSafe('[Get User By Id]:', async () => {
+      const cacheKey = `user:detail:${userId}`;
+      const cached =
+        await this.redis.safeGetJson<IGetUserByIdResponseDto>(cacheKey);
+      if (cached) return cached;
+
       const user = await this.userRepository.findById(userId);
       if (!user) {
         throw new NotFoundException(ERROR_CODES.USER_NOT_FOUND.message);
@@ -38,19 +47,36 @@ export class GetUserByIdQuery extends BaseUsecase {
 
       if (user.role === EUserRole.JOB_SEEKER) {
         const profile = await this.profileRepository.findByUserId(userId);
-        return { ...baseData, profile: profile || undefined };
+        const response = { ...baseData, profile: profile || undefined };
+        await this.redis.safeSetJson(
+          cacheKey,
+          response,
+          USER_DETAIL_CACHE_TTL_SECONDS,
+        );
+        return response;
       }
 
       if (user.role === EUserRole.RECRUITER) {
         const profile = await this.profileRepository.findByUserId(userId);
         const company = await this.companyRepository.findByUserId(userId);
-        return {
+        const response = {
           ...baseData,
           profile: profile || undefined,
           company: company || undefined,
         };
+        await this.redis.safeSetJson(
+          cacheKey,
+          response,
+          USER_DETAIL_CACHE_TTL_SECONDS,
+        );
+        return response;
       }
 
+      await this.redis.safeSetJson(
+        cacheKey,
+        baseData,
+        USER_DETAIL_CACHE_TTL_SECONDS,
+      );
       return baseData;
     });
   }

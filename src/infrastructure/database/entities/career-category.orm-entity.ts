@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -12,14 +13,18 @@ import {
 import { CompanyOrmEntity } from './company.orm-entity';
 
 @Entity({ name: 'career_categories' })
+@Index('idx_career_categories_status', ['status'])
+@Index('idx_career_categories_name', ['name'])
 export class CareerCategoryOrmEntity implements ICareerCategoryEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'name', type: 'varchar', length: 255 })
+  @Index()
   name: string;
 
   @Column({ name: 'slug', type: 'varchar', length: 255, unique: true })
+  @Index()
   slug: string;
 
   @Column({ name: 'description', type: 'text', nullable: true })

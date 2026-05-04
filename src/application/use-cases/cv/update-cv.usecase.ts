@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRequestUpdateCVDto } from 'src/application/dtos/cv/req.cv.dto';
 import { IResponseApiCVDto } from 'src/application/dtos/cv/res.cv.dto';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
@@ -80,22 +81,21 @@ export class UpdateCVUseCase extends BaseUsecase {
         });
       }
 
-      await this.queueDispatch.dispatchSearchIndex({
-        aggregateType: 'cv',
-        aggregateId: cv.id,
-        action: 'index',
-      });
-      await this.queueDispatch.dispatchCacheInvalidation({
-        keys: [`cv:detail:${cv.id}`],
-        prefixes: [`cv:list:user:${cv.userId}:`],
-      });
+      if (fileUrl && fileExtension) {
+        await this.queueDispatch.dispatchCvParse({
+          cvId: cv.id,
+          fileKey: fileUrl,
+          extension: fileExtension,
+        });
+      }
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_LIST);
       return { data: cv };
     });
   }
 
   private async checkUploadRateLimit(userId: string): Promise<void> {
-    const WINDOW_SECONDS = 60; // 1 phút
-    const MAX_UPLOADS = 5; // 5 lần / phút
+    const WINDOW_SECONDS = 60;
+    const MAX_UPLOADS = 5;
 
     const key = `rate:cv:upload:${userId}`;
     try {
@@ -105,10 +105,9 @@ export class UpdateCVUseCase extends BaseUsecase {
       }
     } catch (error) {
       if (error instanceof AppException) throw error;
-      this.logger.error(
-        `Redis CV upload rate-limit unavailable for${userId}: ${error.message}`,
+      this.logger.warn(
+        `Redis CV upload rate-limit unavailable for ${userId}: ${error.message}`,
       );
-      throw new AppException(ERROR_CODES.SYSTEM_BUSY);
     }
   }
 

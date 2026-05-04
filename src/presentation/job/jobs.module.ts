@@ -11,7 +11,6 @@ import { CompanyOrmEntity } from 'src/infrastructure/database/entities/company.o
 import { JobOrmEntity } from 'src/infrastructure/database/entities/job.orm-entity';
 import { CompanyTypeormRepository } from 'src/infrastructure/database/repositories/company.typeorm-repository';
 import { JobTypeormRepository } from 'src/infrastructure/database/repositories/job.typeorm-repository';
-import { SearchModule } from 'src/infrastructure/elasticsearch/search.module';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
 import { JobController } from 'src/presentation/job/controller/job.controller';
 
@@ -20,7 +19,6 @@ import { JobController } from 'src/presentation/job/controller/job.controller';
     TypeOrmModule.forFeature([JobOrmEntity, CompanyOrmEntity]),
     JwtAuthModule,
     RedisModule,
-    SearchModule,
   ],
   controllers: [JobController],
   providers: [

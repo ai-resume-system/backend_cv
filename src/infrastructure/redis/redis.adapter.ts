@@ -20,19 +20,32 @@ export class RedisAdapter extends BaseUsecase {
   // GENERIC CACHE OPERATIONS
   // =======================
   async get(key: string): Promise<string | null> {
-    return this.redis.get(key);
+    try {
+      return await this.redis.get(key);
+    } catch (error) {
+      this.logger.warn(`Redis get failed for ${key}: ${error.message}`);
+      return null;
+    }
   }
 
   async set(key: string, value: string, ttl?: number): Promise<void> {
-    if (ttl) {
-      await this.redis.set(key, value, 'EX', ttl);
-    } else {
-      await this.redis.set(key, value);
+    try {
+      if (ttl) {
+        await this.redis.set(key, value, 'EX', ttl);
+      } else {
+        await this.redis.set(key, value);
+      }
+    } catch (error) {
+      this.logger.warn(`Redis set failed for ${key}: ${error.message}`);
     }
   }
 
   async del(...keys: string[]): Promise<void> {
-    await this.redis.del(...keys);
+    try {
+      if (keys.length) await this.redis.del(...keys);
+    } catch (error) {
+      this.logger.warn(`Redis del failed: ${error.message}`);
+    }
   }
 
   async safeGet(key: string): Promise<string | null> {
@@ -52,6 +65,22 @@ export class RedisAdapter extends BaseUsecase {
     }
   }
 
+  async safeGetJson<T>(key: string): Promise<T | null> {
+    const value = await this.safeGet(key);
+    if (!value) return null;
+    try {
+      return JSON.parse(value) as T;
+    } catch (error) {
+      this.logger.warn(`Redis JSON parse failed for ${key}: ${error.message}`);
+      await this.safeDel(key);
+      return null;
+    }
+  }
+
+  async safeSetJson(key: string, value: unknown, ttl?: number): Promise<void> {
+    await this.safeSet(key, JSON.stringify(value), ttl);
+  }
+
   async safeDel(...keys: string[]): Promise<void> {
     try {
       if (keys.length) await this.del(...keys);
@@ -61,7 +90,12 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   async keys(pattern: string): Promise<string[]> {
-    return this.redis.keys(pattern);
+    try {
+      return await this.redis.keys(pattern);
+    } catch (error) {
+      this.logger.warn(`Redis keys failed for ${pattern}: ${error.message}`);
+      return [];
+    }
   }
 
   async scanByPrefix(prefix: string, count = 100): Promise<string[]> {
@@ -93,15 +127,20 @@ export class RedisAdapter extends BaseUsecase {
   }
 
   async incrWithExpiry(key: string, ttl: number): Promise<number> {
-    const count = await this.redis.incr(key);
-    if (count === 1) {
-      await this.redis.expire(key, ttl);
+    try {
+      const count = await this.redis.incr(key);
+      if (count === 1) {
+        await this.redis.expire(key, ttl);
+      }
+      return count;
+    } catch (error) {
+      this.logger.warn(`Redis incr failed for ${key}: ${error.message}`);
+      return 0;
     }
-    return count;
   }
 
   async setWithExpiry(key: string, value: string, ttl: number): Promise<void> {
-    await this.redis.set(key, value, 'EX', ttl);
+    await this.set(key, value, ttl);
   }
 
   // =======================
@@ -112,16 +151,11 @@ export class RedisAdapter extends BaseUsecase {
     data: any,
     ttl: number = 600,
   ): Promise<void> {
-    await this.redis.set(
-      this.buildKey('job:list', key),
-      JSON.stringify(data),
-      'EX',
-      ttl,
-    );
+    await this.set(this.buildKey('job:list', key), JSON.stringify(data), ttl);
   }
 
   async getJobListCache(key: string): Promise<any | null> {
-    const data = await this.redis.get(this.buildKey('job:list', key));
+    const data = await this.get(this.buildKey('job:list', key));
     return data ? JSON.parse(data) : null;
   }
 
@@ -134,21 +168,16 @@ export class RedisAdapter extends BaseUsecase {
     data: any,
     ttl: number = 1800,
   ): Promise<void> {
-    await this.redis.set(
-      this.buildKey('job:detail', id),
-      JSON.stringify(data),
-      'EX',
-      ttl,
-    );
+    await this.set(this.buildKey('job:detail', id), JSON.stringify(data), ttl);
   }
 
   async getJobDetailCache(id: string): Promise<any | null> {
-    const data = await this.redis.get(this.buildKey('job:detail', id));
+    const data = await this.get(this.buildKey('job:detail', id));
     return data ? JSON.parse(data) : null;
   }
 
   async invalidateJobDetailCache(id: string): Promise<void> {
-    await this.redis.del(this.buildKey('job:detail', id));
+    await this.del(this.buildKey('job:detail', id));
   }
 
   // =======================
@@ -159,16 +188,11 @@ export class RedisAdapter extends BaseUsecase {
     data: any,
     ttl: number = 600,
   ): Promise<void> {
-    await this.redis.set(
-      this.buildKey('cv:list', key),
-      JSON.stringify(data),
-      'EX',
-      ttl,
-    );
+    await this.set(this.buildKey('cv:list', key), JSON.stringify(data), ttl);
   }
 
   async getCvListCache(key: string): Promise<any | null> {
-    const data = await this.redis.get(this.buildKey('cv:list', key));
+    const data = await this.get(this.buildKey('cv:list', key));
     return data ? JSON.parse(data) : null;
   }
 
@@ -184,21 +208,20 @@ export class RedisAdapter extends BaseUsecase {
     data: any,
     ttl: number = 900,
   ): Promise<void> {
-    await this.redis.set(
+    await this.set(
       this.buildKey('user:profile', userId),
       JSON.stringify(data),
-      'EX',
       ttl,
     );
   }
 
   async getUserProfileCache(userId: string): Promise<any | null> {
-    const data = await this.redis.get(this.buildKey('user:profile', userId));
+    const data = await this.get(this.buildKey('user:profile', userId));
     return data ? JSON.parse(data) : null;
   }
 
   async invalidateUserProfileCache(userId: string): Promise<void> {
-    await this.redis.del(this.buildKey('user:profile', userId));
+    await this.del(this.buildKey('user:profile', userId));
   }
 
   // =======================
@@ -465,5 +488,74 @@ export class RedisAdapter extends BaseUsecase {
 
   async clearSignKey(key: string): Promise<void> {
     await this.redis.del(this.buildKey('reset_token', key));
+  }
+
+  // =======================
+  // ACCESS TOKEN BLACKLIST
+  // =======================
+  async setAccessTokenBlacklist(token: string, ttl: number): Promise<void> {
+    await this.redis.set(
+      this.buildKey('at:blacklist', token),
+      'revoked',
+      'EX',
+      ttl,
+    );
+  }
+
+  async isAccessTokenBlacklisted(token: string): Promise<boolean> {
+    return !!(await this.redis.get(this.buildKey('at:blacklist', token)));
+  }
+
+  // =======================
+  // VERSIONED CACHE
+  // =======================
+  async getVersion(entity: string): Promise<number> {
+    try {
+      const version = await this.redis.get(`version:${entity}`);
+      return version ? parseInt(version, 10) : 0;
+    } catch (error) {
+      this.logger.warn(
+        `Redis getVersion failed for ${entity}: ${error.message}`,
+      );
+      return 0;
+    }
+  }
+
+  async bumpVersion(entity: string): Promise<number> {
+    try {
+      const version = await this.redis.incr(`version:${entity}`);
+      return version;
+    } catch (error) {
+      this.logger.warn(
+        `Redis bumpVersion failed for ${entity}: ${error.message}`,
+      );
+      return 1;
+    }
+  }
+
+  async getOrSet<T>(
+    key: string,
+    ttl: number,
+    fallback: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      const cached = await this.get(key);
+      if (cached) return JSON.parse(cached) as T;
+    } catch (error) {
+      this.logger.warn(
+        `Redis getOrSet get failed for ${key}: ${error.message}`,
+      );
+    }
+
+    try {
+      const data = await fallback();
+      await this.set(key, JSON.stringify(data), ttl);
+      return data;
+    } catch (error) {
+      this.logger.warn(
+        `Redis getOrSet fallback failed for ${key}: ${error.message}`,
+      );
+      throw error;
+    }
   }
 }

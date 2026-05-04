@@ -1,13 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IUpdateJobDto } from 'src/application/dtos/job/req.job.dto';
 import { IResponseApiJobDto } from 'src/application/dtos/job/res.job.dto';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
-import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class UpdateJobUseCase extends BaseUsecase {
@@ -15,7 +16,7 @@ export class UpdateJobUseCase extends BaseUsecase {
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
-    private readonly queueDispatch: QueueDispatchService,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(UpdateJobUseCase.name));
   }
@@ -42,20 +43,19 @@ export class UpdateJobUseCase extends BaseUsecase {
         ) {
           throw new AppException(ERROR_CODES.ROLE_INSUFFICIENT_PERMISSIONS);
         }
+
+        const updateData = { ...dto };
+        if (dto.expiredAt) {
+          const newExpiredAt = new Date(dto.expiredAt);
+          const now = new Date();
+          if (newExpiredAt > now && existing.status === EJobStatus.EXPIRED) {
+            updateData.status = EJobStatus.OPEN;
+          }
+        }
+
         const job = await this.jobRepository.update(id, dto);
-        await this.queueDispatch.dispatchSearchIndex({
-          aggregateType: 'job',
-          aggregateId: job.id,
-          action: 'index',
-        });
-        await this.queueDispatch.dispatchCacheInvalidation({
-          keys: [`job:detail:${job.id}`],
-          prefixes: [
-            `job:list:company:${job.companyId}:`,
-            `job:list:status:${job.status}:`,
-            'job:list:public:',
-          ],
-        });
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
         return { data: job };
       },
       ERROR_CODES.JOB_UPDATE_FAILED,

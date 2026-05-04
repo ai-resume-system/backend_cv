@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -15,14 +16,20 @@ import { CVOrmEntity } from './cv.orm-entity';
 import { UserProfileOrmEntity } from './user_profile.orm-entity';
 
 @Entity({ name: 'users' })
+@Index('idx_users_status', ['status'])
+@Index('idx_users_role', ['role'])
+@Index('idx_users_created_at', ['createdAt'])
+@Index(['deletedAt', 'status', 'role'])
 export class UserOrmEntity implements IUserEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'email', type: 'varchar', length: 255, unique: true })
+  @Index()
   email: string;
 
   @Column({ name: 'phone', type: 'varchar', length: 20, nullable: true })
+  @Index()
   phone?: string;
 
   @Column({ name: 'password', type: 'varchar', length: 255, select: false })

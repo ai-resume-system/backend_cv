@@ -50,4 +50,5 @@ export interface IForgotPasswordDto {
 
 export interface ILogoutDto {
   userId: string;
+  accessToken?: string;
 }

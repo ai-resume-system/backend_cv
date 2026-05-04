@@ -1,15 +1,18 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { HttpStatus } from '@nestjs/common';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class DeleteCareerCategoryUseCase extends BaseUsecase {
   constructor(
     @Inject('ICareerCategoryRepository')
     private readonly careerCategoryRepository: ICareerCategoryRepository,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(DeleteCareerCategoryUseCase.name));
   }
@@ -25,6 +28,7 @@ export class DeleteCareerCategoryUseCase extends BaseUsecase {
       }
 
       await this.careerCategoryRepository.delete(id);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_LIST);
       return { message: 'Xóa ngành nghề thành công.' };
     });
   }

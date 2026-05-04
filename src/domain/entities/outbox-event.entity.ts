@@ -8,7 +8,10 @@ export interface IOutboxEventEntity {
   payload: Record<string, unknown>;
   status: EOutboxEventStatus;
   retryCount: number;
+  maxAttempts: number;
   nextRetryAt?: Date;
+  lockedAt?: Date;
+  lastError?: string;
   processedAt?: Date;
   createdAt: Date;
 }

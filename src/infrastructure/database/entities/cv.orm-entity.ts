@@ -19,11 +19,14 @@ import { UserOrmEntity } from './user.orm-entity';
 @Index(['deletedAt', 'status'])
 @Index(['userId', 'isDefault'])
 @Index(['userId', 'createdAt'])
+@Index('idx_cvs_user_status', ['userId', 'status'], { unique: false })
+@Index('idx_cvs_processing_status', ['processingStatus'], { unique: false })
 export class CVOrmEntity implements ICVEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'user_id', type: 'uuid' })
+  @Index()
   userId: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -32,15 +35,21 @@ export class CVOrmEntity implements ICVEntity {
   @Column({ name: 'file_url', type: 'text', nullable: true })
   fileUrl?: string;
 
-  @Column({ name: 'file_extension', type: 'varchar', length: 20, nullable: true })
+  @Column({
+    name: 'file_extension',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
   fileExtension?: string;
 
   @Column({
     name: 'processing_status',
     type: 'enum',
     enum: EProcessingStatus,
+    default: EProcessingStatus.PENDING,
   })
-  processingStatus?: EProcessingStatus;
+  processingStatus: EProcessingStatus;
 
   @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault?: boolean;

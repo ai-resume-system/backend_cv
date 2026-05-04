@@ -1,18 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRejectJobDto } from 'src/application/dtos/job/req.job.dto';
 import { IResponseApiJobDto } from 'src/application/dtos/job/res.job.dto';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
-import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ReviewJobUseCase extends BaseUsecase {
   constructor(
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
-    private readonly queueDispatch: QueueDispatchService,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(ReviewJobUseCase.name));
   }
@@ -43,20 +45,41 @@ export class ReviewJobUseCase extends BaseUsecase {
         status,
         rejectReason,
       });
-      await this.queueDispatch.dispatchSearchIndex({
-        aggregateType: 'job',
-        aggregateId: job.id,
-        action: 'index',
-      });
-      await this.queueDispatch.dispatchCacheInvalidation({
-        keys: [`job:detail:${job.id}`],
-        prefixes: [
-          `job:list:company:${job.companyId}:`,
-          `job:list:status:${job.status}:`,
-          'job:list:public:',
-        ],
-      });
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
       return { data: job };
     });
+  }
+
+  //Hàm tự động kiểm tra trạng thái hết hạn của job
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async autoExpireJobs(): Promise<void> {
+    this.logger.log('[Auto Expire Jobs] Startting...');
+    try {
+      const expireJobs = await this.jobRepository.find({
+        pagination: { page: 1, limit: 1000 },
+        filter: {
+          status: EJobStatus.OPEN,
+          expiredAtBefore: new Date(),
+        },
+      });
+      if (expireJobs.data.length === 0) {
+        this.logger.log('[Auto Expire Jobs] No jobs to expire');
+        return;
+      }
+      for (const job of expireJobs.data) {
+        await this.jobRepository.update(job.id, { status: EJobStatus.EXPIRED });
+      }
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+      this.logger.log(
+        `[Auto Expire Jobs] Expired ${expireJobs.data.length} jobs`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `[Auto Expire Jobs] Failed: ${error.message}`,
+        error.stack,
+      );
+    }
   }
 }

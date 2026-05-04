@@ -38,8 +38,17 @@ export class OutboxEventOrmEntity implements IOutboxEventEntity {
   @Column({ name: 'retry_count', type: 'int', default: 0 })
   retryCount: number;
 
+  @Column({ name: 'max_attempts', type: 'int', default: 3 })
+  maxAttempts: number;
+
   @Column({ name: 'next_retry_at', type: 'timestamp', nullable: true })
   nextRetryAt?: Date;
+
+  @Column({ name: 'locked_at', type: 'timestamp', nullable: true })
+  lockedAt?: Date;
+
+  @Column({ name: 'last_error', type: 'text', nullable: true })
+  lastError?: string;
 
   @Column({ name: 'processed_at', type: 'timestamp', nullable: true })
   processedAt?: Date;

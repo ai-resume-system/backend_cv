@@ -1,13 +1,16 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { IUpdateUserStatusDto } from 'src/application/dtos/user/req.user.dto';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class UpdateUserStatusUseCase extends BaseUsecase {
   constructor(
     @Inject('IUserRepository') private readonly userRepository: IUserRepository,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(UpdateUserStatusUseCase.name));
   }
@@ -23,6 +26,7 @@ export class UpdateUserStatusUseCase extends BaseUsecase {
       }
 
       await this.userRepository.updateStatus(userId, dto.status);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.USER_LIST);
 
       return { message: `Cập nhật trạng thái thành công` };
     });

@@ -1,16 +1,19 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import { IRequestUpdateCareerCategoryDto } from '../../dtos/career-category/req.career-category.dto';
 import { ResponseApiCareerCategoryDto } from 'src/presentation/career-category/dtos/res.career-category.dto';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class UpdateCareerCategoryUseCase extends BaseUsecase {
   constructor(
     @Inject('ICareerCategoryRepository')
     private readonly careerCategoryRepository: ICareerCategoryRepository,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(UpdateCareerCategoryUseCase.name));
   }
@@ -41,6 +44,7 @@ export class UpdateCareerCategoryUseCase extends BaseUsecase {
       }
 
       const updated = await this.careerCategoryRepository.update(id, dto);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_LIST);
       return { data: updated };
     });
   }

@@ -11,8 +11,12 @@ import { ForgotPasswordUseCase } from 'src/application/use-cases/auth/forgot-pas
 import { LogoutUseCase } from 'src/application/use-cases/auth/logout.usecase';
 import { RefreshTokenOrmEntity } from 'src/infrastructure/database/entities/refresh-token.orm-entity';
 import { OtpCodeOrmEntity } from 'src/infrastructure/database/entities/otp-code.orm-entity';
+import { RegistrationSessionOrmEntity } from 'src/infrastructure/database/entities/registration-session.orm-entity';
+import { PasswordResetTokenOrmEntity } from 'src/infrastructure/database/entities/password-reset-token.orm-entity';
 import { RefreshTokenTypeormRepository } from 'src/infrastructure/database/repositories/refresh-token.typeorm-repository';
 import { OtpCodeTypeormRepository } from 'src/infrastructure/database/repositories/otp-code.typeorm-repository';
+import { RegistrationSessionTypeormRepository } from 'src/infrastructure/database/repositories/registration-session.typeorm-repository';
+import { PasswordResetTokenTypeormRepository } from 'src/infrastructure/database/repositories/password-reset-token.typeorm-repository';
 
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
 import { UsersModule } from '../user/users.module';
@@ -23,7 +27,12 @@ import { JwtAuthModule } from 'src/common/guards/jwt-auth.module';
     UsersModule,
     JwtAuthModule,
     RedisModule,
-    TypeOrmModule.forFeature([RefreshTokenOrmEntity, OtpCodeOrmEntity]),
+    TypeOrmModule.forFeature([
+      RefreshTokenOrmEntity,
+      OtpCodeOrmEntity,
+      RegistrationSessionOrmEntity,
+      PasswordResetTokenOrmEntity,
+    ]),
   ],
   controllers: [AuthController],
   providers: [
@@ -43,7 +52,20 @@ import { JwtAuthModule } from 'src/common/guards/jwt-auth.module';
       provide: 'IOtpCodeRepository',
       useClass: OtpCodeTypeormRepository,
     },
+    {
+      provide: 'IRegistrationSessionRepository',
+      useClass: RegistrationSessionTypeormRepository,
+    },
+    {
+      provide: 'IPasswordResetTokenRepository',
+      useClass: PasswordResetTokenTypeormRepository,
+    },
   ],
-  exports: ['IRefreshTokenRepository', 'IOtpCodeRepository'],
+  exports: [
+    'IRefreshTokenRepository',
+    'IOtpCodeRepository',
+    'IRegistrationSessionRepository',
+    'IPasswordResetTokenRepository',
+  ],
 })
 export class AuthModule {}

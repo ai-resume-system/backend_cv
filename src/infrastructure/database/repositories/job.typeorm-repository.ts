@@ -6,6 +6,7 @@ import { IFindOptions } from 'src/domain/repositories/base.repository.interface'
 import type { IJobEntity } from 'src/domain/entities/job.entity';
 import { JobOrmEntity } from '../entities/job.orm-entity';
 import { BaseTypeormRepository } from './base.typeorm-repository';
+import { EJobStatus } from 'src/common/constants/enum/job.enum';
 
 @Injectable()
 export class JobTypeormRepository
@@ -23,6 +24,15 @@ export class JobTypeormRepository
     return ['title', 'location'];
   }
 
+  async findExpiredJobs(): Promise<IJobEntity[]> {
+    const orms = await this.ormRepository
+      .createQueryBuilder('entity')
+      .where('entity.status = :status', { status: EJobStatus.OPEN })
+      .andWhere('entity.expiredAt < :now', { now: new Date() })
+      .andWhere('entity.deletedAt IS NULL')
+      .getMany();
+    return orms.map((orm) => this.toDomain(orm));
+  }
   async findByCompanyId(companyId: string): Promise<IJobEntity[]> {
     const orms = await this.ormRepository.find({
       where: { companyId: companyId, deletedAt: IsNull() },

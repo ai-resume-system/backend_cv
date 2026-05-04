@@ -60,6 +60,14 @@ export abstract class BaseTypeormRepository<
         }
       });
 
+      ///
+      if (otherFilters.expiredAtBefore) {
+        queryBuilder.andWhere('entity.expiredAt  < :expiredAtBefore', {
+          expiredAtBefore: otherFilters.expiredAtBefore,
+        });
+        delete otherFilters.expiredAtBefore;
+      }
+
       if (q) {
         const searchableColumns = this.getSearchableColumns();
 
@@ -74,7 +82,7 @@ export abstract class BaseTypeormRepository<
         }
       }
 
-      queryBuilder.orderBy(`entity.${sortBy}`, sortOrder as 'ASC' | 'DESC');
+      queryBuilder.orderBy(`entity.${sortBy}`, sortOrder);
       queryBuilder.skip(skip).take(take);
 
       [data, totalItems] = await queryBuilder.getManyAndCount();

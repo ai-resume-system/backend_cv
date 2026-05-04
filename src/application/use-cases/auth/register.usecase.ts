@@ -12,6 +12,7 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { TTL_10M } from 'src/common/constants/ttl.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.repository.interface';
+import type { IRegistrationSessionRepository } from 'src/domain/repositories/registration-session.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { MailService } from 'src/infrastructure/mail/mail.service';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
@@ -26,6 +27,8 @@ export class RegisterUseCase extends BaseUsecase {
     private readonly userRepository: IUserRepository,
     @Inject('IOtpCodeRepository')
     private readonly otpCodeRepository: IOtpCodeRepository,
+    @Inject('IRegistrationSessionRepository')
+    private readonly registrationSessionRepository: IRegistrationSessionRepository,
     private readonly redis: RedisAdapter,
     private readonly mailService: MailService,
   ) {
@@ -84,6 +87,7 @@ export class RegisterUseCase extends BaseUsecase {
         const hashedPassword = await bcrypt.hash(dto.password, 10);
         await this.userRepository.createWithPassword({
           email,
+          phone: isRecruiter(dto) ? dto.phone : undefined,
           password: hashedPassword,
           role,
           status: EUserStatus.UNVERIFIED,
@@ -116,6 +120,13 @@ export class RegisterUseCase extends BaseUsecase {
       type: EOtpType.REGISTER,
       expiresAt,
     });
+    if (tempPayload) {
+      await this.registrationSessionRepository.create({
+        email,
+        payload: tempPayload,
+        expiresAt,
+      });
+    }
 
     try {
       await this.redis.setTempProfile(email, tempPayload, TTL_10M);

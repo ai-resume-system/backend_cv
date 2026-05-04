@@ -143,7 +143,7 @@ export class JobController extends BaseController {
   }
 
   @Patch(':id/close')
-  @AuthRequired(EUserRole.ADMIN)
+  @AuthRequired(EUserRole.ADMIN, EUserRole.RECRUITER)
   @ApiOperation({ summary: 'Close job' })
   @ApiResponse({ status: 200, type: ResponseApiJobDto })
   async closeJob(@Param('id') id: string): Promise<ResponseApiJobDto> {

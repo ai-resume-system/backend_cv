@@ -36,6 +36,7 @@ export interface IUpdateJobDto {
   jobType?: EJobType;
   careerCategoryId?: string;
   expiredAt?: Date;
+  status?: EJobStatus;
 }
 
 export interface IRejectJobDto {

@@ -8,6 +8,8 @@ import { EUserStatus } from 'src/common/constants/enum/user.enum';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import type { IRefreshTokenRepository } from 'src/domain/repositories/refresh-token.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import type { IPasswordResetTokenRepository } from 'src/domain/repositories/password-reset-token.repository.interface';
+import { hashToken } from 'src/common/utils/hash.utils';
 
 @Injectable()
 export class ForgotPasswordUseCase extends BaseUsecase {
@@ -15,6 +17,8 @@ export class ForgotPasswordUseCase extends BaseUsecase {
     @Inject('IUserRepository') private readonly userRepository: IUserRepository,
     @Inject('IRefreshTokenRepository')
     private readonly refreshTokenRepository: IRefreshTokenRepository,
+    @Inject('IPasswordResetTokenRepository')
+    private readonly passwordResetTokenRepository: IPasswordResetTokenRepository,
     private readonly redis: RedisAdapter,
   ) {
     super(new Logger(ForgotPasswordUseCase.name));
@@ -33,7 +37,14 @@ export class ForgotPasswordUseCase extends BaseUsecase {
           );
         }
         if (!savedSignKey || savedSignKey !== dto.signKey) {
-          throw new AppException(ERROR_CODES.AUTH_SIGN_KEY_INVALID);
+          const resetToken =
+            await this.passwordResetTokenRepository.findValidByEmailAndHash(
+              dto.email,
+              hashToken(dto.signKey),
+            );
+          if (!resetToken) {
+            throw new AppException(ERROR_CODES.AUTH_SIGN_KEY_INVALID);
+          }
         }
 
         const user = await this.userRepository.findByEmail(dto.email);
@@ -58,6 +69,9 @@ export class ForgotPasswordUseCase extends BaseUsecase {
 
         await this.refreshTokenRepository.revokeAll(user.id);
         await this.redis.deleteAllRefreshTokenCacheByUserId(user.id);
+        await this.passwordResetTokenRepository.markActiveAsUsedByEmail(
+          dto.email,
+        );
 
         return {
           message:

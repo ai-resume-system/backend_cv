@@ -1,12 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRequestCreateCVDto } from 'src/application/dtos/cv/req.cv.dto';
 import { IResponseApiCVDto } from 'src/application/dtos/cv/res.cv.dto';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
-import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
-import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { FileValidationService } from 'src/infrastructure/storage/file-validation.service';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
@@ -16,7 +15,6 @@ import { randomUUID } from 'crypto';
 export class CreateCVUseCase extends BaseUsecase {
   constructor(
     @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
-    private readonly queueDispatch: QueueDispatchService,
     private readonly fileValidation: FileValidationService,
     private readonly storage: S3StorageService,
     private readonly redis: RedisAdapter,
@@ -44,12 +42,14 @@ export class CreateCVUseCase extends BaseUsecase {
           title: this.removeExtension(dto.title || dto.file.originalname),
           fileUrl: key,
           fileExtension: validated.extension,
-          isDefault: false,
-          processingStatus: EProcessingStatus.PENDING,
         });
-        await this.queueDispatch.dispatchCacheInvalidation({
-          prefixes: [`cv:list:user:${cv.userId}:`],
-        });
+        // TODO: Uncomment when AI service is ready
+        // await this.queueDispatch.dispatchCvParse({
+        //   cvId: cv.id,
+        //   fileKey: key,
+        //   extension: validated.extension,
+        // });
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_LIST);
         return { data: cv };
       },
       ERROR_CODES.CV_CREATE_FAILED,
@@ -68,10 +68,9 @@ export class CreateCVUseCase extends BaseUsecase {
       }
     } catch (error) {
       if (error instanceof AppException) throw error;
-      this.logger.error(
-        `Redis CV upload rate-limit unavailable for${userId}: ${error.message}`,
+      this.logger.warn(
+        `Redis CV upload rate-limit unavailable for ${userId}: ${error.message}`,
       );
-      throw new AppException(ERROR_CODES.SYSTEM_BUSY);
     }
   }
 

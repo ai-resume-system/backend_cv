@@ -13,7 +13,9 @@ import type { IUserProfileRepository } from 'src/domain/repositories/user-profil
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.repository.interface';
-import { hashOtp } from 'src/common/utils/hash.utils';
+import type { IRegistrationSessionRepository } from 'src/domain/repositories/registration-session.repository.interface';
+import type { IPasswordResetTokenRepository } from 'src/domain/repositories/password-reset-token.repository.interface';
+import { hashOtp, hashToken } from 'src/common/utils/hash.utils';
 
 @Injectable()
 export class VerifyOtpUseCase extends BaseUsecase {
@@ -25,6 +27,10 @@ export class VerifyOtpUseCase extends BaseUsecase {
     private readonly userProfileRepository: IUserProfileRepository,
     @Inject('IOtpCodeRepository')
     private readonly otpCodeRepository: IOtpCodeRepository,
+    @Inject('IRegistrationSessionRepository')
+    private readonly registrationSessionRepository: IRegistrationSessionRepository,
+    @Inject('IPasswordResetTokenRepository')
+    private readonly passwordResetTokenRepository: IPasswordResetTokenRepository,
     private readonly redis: RedisAdapter,
   ) {
     super(new Logger(VerifyOtpUseCase.name));
@@ -109,12 +115,23 @@ export class VerifyOtpUseCase extends BaseUsecase {
             await this.userRepository.updateStatus(user.id, EUserStatus.ACTIVE);
 
             let tempProfile: any | null = null;
+            let registrationSessionId: string | undefined;
             try {
               tempProfile = await this.redis.getTempProfile(dto.email);
             } catch (error) {
               this.logger.warn(
                 `Redis temp profile unavailable for ${dto.email}: ${error.message}`,
               );
+            }
+            if (!tempProfile) {
+              const session =
+                await this.registrationSessionRepository.findValidByEmail(
+                  dto.email,
+                );
+              if (session) {
+                tempProfile = session.payload;
+                registrationSessionId = session.id;
+              }
             }
             if (tempProfile) {
               if (tempProfile.role === EUserRole.JOB_SEEKER) {
@@ -136,6 +153,15 @@ export class VerifyOtpUseCase extends BaseUsecase {
                   `Redis temp profile clear failed for ${dto.email}: ${error.message}`,
                 );
               }
+              if (registrationSessionId) {
+                await this.registrationSessionRepository.markUsed(
+                  registrationSessionId,
+                );
+              } else {
+                await this.registrationSessionRepository.markActiveAsUsedByEmail(
+                  dto.email,
+                );
+              }
             }
             try {
               await this.redis.deleteOtpCache(dto.email);
@@ -152,6 +178,11 @@ export class VerifyOtpUseCase extends BaseUsecase {
               throw new AppException(ERROR_CODES.AUTH_USER_UNVERIFIED);
             }
             const signKey = randomUUID();
+            await this.passwordResetTokenRepository.create({
+              email: dto.email,
+              signKeyHash: hashToken(signKey),
+              expiresAt: new Date(Date.now() + 600 * 1000),
+            });
             try {
               await this.redis.setSignKey(dto.email, signKey, 600);
               await this.redis.deleteOtpCache(dto.email);
@@ -159,7 +190,6 @@ export class VerifyOtpUseCase extends BaseUsecase {
               this.logger.warn(
                 `Redis reset signKey unavailable for ${dto.email}: ${error.message}`,
               );
-              throw new AppException(ERROR_CODES.INTERNAL_SERVER_ERROR);
             }
 
             return {

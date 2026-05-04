@@ -31,7 +31,10 @@ export class CacheInvalidateProcessor extends WorkerHost {
         }
       }
     } catch (error) {
-      this.logger.error(`Cache invalidation failed: ${error.message}`, error.stack);
+      this.logger.error(
+        `Cache invalidation failed: ${error.message}`,
+        error.stack,
+      );
       if ((job.attemptsMade || 0) + 1 >= (job.opts.attempts || 1)) {
         await this.dlq.add('invalidate.failed', job.data, {
           removeOnComplete: false,

@@ -11,7 +11,6 @@ import { SetDefaultCVUseCase } from 'src/application/use-cases/cv/set-default-cv
 import { JwtAuthModule } from 'src/common/guards/jwt-auth.module';
 import { CVOrmEntity } from 'src/infrastructure/database/entities/cv.orm-entity';
 import { CVTypeormRepository } from 'src/infrastructure/database/repositories/cv.typeorm-repository';
-import { SearchModule } from 'src/infrastructure/elasticsearch/search.module';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
 import { StorageModule } from 'src/infrastructure/storage/storage.module';
 import { CVController } from 'src/presentation/cv/controller/cv.controller';
@@ -22,7 +21,6 @@ import { CVController } from 'src/presentation/cv/controller/cv.controller';
     JwtAuthModule,
     RedisModule,
     StorageModule,
-    SearchModule,
   ],
   controllers: [CVController],
   providers: [

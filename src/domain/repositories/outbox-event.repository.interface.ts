@@ -5,10 +5,10 @@ export interface ICreateOutboxEventData {
   aggregateId: string;
   eventType: string;
   payload: Record<string, unknown>;
+  maxAttempts?: number;
 }
 
 export interface IOutboxEventRepository {
   create(data: ICreateOutboxEventData): Promise<IOutboxEventEntity>;
   markProcessed(id: string): Promise<void>;
-  markFailed(id: string, retryCount: number, nextRetryAt?: Date): Promise<void>;
 }

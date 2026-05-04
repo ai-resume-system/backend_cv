@@ -148,7 +148,10 @@ export class AuthController extends BaseController {
   @AuthRequired()
   async logout(
     @AuthCurrentUser() user: ICurrentUser,
+    @Req() req: Request,
   ): Promise<{ message: string }> {
-    return await this.logoutUseCase.execute({ userId: user.id });
+    const authHeader = req.headers['authorization'] as string;
+    const accessToken = authHeader?.replace('Bearer ', '');
+    return await this.logoutUseCase.execute({ userId: user.id, accessToken });
   }
 }

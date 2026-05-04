@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -10,14 +11,20 @@ import { ERROR_CODES } from '../constants/error-codes.constants';
 import { BaseUsecase } from '../base/base.usecase';
 import { ICurrentUser } from '../decorators/current-user.decorator';
 import { JwtTokenUsecase } from './jwt-token.usecase';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 export interface AuthRequest extends Request {
   user: ICurrentUser;
+  rawAccessToken?: string;
 }
 
 @Injectable()
 export class AuthenticationGuard extends BaseUsecase implements CanActivate {
-  constructor(private readonly jwtTokenUsecase: JwtTokenUsecase) {
+  constructor(
+    private readonly jwtTokenUsecase: JwtTokenUsecase,
+    @Inject(RedisAdapter)
+    private readonly redis: RedisAdapter,
+  ) {
     super(new Logger(AuthenticationGuard.name));
   }
 
@@ -47,6 +54,15 @@ export class AuthenticationGuard extends BaseUsecase implements CanActivate {
         );
       }
 
+      const isBlacklisted = await this.redis.isAccessTokenBlacklisted(token);
+      if (isBlacklisted) {
+        this.logger.error('[canActivate] Access token is revoked');
+        throw new HttpException(
+          ERROR_CODES.ACCESS_TOKEN_INVALID_OR_EXPIRED,
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       const decodedToken = await this.jwtTokenUsecase.verifyAccessToken(token);
 
       if (!decodedToken) {
@@ -61,6 +77,7 @@ export class AuthenticationGuard extends BaseUsecase implements CanActivate {
         id: decodedToken.id,
         role: decodedToken.role,
       };
+      request.rawAccessToken = token;
       return true;
     } catch (error) {
       if (error instanceof HttpException) throw error;

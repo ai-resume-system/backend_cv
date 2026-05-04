@@ -30,10 +30,7 @@ export class StorageDeleteProcessor extends WorkerHost {
         job.data.bucketType as EBucketType,
       );
     } catch (error) {
-      this.logger.error(
-        `Storage delete failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Storage delete failed: ${error.message}`, error.stack);
       if ((job.attemptsMade || 0) + 1 >= (job.opts.attempts || 1)) {
         await this.dlq.add('delete.failed', job.data, {
           removeOnComplete: false,

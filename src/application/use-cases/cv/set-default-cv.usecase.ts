@@ -25,6 +25,7 @@ export class SetDefaultCVUseCase extends BaseUsecase {
       const updated = await this.cvRepository.setDefault(cvId, userId);
 
       await this.queueDispatch.dispatchCacheInvalidation({
+        keys: [`cv:detail:${cvId}`],
         prefixes: [`cv:list:user:${userId}:`],
       });
 

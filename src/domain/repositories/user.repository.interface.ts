@@ -5,10 +5,10 @@ import { IPaginatedResult } from './base.repository.interface';
 
 export interface ICreateUserDto {
   email: string;
+  phone?: string;
   password: string;
   role: EUserRole;
   status: EUserStatus;
-  phone?: string;
 }
 
 export interface IUserRepository extends IBaseRepository<IUserEntity> {

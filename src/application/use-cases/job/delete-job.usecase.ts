@@ -1,10 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
-import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class DeleteJobUseCase extends BaseUsecase {
@@ -12,7 +13,7 @@ export class DeleteJobUseCase extends BaseUsecase {
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
-    private readonly queueDispatch: QueueDispatchService,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(DeleteJobUseCase.name));
   }
@@ -33,19 +34,8 @@ export class DeleteJobUseCase extends BaseUsecase {
           throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
         }
         await this.jobRepository.delete(id);
-        await this.queueDispatch.dispatchSearchIndex({
-          aggregateType: 'job',
-          aggregateId: id,
-          action: 'delete',
-        });
-        await this.queueDispatch.dispatchCacheInvalidation({
-          keys: [`job:detail:${id}`],
-          prefixes: [
-            `job:list:company:${job.companyId}:`,
-            `job:list:status:${job.status}:`,
-            'job:list:public:',
-          ],
-        });
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
         return { data: { success: true, message: 'Job deleted successfully' } };
       },
       ERROR_CODES.JOB_DELETE_FAILED,

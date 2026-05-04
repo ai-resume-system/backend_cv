@@ -6,6 +6,9 @@ import { EUserRole } from 'src/common/constants/enum/user.enum';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+
+const ACCOUNT_PROFILE_CACHE_TTL_SECONDS = 900;
 
 @Injectable()
 export class GetMyProfileQuery extends BaseUsecase {
@@ -15,12 +18,18 @@ export class GetMyProfileQuery extends BaseUsecase {
     private readonly profileRepository: IUserProfileRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(GetMyProfileQuery.name));
   }
 
   async execute(userId: string): Promise<IMyProfileResponseDto> {
     return this.runSafe('[Get Profile]:', async () => {
+      const cacheKey = `account:profile:${userId}`;
+      const cached =
+        await this.redis.safeGetJson<IMyProfileResponseDto>(cacheKey);
+      if (cached) return cached;
+
       const user = await this.userRepository.findById(userId);
       if (!user) {
         throw new NotFoundException(ERROR_CODES.USER_NOT_FOUND);
@@ -75,11 +84,17 @@ export class GetMyProfileQuery extends BaseUsecase {
           result = {};
           break;
       }
-      return {
+      const response = {
         ...baseData,
         ...result,
         ...timeData,
       } as IMyProfileResponseDto;
+      await this.redis.safeSetJson(
+        cacheKey,
+        response,
+        ACCOUNT_PROFILE_CACHE_TTL_SECONDS,
+      );
+      return response;
     });
   }
 }

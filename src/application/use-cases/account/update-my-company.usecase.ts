@@ -5,12 +5,14 @@ import { AppException } from 'src/common/exceptions/app.exception';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { IRequestUpdateMyCompanyDto } from 'src/application/dtos/account/req.account.dto';
 import type { IResponseMyCompanyDto } from 'src/application/dtos/account/res.account.dto';
+import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
 
 @Injectable()
 export class UpdateMyCompanyUseCase extends BaseUsecase {
   constructor(
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
+    private readonly queueDispatch: QueueDispatchService,
   ) {
     super(new Logger(UpdateMyCompanyUseCase.name));
   }
@@ -29,6 +31,10 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
         userId,
         dto,
       );
+      await this.queueDispatch.dispatchCacheInvalidation({
+        keys: [`account:profile:${userId}`, `user:detail:${userId}`],
+        prefixes: ['user:list:'],
+      });
       return {
         id: updated.id,
         careerCategoriesId: updated.careerCategoriesId,

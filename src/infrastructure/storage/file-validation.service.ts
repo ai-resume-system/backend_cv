@@ -31,10 +31,7 @@ export class FileValidationService {
     const header = file.buffer.subarray(0, 1024).toString('latin1');
     const isPdfByHeader = header.includes('%PDF-');
 
-    if (
-      originalExtension === 'pdf' &&
-      (extension === 'pdf' || isPdfByHeader)
-    ) {
+    if (originalExtension === 'pdf' && (extension === 'pdf' || isPdfByHeader)) {
       return { extension: 'pdf', mime: 'application/pdf' };
     }
 
