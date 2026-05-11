@@ -14,6 +14,7 @@ import {
 import { CompanyOrmEntity } from './company.orm-entity';
 import { CVOrmEntity } from './cv.orm-entity';
 import { UserProfileOrmEntity } from './user_profile.orm-entity';
+import { JobApplicationOrmEntity } from './job-application.orm-entity';
 
 @Entity({ name: 'users' })
 @Index('idx_users_status', ['status'])
@@ -81,4 +82,10 @@ export class UserOrmEntity implements IUserEntity {
 
   @OneToMany(() => CVOrmEntity, (cv) => cv.user)
   cvs: CVOrmEntity[];
+
+  @OneToMany(
+    () => JobApplicationOrmEntity,
+    (jobApplication) => jobApplication.user,
+  )
+  jobApplications: JobApplicationOrmEntity[];
 }

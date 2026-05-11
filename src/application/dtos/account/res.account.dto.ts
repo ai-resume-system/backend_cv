@@ -15,6 +15,7 @@ export interface IMyProfileResponseDto {
     careerCategoriesId?: string;
     companyName?: string;
     logoUrl?: string;
+    bannerUrl?: string;
     location?: string;
     description?: string;
     taxCode?: string;
@@ -40,6 +41,7 @@ export interface IResponseMyCompanyDto {
   companyName?: string;
   taxCode?: string;
   logoUrl?: string;
+  bannerUrl?: string;
   location?: string;
   description?: string;
   websiteUrl?: string;

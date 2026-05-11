@@ -30,6 +30,11 @@ export const ERROR_CODES = {
   // ─────────────────────────────────────────
   // AUTH - OTP / VERIFY (1020 – 1039)
   // ─────────────────────────────────────────
+  INVALID_OTP_TYPE: {
+    code: 1020,
+    message: 'Loại OTP không hợp lệ.',
+    status: HttpStatus.BAD_REQUEST,
+  },
   AUTH_OTP_INVALID: {
     code: 1021,
     message: 'Mã OTP không hợp lệ hoặc đã hết hạn.',
@@ -262,8 +267,88 @@ export const ERROR_CODES = {
   },
 
   // ─────────────────────────────────────────
+  // JOB APPLICATION (2400 – 2499)
+  // ─────────────────────────────────────────
+  JOB_APPLICATION_NOT_FOUND: {
+    code: 2401,
+    message: 'Không tìm thấy đơn ứng tuyển.',
+    status: HttpStatus.NOT_FOUND,
+  },
+  JOB_APPLICATION_ALREADY_EXISTS: {
+    code: 2402,
+    message: 'Bạn đã ứng tuyển công việc này rồi.',
+    status: HttpStatus.CONFLICT,
+  },
+  JOB_APPLICATION_CREATE_FAILED: {
+    code: 2403,
+    message: 'Ứng tuyển thất bại.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  JOB_APPLICATION_UPDATE_FAILED: {
+    code: 2404,
+    message: 'Cập nhật đơn ứng tuyển thất bại.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  JOB_APPLICATION_WITHDRAW_FAILED: {
+    code: 2405,
+    message: 'Rút đơn ứng tuyển thất bại.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  JOB_APPLICATION_JOB_NOT_OPEN: {
+    code: 2406,
+    message: 'Công việc này không còn nhận ứng viên.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_APPLICATION_JOB_EXPIRED: {
+    code: 2407,
+    message: 'Công việc này đã hết hạn ứng tuyển.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_APPLICATION_CV_IN_USE: {
+    code: 2408,
+    message: 'CV này đang được sử dụng cho đơn ứng tuyển khác.',
+    status: HttpStatus.CONFLICT,
+  },
+  JOB_APPLICATION_CANNOT_WITHDRAW: {
+    code: 2409,
+    message: 'Không thể rút đơn. Đơn đã được chuyển trạng thái.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_APPLICATION_STATUS_INVALID: {
+    code: 2410,
+    message: 'Trạng thái đơn ứng tuyển không hợp lệ.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+
+  // ─────────────────────────────────────────
   // ROLE (3000 – 3099)
   // ─────────────────────────────────────────
+  MEDIA_FILE_REQUIRED: {
+    code: 2501,
+    message: 'File tai len khong duoc de trong.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  MEDIA_FILE_TOO_LARGE: {
+    code: 2502,
+    message: 'Dung luong file toi da 5MB.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  MEDIA_FILE_TYPE_INVALID: {
+    code: 2503,
+    message: 'Dinh dang file khong hop le. Chi chap nhan file anh.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  MEDIA_TYPE_INVALID: {
+    code: 2504,
+    message: 'Loai media khong hop le.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  MEDIA_UPLOAD_FAILED: {
+    code: 2505,
+    message: 'Tai media that bai.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+
   ROLE_UNABLE_TO_DETERMINE: {
     code: 3003,
     message: 'Không xác định được quyền hạn của người dùng.',
@@ -278,10 +363,10 @@ export const ERROR_CODES = {
   // ─────────────────────────────────────────
   // SYSTEM (9000 – 9999)
   // ─────────────────────────────────────────
-  INVALID_OTP_TYPE: {
+  IP_NOT_FOUND: {
     code: 9000,
-    message: 'Loại OTP không hợp lệ.',
-    status: HttpStatus.BAD_REQUEST,
+    message: 'Không tìm thấy IP.',
+    status: HttpStatus.NOT_FOUND,
   },
   INTERNAL_SERVER_ERROR: {
     code: 9001,

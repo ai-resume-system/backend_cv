@@ -49,6 +49,13 @@ export class RequestGetJobsDto extends RequestPaginationDto {
   @IsString()
   careerCategoryId?: string;
 
+  @ApiPropertyOptional({
+    description: 'Filter jobs by career category slug, e.g: y-te',
+  })
+  @IsOptional()
+  @IsString()
+  careerCategorySlug?: string;
+
   @ApiPropertyOptional({ enum: EJobStatus })
   @IsOptional()
   @IsEnum(EJobStatus)

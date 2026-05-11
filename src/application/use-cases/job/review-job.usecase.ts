@@ -6,6 +6,7 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -14,6 +15,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class ReviewJobUseCase extends BaseUsecase {
   constructor(
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
+    @Inject('ICompanyRepository')
+    private readonly companyRepository: ICompanyRepository,
     private readonly redis: RedisAdapter,
   ) {
     super(new Logger(ReviewJobUseCase.name));
@@ -47,7 +50,31 @@ export class ReviewJobUseCase extends BaseUsecase {
       });
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
-      return { data: job };
+
+      const company = await this.companyRepository.findById(job.companyId);
+      const data = {
+        id: job.id,
+        title: job.title,
+        shortDescription: job.shortDescription,
+        location: job.location,
+        salaryMin: job.salaryMin,
+        salaryMax: job.salaryMax,
+        experienceYears: job.experienceYears,
+        jobType: job.jobType,
+        expiredAt: job.expiredAt,
+        status: job.status,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt,
+        company: {
+          id: company?.id || job.companyId,
+          companyName: company?.companyName,
+          logoUrl: company?.logoUrl,
+          location: company?.location,
+          websiteUrl: company?.websiteUrl,
+        },
+        careerCategory: undefined,
+      };
+      return { data };
     });
   }
 

@@ -8,11 +8,13 @@ import {
   DeleteDateColumn,
   Index,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
 import type { IJobEntity } from 'src/domain/entities/job.entity';
 import { CompanyOrmEntity } from './company.orm-entity';
 import { CareerCategoryOrmEntity } from './career-category.orm-entity';
+import { JobApplicationOrmEntity } from './job-application.orm-entity';
 
 @Entity('jobs')
 @Index(['deletedAt', 'status'])
@@ -126,4 +128,10 @@ export class JobOrmEntity implements IJobEntity {
   @ManyToOne(() => CareerCategoryOrmEntity, { nullable: true })
   @JoinColumn({ name: 'career_category_id' })
   careerCategory?: CareerCategoryOrmEntity;
+
+  @OneToMany(
+    () => JobApplicationOrmEntity,
+    (jobApplication) => jobApplication.job,
+  )
+  jobApplications: JobApplicationOrmEntity[];
 }

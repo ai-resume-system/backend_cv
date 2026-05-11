@@ -14,6 +14,7 @@ import { CareerCategoriesModule } from './presentation/career-category/career-ca
 import { UsersModule } from './presentation/user/users.module';
 import { CVModule } from './presentation/cv/cv.module';
 import { JobsModule } from './presentation/job/jobs.module';
+import { JobApplicationModule } from './presentation/job-application/job-application.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { JobsModule } from './presentation/job/jobs.module';
     UsersModule,
     CVModule,
     JobsModule,
+    JobApplicationModule,
   ],
   controllers: [],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

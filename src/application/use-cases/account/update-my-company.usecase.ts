@@ -41,6 +41,7 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
         companyName: updated.companyName,
         taxCode: updated.taxCode,
         logoUrl: updated.logoUrl,
+        bannerUrl: updated.bannerUrl,
         location: updated.location,
         description: updated.description,
         websiteUrl: updated.websiteUrl,

@@ -72,6 +72,7 @@ export class GetMyProfileQuery extends BaseUsecase {
                   careerCategoriesId: company.careerCategoriesId,
                   companyName: company.companyName,
                   logoUrl: company.logoUrl,
+                  bannerUrl: company.bannerUrl,
                   location: company.location,
                   description: company.description,
                   taxCode: company.taxCode,

@@ -63,9 +63,6 @@ export class ResponseListApiCVDto {
 
   @ApiProperty({ type: PaginationDto })
   pagination?: PaginationDto;
-
-  @ApiPropertyOptional()
-  nextCursor?: string;
 }
 
 export class ResponseCVDownloadDto {

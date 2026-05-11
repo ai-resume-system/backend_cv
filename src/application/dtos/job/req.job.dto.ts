@@ -8,6 +8,10 @@ export interface IGetJobsDto extends IApiRequestPagination {
   location?: string;
   jobType?: EJobType;
   companyId?: string;
+  // public
+  careerCategorySlug?: string;
+
+  // internal/admin
   careerCategoryId?: string;
   status?: EJobStatus;
 }

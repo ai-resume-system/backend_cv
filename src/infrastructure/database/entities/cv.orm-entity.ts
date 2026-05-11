@@ -10,10 +10,12 @@ import {
   Entity,
   Index,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { UserOrmEntity } from './user.orm-entity';
+import { JobApplicationOrmEntity } from './job-application.orm-entity';
 
 @Entity('cvs')
 @Index(['deletedAt', 'status'])
@@ -90,4 +92,10 @@ export class CVOrmEntity implements ICVEntity {
     onDelete: 'CASCADE',
   })
   user: UserOrmEntity;
+
+  @OneToMany(
+    () => JobApplicationOrmEntity,
+    (jobApplication) => jobApplication.cv,
+  )
+  jobApplications: JobApplicationOrmEntity[];
 }

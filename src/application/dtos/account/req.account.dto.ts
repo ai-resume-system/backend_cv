@@ -9,6 +9,7 @@ export interface IRequestUpdateMyCompanyDto {
   companyName?: string;
   taxCode?: string;
   logoUrl?: string;
+  bannerUrl?: string;
   location?: string;
   description?: string;
   websiteUrl?: string;

@@ -12,6 +12,7 @@ import { JobOrmEntity } from 'src/infrastructure/database/entities/job.orm-entit
 import { CompanyTypeormRepository } from 'src/infrastructure/database/repositories/company.typeorm-repository';
 import { JobTypeormRepository } from 'src/infrastructure/database/repositories/job.typeorm-repository';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
+import { CareerCategoriesModule } from 'src/presentation/career-category/career-categories.module';
 import { JobController } from 'src/presentation/job/controller/job.controller';
 
 @Module({
@@ -19,6 +20,7 @@ import { JobController } from 'src/presentation/job/controller/job.controller';
     TypeOrmModule.forFeature([JobOrmEntity, CompanyOrmEntity]),
     JwtAuthModule,
     RedisModule,
+    CareerCategoriesModule,
   ],
   controllers: [JobController],
   providers: [
@@ -31,6 +33,6 @@ import { JobController } from 'src/presentation/job/controller/job.controller';
     { provide: 'IJobRepository', useClass: JobTypeormRepository },
     { provide: 'ICompanyRepository', useClass: CompanyTypeormRepository },
   ],
-  exports: ['IJobRepository'],
+  exports: ['IJobRepository', 'ICompanyRepository'],
 })
 export class JobsModule {}

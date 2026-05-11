@@ -37,10 +37,10 @@ export class LoginUseCase extends BaseUsecase {
     deviceInfo?: string,
   ): Promise<IResponseAuthDto> {
     return this.runSafe(
-      'Login',
+      '[Login]: ',
       async () => {
         if (!ip) {
-          throw new AppException(ERROR_CODES.AUTH_INVALID_CREDENTIALS);
+          throw new AppException(ERROR_CODES.IP_NOT_FOUND);
         }
 
         try {

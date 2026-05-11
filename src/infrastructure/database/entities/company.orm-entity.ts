@@ -37,6 +37,9 @@ export class CompanyOrmEntity implements ICompanyEntity {
   @Column({ name: 'logo_url', type: 'text', nullable: true })
   logoUrl?: string;
 
+  @Column({ name: 'banner_url', type: 'text', nullable: true })
+  bannerUrl?: string;
+
   @Column({ name: 'location', type: 'text', nullable: true })
   location?: string;
 

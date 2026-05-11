@@ -60,14 +60,6 @@ export abstract class BaseTypeormRepository<
         }
       });
 
-      ///
-      if (otherFilters.expiredAtBefore) {
-        queryBuilder.andWhere('entity.expiredAt  < :expiredAtBefore', {
-          expiredAtBefore: otherFilters.expiredAtBefore,
-        });
-        delete otherFilters.expiredAtBefore;
-      }
-
       if (q) {
         const searchableColumns = this.getSearchableColumns();
 

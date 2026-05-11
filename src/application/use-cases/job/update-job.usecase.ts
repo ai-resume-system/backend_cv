@@ -56,7 +56,29 @@ export class UpdateJobUseCase extends BaseUsecase {
         const job = await this.jobRepository.update(id, dto);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
-        return { data: job };
+        const data = {
+          id: job.id,
+          title: job.title,
+          shortDescription: job.shortDescription,
+          location: job.location,
+          salaryMin: job.salaryMin,
+          salaryMax: job.salaryMax,
+          experienceYears: job.experienceYears,
+          jobType: job.jobType,
+          expiredAt: job.expiredAt,
+          status: job.status,
+          createdAt: job.createdAt,
+          updatedAt: job.updatedAt,
+          company: {
+            id: company.id,
+            companyName: company.companyName,
+            logoUrl: company.logoUrl,
+            location: company.location,
+            websiteUrl: company.websiteUrl,
+          },
+          careerCategory: undefined,
+        };
+        return { data };
       },
       ERROR_CODES.JOB_UPDATE_FAILED,
     );

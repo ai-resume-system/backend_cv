@@ -9,6 +9,11 @@ export interface IValidatedFile {
   mime: string;
 }
 
+export interface IValidatedImageFile {
+  extension: 'jpeg' | 'png' | 'webp';
+  mime: string;
+}
+
 const MAX_CV_FILE_SIZE = 5 * 1024 * 1024;
 @Injectable()
 export class FileValidationService {

@@ -1,7 +1,6 @@
 export interface IApiResponseMeta {
   status: boolean;
   message: string;
-  extra?: object | null;
 }
 
 export interface IApiResponsePagination {

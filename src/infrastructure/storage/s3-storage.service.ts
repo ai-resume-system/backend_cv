@@ -13,6 +13,7 @@ export enum EBucketType {
   CV = 'cv',
   COMPANY_LOGO = 'company_logo',
   AVATAR = 'avatar',
+  BANNER = 'banner',
 }
 
 export interface IUploadObjectParams {
@@ -210,6 +211,11 @@ export class S3StorageService {
         return (
           this.configService.get<string>('MINIO_S3_BUCKET_AVATAR') ||
           'avatars-profile'
+        );
+      case EBucketType.BANNER:
+        return (
+          this.configService.get<string>('MINIO_S3_BUCKET_BANNER') ||
+          'company-banners'
         );
       default:
         return (

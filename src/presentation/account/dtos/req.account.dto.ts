@@ -39,6 +39,11 @@ export class RequestUpdateMyCompanyDto {
   @IsString()
   logoUrl?: string;
 
+  @ApiPropertyOptional({ example: 'https://example.com/banner.jpg' })
+  @IsOptional()
+  @IsString()
+  bannerUrl?: string;
+
   @ApiPropertyOptional({ example: 'Hanoi' })
   @IsOptional()
   @IsString()

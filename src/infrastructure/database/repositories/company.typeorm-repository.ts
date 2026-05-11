@@ -37,6 +37,7 @@ export class CompanyTypeormRepository
       careerCategoriesId: orm.careerCategoriesId,
       companyName: orm.companyName,
       logoUrl: orm.logoUrl,
+      bannerUrl: orm.bannerUrl,
       location: orm.location,
       description: orm.description,
       taxCode: orm.taxCode,

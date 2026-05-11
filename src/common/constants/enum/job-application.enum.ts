@@ -1,4 +1,4 @@
-export enum EApplicationStatus {
+export enum EJobApplicationStatus {
   APPLIED = 'APPLIED', // vừa apply
   REVIEWING = 'REVIEWING', // HR đang xem
   INTERVIEW = 'INTERVIEW', // đã lên lịch phỏng vấn

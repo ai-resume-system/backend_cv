@@ -22,14 +22,6 @@ export class MetaDto implements IApiResponseMeta {
     type: String,
   })
   message: string;
-
-  @ApiPropertyOptional({
-    description: 'Additional metadata, if any',
-    example: null,
-    nullable: true,
-    type: Object,
-  })
-  extra?: object | null;
 }
 
 // Pagination DTO
