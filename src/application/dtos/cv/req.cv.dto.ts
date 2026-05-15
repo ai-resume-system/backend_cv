@@ -11,11 +11,11 @@ export interface IRequestGetCVsDto extends IApiRequestPagination {
 
 export interface IRequestCreateCVDto {
   title?: string;
-  file: Express.Multer.File; //fileUrl
+  fileUrl: string;
+  fileExtension: 'pdf' | 'docx' | 'doc';
 }
 
 export interface IRequestUpdateCVDto {
   title?: string;
-  file?: Express.Multer.File; //fileUrl
   status?: ECVStatus;
 }

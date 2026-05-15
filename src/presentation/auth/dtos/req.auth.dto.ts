@@ -54,8 +54,6 @@ export class RequestRegisterRecruiterDto extends RequestRegisterDto {
   @ApiProperty({ example: 'Tech Company' })
   @IsNotEmpty()
   @IsString()
-  @MinLength(2)
-  @MaxLength(200)
   company_name: string;
 
   @ApiProperty({ example: 'Hanoi' })

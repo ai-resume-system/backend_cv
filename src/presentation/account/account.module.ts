@@ -7,9 +7,10 @@ import { ChangePasswordUseCase } from 'src/application/use-cases/account/change-
 import { UsersModule } from '../user/users.module';
 import { JwtAuthModule } from 'src/common/guards/jwt-auth.module';
 import { AuthModule } from '../auth/auth.module';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 
 @Module({
-  imports: [UsersModule, JwtAuthModule, AuthModule],
+  imports: [UsersModule, JwtAuthModule, AuthModule, StorageModule],
   controllers: [AccountController],
   providers: [
     GetMyProfileQuery,

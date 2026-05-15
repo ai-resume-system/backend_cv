@@ -7,6 +7,10 @@ import type { ICompanyRepository } from 'src/domain/repositories/company.reposit
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import {
+  EBucketType,
+  S3StorageService,
+} from 'src/infrastructure/storage/s3-storage.service';
 
 const ACCOUNT_PROFILE_CACHE_TTL_SECONDS = 900;
 
@@ -19,6 +23,7 @@ export class GetMyProfileQuery extends BaseUsecase {
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     private readonly redis: RedisAdapter,
+    private readonly storage: S3StorageService,
   ) {
     super(new Logger(GetMyProfileQuery.name));
   }
@@ -58,7 +63,10 @@ export class GetMyProfileQuery extends BaseUsecase {
             profile: profile
               ? {
                   fullName: profile.fullName,
-                  avatarUrl: profile.avatarUrl,
+                  avatarUrl: await this.toPreviewUrl(
+                    profile.avatarUrl,
+                    EBucketType.AVATAR,
+                  ),
                   bio: profile.bio,
                 }
               : undefined,
@@ -71,8 +79,14 @@ export class GetMyProfileQuery extends BaseUsecase {
               ? {
                   careerCategoriesId: company.careerCategoriesId,
                   companyName: company.companyName,
-                  logoUrl: company.logoUrl,
-                  bannerUrl: company.bannerUrl,
+                  logoUrl: await this.toPreviewUrl(
+                    company.logoUrl,
+                    EBucketType.COMPANY_LOGO,
+                  ),
+                  bannerUrl: await this.toPreviewUrl(
+                    company.bannerUrl,
+                    EBucketType.BANNER,
+                  ),
                   location: company.location,
                   description: company.description,
                   taxCode: company.taxCode,
@@ -97,5 +111,19 @@ export class GetMyProfileQuery extends BaseUsecase {
       );
       return response;
     });
+  }
+
+  private async toPreviewUrl(
+    value: string | undefined,
+    bucketType: EBucketType,
+  ): Promise<string | undefined> {
+    if (!value || this.storage.isExternalUrl(value)) {
+      return value;
+    }
+    return this.storage.createPrivatePreviewUrl(
+      value,
+      bucketType,
+      ACCOUNT_PROFILE_CACHE_TTL_SECONDS,
+    );
   }
 }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { JwtAuthModule } from './common/guards/jwt-auth.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
@@ -15,10 +16,12 @@ import { UsersModule } from './presentation/user/users.module';
 import { CVModule } from './presentation/cv/cv.module';
 import { JobsModule } from './presentation/job/jobs.module';
 import { JobApplicationModule } from './presentation/job-application/job-application.module';
+import { UploadModule } from './presentation/upload/upload.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     DatabaseModule,
     RedisModule,
@@ -27,6 +30,7 @@ import { JobApplicationModule } from './presentation/job-application/job-applica
     QueueModule,
     AuthModule,
     AccountModule,
+    UploadModule,
     CareerCategoriesModule,
     UsersModule,
     CVModule,

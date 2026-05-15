@@ -10,11 +10,11 @@ export interface IValidatedFile {
 }
 
 export interface IValidatedImageFile {
-  extension: 'jpeg' | 'png' | 'webp';
+  extension: 'jpg' | 'jpeg' | 'png' | 'webp';
   mime: string;
 }
 
-const MAX_CV_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 @Injectable()
 export class FileValidationService {
   async validateCvFile(file: Express.Multer.File): Promise<IValidatedFile> {
@@ -22,7 +22,7 @@ export class FileValidationService {
       throw new AppException(ERROR_CODES.VALIDATION_ERROR);
     }
 
-    if (file.size > MAX_CV_FILE_SIZE) {
+    if (file.size > MAX_FILE_SIZE) {
       throw new AppException(ERROR_CODES.CV_FILE_TOO_LARGE);
     }
 
@@ -66,5 +66,46 @@ export class FileValidationService {
     }
 
     throw new AppException(ERROR_CODES.CV_FILE_TYPE_INVALID);
+  }
+
+  async validateImageFile(
+    file: Express.Multer.File,
+  ): Promise<IValidatedImageFile> {
+    if (!file || !file.buffer?.length) {
+      throw new AppException(ERROR_CODES.MEDIA_FILE_REQUIRED);
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      throw new AppException(ERROR_CODES.MEDIA_FILE_TOO_LARGE);
+    }
+
+    const detected = await fileTypeFromBuffer(file.buffer);
+    const detectedExtension = detected?.ext?.toLowerCase();
+    const detectedMime = detected?.mime?.toLowerCase();
+    const originalExtension = extname(file.originalname || '')
+      .replace('.', '')
+      .toLowerCase();
+
+    const isAllowedImage =
+      detectedMime &&
+      ['image/jpeg', 'image/png', 'image/webp'].includes(detectedMime) &&
+      ['jpg', 'jpeg', 'png', 'webp'].includes(originalExtension) &&
+      ['jpg', 'jpeg', 'png', 'webp'].includes(detectedExtension || '');
+
+    if (!isAllowedImage) {
+      throw new AppException(ERROR_CODES.MEDIA_FILE_TYPE_INVALID);
+    }
+
+    if (detectedMime === 'image/jpeg') {
+      return {
+        extension: originalExtension === 'jpg' ? 'jpg' : 'jpeg',
+        mime: 'image/jpeg',
+      };
+    }
+
+    return {
+      extension: detectedExtension as 'png' | 'webp',
+      mime: detectedMime,
+    };
   }
 }

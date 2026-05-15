@@ -1,7 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
-  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -43,14 +42,12 @@ export class RequestCreateCVDto {
   title?: string;
 
   @ApiPropertyOptional()
-  @IsOptional()
   @IsString()
-  file?: string;
+  fileUrl: string;
 
   @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  isDefault?: boolean;
+  @IsString()
+  fileExtension: 'pdf' | 'docx' | 'doc';
 }
 
 export class RequestUpdateCVDto {

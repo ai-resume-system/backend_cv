@@ -17,8 +17,8 @@ export interface ICacheInvalidateJob {
 }
 
 export interface IStorageDeleteJob {
-  bucketType: 'cv' | 'company_logo' | 'avatar';
+  bucketType: 'cv' | 'company_logo' | 'avatar' | 'banner';
   objectKey: string;
-  reason: 'cv.deleted' | 'cv.replaced';
+  reason: 'cv.deleted' | 'cv.replaced' | 'storage.cleanup';
   aggregateId: string;
 }

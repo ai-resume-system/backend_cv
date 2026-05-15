@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
@@ -21,6 +22,12 @@ export interface IUploadObjectParams {
   buffer: Buffer;
   contentType: string;
   bucketType?: EBucketType;
+}
+
+export interface IStorageObjectInfo {
+  key: string;
+  lastModified?: Date;
+  size?: number;
 }
 
 @Injectable()
@@ -133,6 +140,38 @@ export class S3StorageService {
     );
   }
 
+  async listObjects(
+    bucketType: EBucketType,
+    prefix?: string,
+  ): Promise<IStorageObjectInfo[]> {
+    const bucket = this.getBucket(bucketType);
+    const objects: IStorageObjectInfo[] = [];
+    let continuationToken: string | undefined;
+
+    do {
+      const result = await this.s3.send(
+        new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        }),
+      );
+
+      for (const item of result.Contents || []) {
+        if (!item.Key) continue;
+        objects.push({
+          key: item.Key,
+          lastModified: item.LastModified,
+          size: item.Size,
+        });
+      }
+
+      continuationToken = result.NextContinuationToken;
+    } while (continuationToken);
+
+    return objects;
+  }
+
   normalizeObjectKey(
     keyOrUrl: string,
     bucketType: EBucketType = EBucketType.CV,
@@ -194,6 +233,17 @@ export class S3StorageService {
     const bucket = this.getBucket(bucketType);
     const baseUrl = this.endpoint.replace(/\/$/, '');
     return `${baseUrl}/${bucket}/${key.replace(/^\//, '')}`;
+  }
+
+  isExternalUrl(value?: string): boolean {
+    if (!value) return false;
+    try {
+      const url = new URL(value);
+      const endpoint = new URL(this.endpoint);
+      return url.host !== endpoint.host;
+    } catch {
+      return false;
+    }
   }
 
   private getBucket(bucketType: EBucketType): string {

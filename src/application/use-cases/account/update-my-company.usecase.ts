@@ -6,6 +6,12 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { IRequestUpdateMyCompanyDto } from 'src/application/dtos/account/req.account.dto';
 import type { IResponseMyCompanyDto } from 'src/application/dtos/account/res.account.dto';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import {
+  EBucketType,
+  S3StorageService,
+} from 'src/infrastructure/storage/s3-storage.service';
+
+const ACCOUNT_IMAGE_PREVIEW_TTL_SECONDS = 900;
 
 @Injectable()
 export class UpdateMyCompanyUseCase extends BaseUsecase {
@@ -13,6 +19,7 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     private readonly queueDispatch: QueueDispatchService,
+    private readonly storage: S3StorageService,
   ) {
     super(new Logger(UpdateMyCompanyUseCase.name));
   }
@@ -40,12 +47,29 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
         careerCategoriesId: updated.careerCategoriesId,
         companyName: updated.companyName,
         taxCode: updated.taxCode,
-        logoUrl: updated.logoUrl,
-        bannerUrl: updated.bannerUrl,
+        logoUrl: await this.toPreviewUrl(
+          updated.logoUrl,
+          EBucketType.COMPANY_LOGO,
+        ),
+        bannerUrl: await this.toPreviewUrl(updated.bannerUrl, EBucketType.BANNER),
         location: updated.location,
         description: updated.description,
         websiteUrl: updated.websiteUrl,
       };
     });
+  }
+
+  private async toPreviewUrl(
+    value: string | undefined,
+    bucketType: EBucketType,
+  ): Promise<string | undefined> {
+    if (!value || this.storage.isExternalUrl(value)) {
+      return value;
+    }
+    return this.storage.createPrivatePreviewUrl(
+      value,
+      bucketType,
+      ACCOUNT_IMAGE_PREVIEW_TTL_SECONDS,
+    );
   }
 }
