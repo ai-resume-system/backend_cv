@@ -1,3 +1,4 @@
+// Cấu hình để response trả về theo dạng {meta: {...}, data: {...}, pagination: {...}}
 import {
   Injectable,
   NestInterceptor,

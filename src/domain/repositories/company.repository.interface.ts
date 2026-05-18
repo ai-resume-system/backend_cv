@@ -2,7 +2,7 @@ import { ICompanyEntity } from '../entities/company.entity';
 import { IBaseRepository } from './base.repository.interface';
 
 export interface ICompanyRepository extends IBaseRepository<ICompanyEntity> {
-  findById(id: string): Promise<ICompanyEntity | null>;
+  findByIds(ids: string[]): Promise<ICompanyEntity[]>;
   findByUserId(userId: string): Promise<ICompanyEntity | null>;
   updateWithUserId(
     userId: string,

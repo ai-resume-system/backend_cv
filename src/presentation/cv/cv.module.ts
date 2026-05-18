@@ -25,7 +25,6 @@ import { CVController } from 'src/presentation/cv/controller/cv.controller';
   controllers: [CVController],
   providers: [
     GetCVsQuery,
-    // GetCVByIdQuery,
     GetCVDownloadUrlQuery,
     GetCVPreviewUrlQuery,
     CreateCVUseCase,

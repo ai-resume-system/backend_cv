@@ -38,18 +38,18 @@ export class S3StorageService {
 
   constructor(private readonly configService: ConfigService) {
     this.endpoint =
-      this.configService.get<string>('MINIO_ENDPOINT') ||
+      this.configService.get<string>('minio.endpoint') ||
       'http://localhost:9000';
-    const accessKeyId = this.configService.get<string>('MINIO_ACCESS_KEY_ID');
+    const accessKeyId = this.configService.get<string>('minio.accessKeyId');
     const secretAccessKey = this.configService.get<string>(
-      'MINIO_SECRET_ACCESS_KEY',
+      'minio.secretAccessKey',
     );
     const s3Region =
-      this.configService.get<string>('MINIO_S3_REGION') || 'us-east-1';
+      this.configService.get<string>('minio.region') || 'us-east-1';
 
     const forcePathStyle =
-      this.configService.get<string>('MINIO_FORCE_PATH_STYLE') === 'true' ||
-      this.configService.get<boolean>('MINIO_FORCE_PATH_STYLE') === true;
+      this.configService.get<string>('minio.pathStyle') === 'true' ||
+      this.configService.get<boolean>('minio.pathStyle') === true;
 
     if (!this.endpoint || !accessKeyId || !secretAccessKey) {
       throw new Error(
@@ -209,7 +209,7 @@ export class S3StorageService {
       {
         expiresIn:
           expiresIn ||
-          this.configService.get<number>('S3_PRESIGNED_TTL_SECONDS') ||
+          this.configService.get<number>('minio.presignedUrlTtl') ||
           900,
       },
     );
@@ -249,28 +249,23 @@ export class S3StorageService {
   private getBucket(bucketType: EBucketType): string {
     switch (bucketType) {
       case EBucketType.CV:
-        return (
-          this.configService.get<string>('MINIO_S3_BUCKET_CV') || 'cv-files'
-        );
+        return this.configService.get<string>('minio.cvBucket') || 'cv-files';
       case EBucketType.COMPANY_LOGO:
         return (
-          this.configService.get<string>('MINIO_S3_BUCKET_LOGO') ||
-          'company-logos'
+          this.configService.get<string>('minio.logoBucket') || 'company-logos'
         );
       case EBucketType.AVATAR:
         return (
-          this.configService.get<string>('MINIO_S3_BUCKET_AVATAR') ||
+          this.configService.get<string>('minio.avatarBucket') ||
           'avatars-profile'
         );
       case EBucketType.BANNER:
         return (
-          this.configService.get<string>('MINIO_S3_BUCKET_BANNER') ||
+          this.configService.get<string>('minio.bannerBucket') ||
           'company-banners'
         );
       default:
-        return (
-          this.configService.get<string>('MINIO_S3_BUCKET_CV') || 'cv-files'
-        );
+        return this.configService.get<string>('minio.cvBucket') || 'cv-files';
     }
   }
 }

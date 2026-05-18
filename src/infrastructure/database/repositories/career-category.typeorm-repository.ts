@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { Repository, IsNull, In } from 'typeorm';
 import { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import { CareerCategoryOrmEntity } from '../entities/career-category.orm-entity';
 import { ICareerCategoryEntity } from 'src/domain/entities/career-category.entity';
@@ -21,6 +21,28 @@ export class CareerCategoryTypeormRepository
 
   protected getSearchableColumns(): string[] {
     return ['name', 'slug'];
+  }
+
+  async findById(id: string): Promise<ICareerCategoryEntity | null> {
+    const orm = await this.ormRepository.findOne({
+      where: { id, deletedAt: IsNull() },
+    });
+    return orm ? this.toDomain(orm) : null;
+  }
+
+  async findByIds(ids: string[]): Promise<ICareerCategoryEntity[]> {
+    if (!ids.length) {
+      return [];
+    }
+
+    const orms = await this.ormRepository.find({
+      where: {
+        id: In(ids),
+        deletedAt: IsNull(),
+      },
+    });
+
+    return orms.map((orm) => this.toDomain(orm));
   }
 
   async findByName(name: string): Promise<ICareerCategoryEntity | null> {

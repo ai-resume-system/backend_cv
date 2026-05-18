@@ -70,13 +70,6 @@ export class UploadFileUseCase extends BaseUsecase {
       fileExtension: validated.extension,
     });
 
-    // TODO: Uncomment when AI service is ready
-    // await this.queueDispatch.dispatchCvParse({
-    //   cvId: cv.id,
-    //   fileKey: objectKey,
-    //   extension: validated.extension,
-    // });
-
     await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_LIST);
     return { data: cv };
   }

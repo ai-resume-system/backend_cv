@@ -18,7 +18,8 @@ import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 @Injectable()
 export class GetJobsQuery extends BaseUsecase {
   constructor(
-    @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
+    @Inject('IJobRepository')
+    private readonly jobRepository: IJobRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     @Inject('ICareerCategoryRepository')
@@ -77,34 +78,69 @@ export class GetJobsQuery extends BaseUsecase {
       },
     });
 
-    const data = dbResult.data.map((job) => ({
-      id: job.id,
-      title: job.title,
-      shortDescription: job.shortDescription,
-      location: job.location,
-      salaryMin: job.salaryMin,
-      salaryMax: job.salaryMax,
-      experienceYears: job.experienceYears,
-      jobType: job.jobType,
-      expiredAt: job.expiredAt,
-      status: job.status,
-      createdAt: job.createdAt,
-      updatedAt: job.updatedAt,
-      company: {
-        id: job.company?.id || job.companyId,
-        companyName: job.company?.companyName,
-        logoUrl: job.company?.logoUrl,
-        location: job.company?.location,
-        websiteUrl: job.company?.websiteUrl,
-      },
-      careerCategory: job.careerCategory
-        ? {
-            id: job.careerCategory.id,
-            name: job.careerCategory.name,
-            slug: job.careerCategory.slug,
-          }
-        : undefined,
-    }));
+    // Lấy companyId từ dbResult
+    const companyIds = [...new Set(dbResult.data.map((job) => job.companyId))];
+    const careerCategoryIds = [
+      ...new Set(
+        dbResult.data
+          .map((job) => job.careerCategoryId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+
+    //
+    const [companies, careerCategories] = await Promise.all([
+      this.companyRepository.findByIds(companyIds),
+      this.careerCategoryRepository.findByIds(careerCategoryIds),
+    ]);
+
+    const companiesMap = new Map(
+      companies.map((company) => [company.id, company]),
+    );
+    const careerCategoryMap = new Map(
+      careerCategories.map((careerCategory) => [
+        careerCategory.id,
+        careerCategory,
+      ]),
+    );
+
+    const data = dbResult.data.map((job) => {
+      const company = companiesMap.get(job.companyId);
+      if (!company) {
+        throw new AppException(ERROR_CODES.USER_NOT_FOUND); //tạm
+      }
+      const careerCategory = job.careerCategoryId
+        ? careerCategoryMap.get(job.careerCategoryId)
+        : undefined;
+
+      return {
+        id: job.id,
+        title: job.title,
+        shortDescription: job.shortDescription,
+        location: job.location,
+        salaryMin: job.salaryMin,
+        salaryMax: job.salaryMax,
+        experienceYears: job.experienceYears,
+        expiredAt: job.expiredAt,
+        status: job.status,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt,
+        company: {
+          id: company.id,
+          companyName: company.companyName,
+          logoUrl: company.logoUrl,
+          location: company.location,
+          websiteUrl: company.websiteUrl,
+        },
+        careerCategory: careerCategory
+          ? {
+              id: careerCategory.id,
+              name: careerCategory.name,
+              slug: careerCategory.slug,
+            }
+          : undefined,
+      };
+    });
 
     const response = {
       data,

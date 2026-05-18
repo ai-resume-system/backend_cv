@@ -1,4 +1,4 @@
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { IApiResponse } from 'src/common/interface/api-response.interface';
 
 export interface IJobCompanyDto {
@@ -23,7 +23,6 @@ export interface IJobResponseDto {
   salaryMin?: number;
   salaryMax?: number;
   experienceYears?: number;
-  jobType: EJobType;
   expiredAt?: Date;
   status: EJobStatus;
   createdAt: Date;

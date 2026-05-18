@@ -10,7 +10,7 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import type { IJobEntity } from 'src/domain/entities/job.entity';
 import { CompanyOrmEntity } from './company.orm-entity';
 import { CareerCategoryOrmEntity } from './career-category.orm-entity';
@@ -74,14 +74,6 @@ export class JobOrmEntity implements IJobEntity {
 
   @Column({ name: 'experience_years', type: 'int', nullable: true })
   experienceYears?: number;
-
-  @Column({
-    name: 'job_type',
-    type: 'enum',
-    enum: EJobType,
-    default: EJobType.FULL_TIME,
-  })
-  jobType: EJobType;
 
   @Column({ name: 'expired_at', type: 'timestamptz', nullable: true })
   expiredAt?: Date;

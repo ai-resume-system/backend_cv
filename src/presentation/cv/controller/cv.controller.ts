@@ -34,7 +34,6 @@ import {
 export class CVController extends BaseController {
   constructor(
     private readonly getCVsQuery: GetCVsQuery,
-    // private readonly getCVByIdQuery: GetCVByIdQuery,
     private readonly getCVDownloadUrlQuery: GetCVDownloadUrlQuery,
     private readonly getCVPreviewUrlQuery: GetCVPreviewUrlQuery,
     private readonly updateCVUseCase: UpdateCVUseCase,
@@ -76,17 +75,6 @@ export class CVController extends BaseController {
   ): Promise<ResponseApiCVPreviewDto> {
     return this.getCVPreviewUrlQuery.execute(id, user.id);
   }
-
-  // @Get(':id')
-  // @AuthRequired(EUserRole.JOB_SEEKER)
-  // @ApiOperation({ summary: 'Get CV metadata' })
-  // @ApiResponse({ status: 200, type: ResponseApiCVDto })
-  // async getCVById(
-  //   @AuthCurrentUser() user: ICurrentUser,
-  //   @Param('id') id: string,
-  // ): Promise<ResponseApiCVDto> {
-  //   return this.getCVByIdQuery.execute(id, user.id);
-  // }
 
   @Patch(':id')
   @AuthRequired(EUserRole.JOB_SEEKER)

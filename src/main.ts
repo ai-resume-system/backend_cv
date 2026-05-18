@@ -13,6 +13,7 @@ import { ERROR_CODES } from './common/constants/error-codes.constants';
 import { AppException } from './common/exceptions/app.exception';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { ConfigService } from '@nestjs/config';
 
 // Hàm cấu hình global prefix (thêm /api vào đầu mỗi route)
 function setGlobalPrefix(app: INestApplication<any>, logger: Logger) {
@@ -121,10 +122,11 @@ async function bootstrap() {
     setSwagger(app, logger);
   }
 
-  const port = process.env.WEB_PORT || 3000;
-  await app.listen(port);
-  logger.log(
-    `[DOCS] Documentation: http://${process.env.IP_ADDRESS}:${port}/api/docs`,
-  );
+  const configService = app.get(ConfigService);
+
+  const host = configService.get<string>('app.host') || 'localhost';
+  const port = configService.get<number>('app.port') || 3000;
+  await app.listen(port, host);
+  logger.log(`[DOCS] Documentation: http://${host}:${port}/api/docs`);
 }
 bootstrap();

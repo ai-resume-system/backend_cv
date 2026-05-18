@@ -60,7 +60,6 @@ export class ReviewJobUseCase extends BaseUsecase {
         salaryMin: job.salaryMin,
         salaryMax: job.salaryMax,
         experienceYears: job.experienceYears,
-        jobType: job.jobType,
         expiredAt: job.expiredAt,
         status: job.status,
         createdAt: job.createdAt,

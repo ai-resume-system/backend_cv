@@ -2,15 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsDateString,
-  IsEnum,
   IsInt,
   IsOptional,
   IsString,
   MaxLength,
-  Min,
 } from 'class-validator';
-import { extname } from 'path';
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 
 export class RequestGetJobsDto extends RequestPaginationDto {
@@ -25,19 +22,14 @@ export class RequestGetJobsDto extends RequestPaginationDto {
   sortBy?: string;
 
   @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'DESC' })
-  @IsEnum(['ASC', 'DESC'])
   @IsOptional()
+  @IsString()
   sortOrder?: 'ASC' | 'DESC';
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   location?: string;
-
-  @ApiPropertyOptional({ enum: EJobType })
-  @IsOptional()
-  @IsEnum(EJobType)
-  jobType?: EJobType;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -58,7 +50,7 @@ export class RequestGetJobsDto extends RequestPaginationDto {
 
   @ApiPropertyOptional({ enum: EJobStatus })
   @IsOptional()
-  @IsEnum(EJobStatus)
+  @IsString()
   status?: EJobStatus;
 }
 
@@ -95,10 +87,6 @@ export class RequestCreateJobDto {
   @Transform(({ value }) => Number(value))
   @IsInt()
   experienceYears?: number;
-
-  @ApiProperty({ enum: EJobType })
-  @IsEnum(EJobType)
-  jobType: EJobType;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -145,11 +133,6 @@ export class RequestUpdateJobDto {
   @Transform(({ value }) => Number(value))
   @IsInt()
   experienceYears?: number;
-
-  @ApiPropertyOptional({ enum: EJobType })
-  @IsOptional()
-  @IsEnum(EJobType)
-  jobType?: EJobType;
 
   @ApiPropertyOptional()
   @IsOptional()

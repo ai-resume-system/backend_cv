@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -14,13 +13,15 @@ import { AccountModule } from './presentation/account/account.module';
 import { CareerCategoriesModule } from './presentation/career-category/career-categories.module';
 import { UsersModule } from './presentation/user/users.module';
 import { CVModule } from './presentation/cv/cv.module';
+import { CVAnalysisModule } from './presentation/cv-analysis/cv-analysis.module';
 import { JobsModule } from './presentation/job/jobs.module';
 import { JobApplicationModule } from './presentation/job-application/job-application.module';
 import { UploadModule } from './presentation/upload/upload.module';
+import { ConfigModule } from './common/config/config.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     DatabaseModule,
@@ -34,6 +35,7 @@ import { UploadModule } from './presentation/upload/upload.module';
     CareerCategoriesModule,
     UsersModule,
     CVModule,
+    CVAnalysisModule,
     JobsModule,
     JobApplicationModule,
   ],

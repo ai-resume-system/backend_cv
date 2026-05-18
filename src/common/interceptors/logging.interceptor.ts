@@ -1,3 +1,4 @@
+//Đo thời gian chạy API
 import {
   CallHandler,
   ExecutionContext,
@@ -8,7 +9,6 @@ import {
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
-//Đo thời gian chạy API
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger('HTTP');

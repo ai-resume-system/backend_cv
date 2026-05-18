@@ -9,21 +9,21 @@ export class MailService {
 
   constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('SMTP_HOST'),
-      port: this.configService.get<number>('SMTP_PORT'),
+      host: this.configService.get<string>('email.host'),
+      port: this.configService.get<number>('email.port'),
       secure: false,
       auth: {
-        user: this.configService.get<string>('SMTP_USER'),
-        pass: this.configService.get<string>('SMTP_PASSWORD'),
+        user: this.configService.get<string>('email.user'),
+        pass: this.configService.get<string>('email.password'),
       },
     });
   }
 
   async sendOtp(email: string, otp: string): Promise<void> {
-    const fromName = this.configService.get<string>('MAIL_FROM_NAME');
-    const fromAddress = this.configService.get<string>('MAIL_FROM_ADDRESS');
-    const appName = this.configService.get<string>('MAIL_FROM_NAME');
-    const supportEmail = this.configService.get<string>('SMTP_USER');
+    const fromName = this.configService.get<string>('email.from.name');
+    const fromAddress = this.configService.get<string>('email.from.address');
+    const appName = this.configService.get<string>('email.from.name');
+    const supportEmail = this.configService.get<string>('email.user');
     const year = new Date().getFullYear();
 
     const mailOptions = {

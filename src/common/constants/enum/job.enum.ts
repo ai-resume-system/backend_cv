@@ -5,10 +5,3 @@ export enum EJobStatus {
   REJECTED = 'rejected',
   EXPIRED = 'expired',
 }
-
-export enum EJobType {
-  FULL_TIME = 'full_time',
-  PART_TIME = 'part_time',
-  INTERNSHIP = 'internship',
-  CONTRACT = 'contract',
-}

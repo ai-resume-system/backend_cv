@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import { CompanyOrmEntity } from '../entities/company.orm-entity';
 import { ICompanyEntity } from 'src/domain/entities/company.entity';
@@ -16,6 +16,28 @@ export class CompanyTypeormRepository
     private readonly repository: Repository<CompanyOrmEntity>,
   ) {
     super(repository);
+  }
+
+  async findById(id: string): Promise<ICompanyEntity | null> {
+    const orm = await this.repository.findOne({
+      where: { id, deletedAt: IsNull() },
+    });
+    return orm ? this.toDomain(orm) : null;
+  }
+
+  async findByIds(ids: string[]): Promise<ICompanyEntity[]> {
+    if (!ids.length) {
+      return [];
+    }
+
+    const orms = await this.repository.find({
+      where: {
+        id: In(ids),
+        deletedAt: IsNull(),
+      },
+    });
+
+    return orms.map((orm) => this.toDomain(orm));
   }
 
   async findByUserId(userId: string): Promise<ICompanyEntity | null> {

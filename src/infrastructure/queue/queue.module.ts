@@ -2,12 +2,19 @@ import { BullModule } from '@nestjs/bullmq';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AiAnalysisModule } from '../ai/ai-analysis.module';
+import { CVParsedDataOrmEntity } from '../database/entities/cv-parsed-data.orm-entity';
+import { CVSkillOrmEntity } from '../database/entities/cv-skill.orm-entity';
 import { CVOrmEntity } from '../database/entities/cv.orm-entity';
 import { JobOrmEntity } from '../database/entities/job.orm-entity';
 import { OutboxEventOrmEntity } from '../database/entities/outbox-event.orm-entity';
+import { SkillOrmEntity } from '../database/entities/skill.orm-entity';
+import { CVParsedDataTypeormRepository } from '../database/repositories/cv-parsed-data.typeorm-repository';
+import { CVSkillTypeormRepository } from '../database/repositories/cv-skill.typeorm-repository';
 import { CVTypeormRepository } from '../database/repositories/cv.typeorm-repository';
 import { JobTypeormRepository } from '../database/repositories/job.typeorm-repository';
 import { OutboxEventTypeormRepository } from '../database/repositories/outbox-event.typeorm-repository';
+import { SkillTypeormRepository } from '../database/repositories/skill.typeorm-repository';
 import { RedisModule } from '../redis/redis.module';
 import { StorageModule } from '../storage/storage.module';
 import {
@@ -54,7 +61,15 @@ const queueRetryStrategy = (times: number): number | null => {
       { name: CACHE_INVALIDATE_DLQ },
       { name: STORAGE_DELETE_DLQ },
     ),
-    TypeOrmModule.forFeature([CVOrmEntity, JobOrmEntity, OutboxEventOrmEntity]),
+    TypeOrmModule.forFeature([
+      CVOrmEntity,
+      CVParsedDataOrmEntity,
+      CVSkillOrmEntity,
+      SkillOrmEntity,
+      JobOrmEntity,
+      OutboxEventOrmEntity,
+    ]),
+    AiAnalysisModule,
     StorageModule,
     RedisModule,
   ],
@@ -64,6 +79,12 @@ const queueRetryStrategy = (times: number): number | null => {
     CacheInvalidateProcessor,
     StorageDeleteProcessor,
     { provide: 'ICVRepository', useClass: CVTypeormRepository },
+    {
+      provide: 'ICVParsedDataRepository',
+      useClass: CVParsedDataTypeormRepository,
+    },
+    { provide: 'ICVSkillRepository', useClass: CVSkillTypeormRepository },
+    { provide: 'ISkillRepository', useClass: SkillTypeormRepository },
     { provide: 'IJobRepository', useClass: JobTypeormRepository },
     {
       provide: 'IOutboxEventRepository',

@@ -1,12 +1,11 @@
 import { IApiRequestPagination } from 'src/common/interface/api-request.interface';
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import { EJobStatus } from 'src/common/constants/enum/job.enum';
 
 export interface IGetJobsDto extends IApiRequestPagination {
   q?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
   location?: string;
-  jobType?: EJobType;
   companyId?: string;
   // public
   careerCategorySlug?: string;
@@ -24,7 +23,6 @@ export interface ICreateJobDto {
   salaryMin?: number;
   salaryMax?: number;
   experienceYears?: number;
-  jobType: EJobType;
   companyId: string;
   careerCategoryId?: string;
   expiredAt?: Date;
@@ -37,7 +35,6 @@ export interface IUpdateJobDto {
   salaryMin?: number;
   salaryMax?: number;
   experienceYears?: number;
-  jobType?: EJobType;
   careerCategoryId?: string;
   expiredAt?: Date;
   status?: EJobStatus;

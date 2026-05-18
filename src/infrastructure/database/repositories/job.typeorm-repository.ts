@@ -32,10 +32,7 @@ export class JobTypeormRepository
 
     if (notExpired === true) {
       const now = new Date();
-      const queryBuilder = this.ormRepository
-        .createQueryBuilder('entity')
-        .leftJoinAndSelect('entity.company', 'company')
-        .leftJoinAndSelect('entity.careerCategory', 'careerCategory');
+      const queryBuilder = this.ormRepository.createQueryBuilder('entity');
       queryBuilder.where('entity.deletedAt IS NULL');
       queryBuilder.andWhere(
         '(entity.expiredAt > :now OR entity.expiredAt IS NULL)',
@@ -94,6 +91,7 @@ export class JobTypeormRepository
       .getMany();
     return orms.map((orm) => this.toDomain(orm));
   }
+
   async findByCompanyId(companyId: string): Promise<IJobEntity[]> {
     const orms = await this.ormRepository.find({
       where: { companyId: companyId, deletedAt: IsNull() },
@@ -102,17 +100,12 @@ export class JobTypeormRepository
   }
 
   async findById(id: string): Promise<IJobEntity | null> {
-    const orm = await this.ormRepository
-      .createQueryBuilder('entity')
-      .leftJoinAndSelect('entity.company', 'company')
-      .leftJoinAndSelect('entity.careerCategory', 'careerCategory')
-      .where('entity.id = :id', { id })
-      .andWhere('entity.deletedAt IS NULL')
-      .getOne();
+    const orm = await this.ormRepository.findOne({
+      where: { id, deletedAt: IsNull() },
+    });
     return orm ? this.toDomain(orm) : null;
   }
 
-  /// Đang tạm xem xét lại
   protected toDomain(orm: JobOrmEntity): IJobEntity {
     return {
       id: orm.id,
@@ -125,29 +118,12 @@ export class JobTypeormRepository
       salaryMin: orm.salaryMin,
       salaryMax: orm.salaryMax,
       experienceYears: orm.experienceYears,
-      jobType: orm.jobType,
       expiredAt: orm.expiredAt,
       rejectReason: orm.rejectReason,
       status: orm.status,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
       deletedAt: orm.deletedAt,
-      company: orm.company
-        ? {
-            id: orm.company.id,
-            companyName: orm.company.companyName,
-            logoUrl: orm.company.logoUrl,
-            location: orm.company.location,
-            websiteUrl: orm.company.websiteUrl,
-          }
-        : undefined,
-      careerCategory: orm.careerCategory
-        ? {
-            id: orm.careerCategory.id,
-            name: orm.careerCategory.name,
-            slug: orm.careerCategory.slug,
-          }
-        : undefined,
     };
   }
 }

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { MetaDto, PaginationDto } from 'src/common/dto/response.dto';
 
 export class ResponseJobCompanyDto {
@@ -51,9 +51,6 @@ export class ResponseJobDto {
 
   @ApiPropertyOptional()
   experienceYears?: number;
-
-  @ApiProperty({ enum: EJobType })
-  jobType: EJobType;
 
   @ApiPropertyOptional()
   expiredAt?: Date;

@@ -27,7 +27,7 @@ export class JwtTokenUsecase extends BaseUsecase {
 
   generateToken(payload: IGenerateTokensPayload, expiresIn: string): string {
     return this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
+      secret: this.configService.get<string>('jwt.secret'),
       expiresIn: expiresIn as StringValue,
       algorithm: 'HS256',
     });
@@ -36,11 +36,11 @@ export class JwtTokenUsecase extends BaseUsecase {
   generateTokens(payload: IGenerateTokensPayload): IResponseGenerateTokens {
     const accessToken = this.generateToken(
       { ...payload, type: 'access' },
-      this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m'),
+      this.configService.get<string>('jwt.accessTokenExpiration', '15m'),
     );
     const refreshToken = this.generateToken(
       { ...payload, type: 'refresh' },
-      this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d'),
+      this.configService.get<string>('jwt.refreshTokenExpiration', '7d'),
     );
     return {
       accessToken,
@@ -51,7 +51,7 @@ export class JwtTokenUsecase extends BaseUsecase {
   async verifyToken(token: string): Promise<IGenerateTokensPayload | null> {
     try {
       const decoded = this.jwtService.verify<IGenerateTokensPayload>(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.configService.get<string>('jwt.secret'),
       });
       return decoded;
     } catch (error) {
