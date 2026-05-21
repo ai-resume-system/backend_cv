@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
-import { MetaDto } from 'src/common/dto/response.dto';
+import { ApiResponseDto } from 'src/common/dto/response.dto';
 
 export class ResponseAuthDto {
   @ApiProperty({
@@ -26,10 +26,26 @@ export class ResponseAuthDto {
   };
 }
 
-export class ResponseApiAuthDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
+export class ResponseVerifyOtpDto {
+  @ApiProperty({
+    description: 'Sign key for forgot password flow',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    required: false,
+  })
+  signKey?: string;
+}
 
+export class ResponseApiAuthDto extends ApiResponseDto<ResponseAuthDto> {
   @ApiProperty({ type: ResponseAuthDto })
-  data: ResponseAuthDto;
+  declare data: ResponseAuthDto;
+}
+
+export class ResponseApiVerifyOtpDto extends ApiResponseDto<ResponseVerifyOtpDto | null> {
+  @ApiProperty({
+    description: 'Verify OTP payload',
+    type: ResponseVerifyOtpDto,
+    nullable: true,
+    required: false,
+  })
+  declare data: ResponseVerifyOtpDto | null;
 }

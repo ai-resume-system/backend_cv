@@ -22,7 +22,9 @@ export class SkillTypeormRepository
     return ['name'];
   }
 
-  async findByCareerCategoryId(careerCategoryId: string): Promise<ISkillEntity[]> {
+  async findByCareerCategoryId(
+    careerCategoryId: string,
+  ): Promise<ISkillEntity[]> {
     const orms = await this.ormRepository.find({
       where: {
         careerCategoriesId: careerCategoryId,

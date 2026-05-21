@@ -8,10 +8,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { IGetUserByIdResponseDto } from 'src/application/dtos/user/res.user.dto';
 import { GetUserByIdQuery } from 'src/application/queries/user/get-user-by-id.query';
 import { GetUsersQuery } from 'src/application/queries/user/get-users.query';
 import { UpdateUserStatusUseCase } from 'src/application/use-cases/user/update-user-status.usecase';
 import { BaseController } from 'src/common/base/base.controller';
+import { ResponseApiNullDto } from 'src/common/dto/response.dto';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import {
@@ -19,8 +21,8 @@ import {
   RequestUpdateUserStatusDto,
 } from '../dtos/req.user.dto';
 import {
-  ResponseApiArrayUserDto,
   ResponseApiUserDto,
+  ResponseListApiUserDto,
 } from '../dtos/res.user.dto';
 
 @Controller({ path: 'users', version: '1' })
@@ -40,11 +42,11 @@ export class UserController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Get all users successfully',
-    type: ResponseApiArrayUserDto,
+    type: ResponseListApiUserDto,
   })
   async getAllUsers(
     @Query() dto: RequestGetAllUsersDto,
-  ): Promise<ResponseApiArrayUserDto> {
+  ): Promise<ResponseListApiUserDto> {
     return await this.getUsersQuery.execute(dto);
   }
 
@@ -56,7 +58,9 @@ export class UserController extends BaseController {
     description: 'Get user successfully',
     type: ResponseApiUserDto,
   })
-  async getUserById(@Param('id') id: string) {
+  async getUserById(
+    @Param('id') id: string,
+  ): Promise<IGetUserByIdResponseDto> {
     return await this.getUserByIdQuery.execute(id);
   }
 
@@ -66,12 +70,12 @@ export class UserController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'User status updated successfully',
-    type: ResponseApiUserDto,
+    type: ResponseApiNullDto,
   })
   async updateUserStatus(
     @Param('id') id: string,
     @Body() dto: RequestUpdateUserStatusDto,
-  ) {
+  ): Promise<{ message: string }> {
     return await this.updateUserStatusUseCase.execute(id, dto);
   }
 }

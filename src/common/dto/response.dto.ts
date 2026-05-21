@@ -3,25 +3,23 @@ import { Transform } from 'class-transformer';
 import { IsInt, Min } from 'class-validator';
 import {
   IApiResponse,
-  IApiResponseMeta,
   IApiResponsePagination,
 } from '../interface/api-response.interface';
 
-// Meta DTO
-export class MetaDto implements IApiResponseMeta {
+export class MetaDto {
   @ApiProperty({
-    description: 'Indicates the success or failure of the request',
-    example: true,
-    type: Boolean,
+    description: 'Response status',
+    example: 'success',
+    enum: ['success'],
   })
-  status: boolean;
+  status?: 'success';
 
   @ApiProperty({
     description: 'A message describing the result',
-    example: 'Success',
+    example: 'Successfully',
     type: String,
   })
-  message: string;
+  message?: string;
 }
 
 // Pagination DTO
@@ -69,6 +67,20 @@ export class PaginationDto implements IApiResponsePagination {
 
 export class ApiResponseDto<T> implements IApiResponse<T> {
   @ApiProperty({
+    description: 'Response status',
+    example: 'success',
+    enum: ['success'],
+  })
+  status?: 'success';
+
+  @ApiProperty({
+    description: 'A message describing the result',
+    example: 'Successfully',
+    type: String,
+  })
+  message?: string;
+
+  @ApiProperty({
     description:
       'The data payload, which can be an object, array, or specific DTO type',
     type: () => Object,
@@ -82,6 +94,15 @@ export class ApiResponseDto<T> implements IApiResponse<T> {
   pagination?: PaginationDto;
 }
 
+export class ResponseApiNullDto extends ApiResponseDto<null> {
+  @ApiProperty({
+    description: 'The data payload for action responses',
+    nullable: true,
+    example: null,
+  })
+  declare data: null;
+}
+
 export class ResponseBooleanDto {
   @ApiProperty({
     description: 'Indicates successful',
@@ -92,6 +113,20 @@ export class ResponseBooleanDto {
 }
 
 export class ApiResponseBooleanDto {
+  @ApiProperty({
+    description: 'Response status',
+    example: 'success',
+    enum: ['success'],
+  })
+  status?: 'success';
+
+  @ApiProperty({
+    description: 'A message describing the result',
+    example: 'Successfully',
+    type: String,
+  })
+  message?: string;
+
   @ApiProperty({ type: ResponseBooleanDto })
   data: ResponseBooleanDto;
 }

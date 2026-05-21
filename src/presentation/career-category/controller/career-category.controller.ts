@@ -10,12 +10,17 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type {
+  IResponseApiCareerCategoryDto,
+  IResponseListApiCareerCategoryDto,
+} from 'src/application/dtos/career-category/res.career-category.dto';
 import { GetCareerCategoriesQuery } from 'src/application/queries/career-categories/get-career-categories.query';
 import { CreateCareerCategoryUseCase } from 'src/application/use-cases/career-category/create-career-category.usecase';
 import { DeleteCareerCategoryUseCase } from 'src/application/use-cases/career-category/delete-career-category.usecase';
 import { UpdateCareerCategoryUseCase } from 'src/application/use-cases/career-category/update-career-category.usecase';
 import { BaseController } from 'src/common/base/base.controller';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
+import { ResponseApiNullDto } from 'src/common/dto/response.dto';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import {
   RequestCreateCareerCategoryDto,
@@ -50,9 +55,8 @@ export class CareerCategoryController extends BaseController {
   })
   async getAllCareerCategories(
     @Query() query: RequestGetCareerCategoriesDto,
-  ): Promise<ResponseListApiCareerCategoryDto> {
-    const result = await this.getCareerCategoriesQuery.execute(query);
-    return result;
+  ): Promise<IResponseListApiCareerCategoryDto> {
+    return await this.getCareerCategoriesQuery.execute(query);
   }
 
   @Get(':id')
@@ -64,9 +68,8 @@ export class CareerCategoryController extends BaseController {
   })
   async getCareerCategoryById(
     @Param('id') id: string,
-  ): Promise<ResponseApiCareerCategoryDto> {
-    const result = await this.getCareerCategoryByIdQuery.execute(id);
-    return result;
+  ): Promise<IResponseApiCareerCategoryDto> {
+    return await this.getCareerCategoryByIdQuery.execute(id);
   }
 
   @Post()
@@ -79,9 +82,8 @@ export class CareerCategoryController extends BaseController {
   })
   async createCareerCategory(
     @Body() dto: RequestCreateCareerCategoryDto,
-  ): Promise<ResponseApiCareerCategoryDto> {
-    const result = await this.createCareerCategoryUseCase.execute(dto);
-    return result;
+  ): Promise<IResponseApiCareerCategoryDto> {
+    return await this.createCareerCategoryUseCase.execute(dto);
   }
 
   @Patch(':id')
@@ -95,9 +97,8 @@ export class CareerCategoryController extends BaseController {
   async updateCareerCategory(
     @Param('id') id: string,
     @Body() dto: RequestUpdateCareerCategoryDto,
-  ): Promise<ResponseApiCareerCategoryDto> {
-    const result = await this.updateCareerCategoryUseCase.execute(id, dto);
-    return result;
+  ): Promise<IResponseApiCareerCategoryDto> {
+    return await this.updateCareerCategoryUseCase.execute(id, dto);
   }
 
   @Delete(':id')
@@ -106,11 +107,9 @@ export class CareerCategoryController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Career category deleted successfully',
+    type: ResponseApiNullDto,
   })
-  async deleteCareerCategory(
-    @Param('id') id: string,
-  ): Promise<{ message: string }> {
-    const result = await this.deleteCareerCategoryUseCase.execute(id);
-    return result;
+  async deleteCareerCategory(@Param('id') id: string): Promise<{ message: string }> {
+    return await this.deleteCareerCategoryUseCase.execute(id);
   }
 }

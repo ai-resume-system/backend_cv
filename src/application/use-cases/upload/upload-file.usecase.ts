@@ -1,10 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { IRequestUploadFileDto, EUploadType } from 'src/application/dtos/upload/req.upload.dto';
+import { IRequestUploadFileDto } from 'src/application/dtos/upload/req.upload.dto';
 import { IResponseApiUploadDto } from 'src/application/dtos/upload/res.upload.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
+import { EUploadType } from 'src/common/constants/enum/upload.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';

@@ -1,9 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
+import { ApiResponseDto } from 'src/common/dto/response.dto';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 
+//Response base
+export class ResponseBaseProfileDto {
+  @ApiPropertyOptional({ example: '0987654321' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+}
+
 //Response for Job Seeker
-export class ResponseProfileDto {
+export class ResponseProfileDto extends ResponseBaseProfileDto {
   @ApiPropertyOptional({ example: 'Nguyen Van A' })
   @IsOptional()
   @IsString()
@@ -21,7 +30,7 @@ export class ResponseProfileDto {
 }
 
 //Response for Recruiter
-export class ResponseCompanyDto {
+export class ResponseCompanyDto extends ResponseBaseProfileDto {
   @ApiPropertyOptional({ example: 'uuid-of-career-category' })
   @IsOptional()
   @IsString()
@@ -94,4 +103,19 @@ export class ResponseMyProfileDto {
 
   @ApiProperty()
   deletedAt?: Date;
+}
+
+export class ResponseApiMyProfileDto extends ApiResponseDto<ResponseMyProfileDto> {
+  @ApiProperty({ type: ResponseMyProfileDto })
+  declare data: ResponseMyProfileDto;
+}
+
+export class ResponseApiProfileDto extends ApiResponseDto<ResponseProfileDto> {
+  @ApiProperty({ type: ResponseProfileDto })
+  declare data: ResponseProfileDto;
+}
+
+export class ResponseApiCompanyDto extends ApiResponseDto<ResponseCompanyDto> {
+  @ApiProperty({ type: ResponseCompanyDto })
+  declare data: ResponseCompanyDto;
 }

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
-import { MetaDto, PaginationDto } from 'src/common/dto/response.dto';
+import { ApiResponseDto, PaginationDto } from 'src/common/dto/response.dto';
 
 export class ResponseJobCompanyDto {
   @ApiProperty()
@@ -71,21 +71,15 @@ export class ResponseJobDto {
   careerCategory?: ResponseJobCareerCategoryDto;
 }
 
-export class ResponseApiJobDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseApiJobDto extends ApiResponseDto<ResponseJobDto> {
   @ApiProperty({ type: ResponseJobDto })
-  data: ResponseJobDto;
+  declare data: ResponseJobDto;
 }
 
-export class ResponseListApiJobDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseListApiJobDto extends ApiResponseDto<ResponseJobDto[]> {
   @ApiProperty({ type: [ResponseJobDto] })
-  data: ResponseJobDto[];
+  declare data: ResponseJobDto[];
 
   @ApiProperty({ type: PaginationDto })
-  pagination?: PaginationDto;
+  declare pagination?: PaginationDto;
 }

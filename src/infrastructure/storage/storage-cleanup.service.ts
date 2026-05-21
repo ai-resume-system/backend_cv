@@ -34,7 +34,10 @@ export class StorageCleanupService {
     ];
 
     for (const bucketType of bucketTypes) {
-      await this.cleanupBucket(bucketType, referenced.get(bucketType) || new Set());
+      await this.cleanupBucket(
+        bucketType,
+        referenced.get(bucketType) || new Set(),
+      );
     }
   }
 
@@ -94,11 +97,7 @@ export class StorageCleanupService {
       this.addReferencedKey(result, EBucketType.AVATAR, profile.avatarUrl);
     }
     for (const company of companies) {
-      this.addReferencedKey(
-        result,
-        EBucketType.COMPANY_LOGO,
-        company.logoUrl,
-      );
+      this.addReferencedKey(result, EBucketType.COMPANY_LOGO, company.logoUrl);
       this.addReferencedKey(result, EBucketType.BANNER, company.bannerUrl);
     }
 

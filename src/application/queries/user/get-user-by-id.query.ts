@@ -1,8 +1,9 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { IGetUserByIdResponseDto } from 'src/application/dtos/user/res.user.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
+import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
@@ -32,7 +33,7 @@ export class GetUserByIdQuery extends BaseUsecase {
 
       const user = await this.userRepository.findById(userId);
       if (!user) {
-        throw new NotFoundException(ERROR_CODES.USER_NOT_FOUND.message);
+        throw new AppException(ERROR_CODES.USER_NOT_FOUND);
       }
 
       const baseData = {

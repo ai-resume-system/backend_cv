@@ -10,12 +10,15 @@ import {
   EBucketType,
   S3StorageService,
 } from 'src/infrastructure/storage/s3-storage.service';
+import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 
 const ACCOUNT_IMAGE_PREVIEW_TTL_SECONDS = 900;
 
 @Injectable()
 export class UpdateMyCompanyUseCase extends BaseUsecase {
   constructor(
+    @Inject('IUserRepository')
+    private readonly userRepository: IUserRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     private readonly queueDispatch: QueueDispatchService,
@@ -29,32 +32,51 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
     dto: IRequestUpdateMyCompanyDto,
   ): Promise<IResponseMyCompanyDto> {
     return this.runSafe('[Update My Company]:', async () => {
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        throw new AppException(ERROR_CODES.USER_NOT_FOUND);
+      }
       const company = await this.companyRepository.findByUserId(userId);
       if (!company) {
         throw new AppException(ERROR_CODES.USER_NOT_FOUND);
       }
 
-      const updated = await this.companyRepository.updateWithUserId(
-        userId,
-        dto,
+      const { phone, ...companyPayload } = dto;
+
+      const updatedUser =
+        phone !== undefined
+          ? await this.userRepository.updateProfile(userId, { phone })
+          : user;
+
+      const hasCompanyFields = Object.values(companyPayload).some(
+        (value) => value !== undefined,
       );
+
+      const updatedCompany = hasCompanyFields
+        ? await this.companyRepository.updateWithUserId(userId, companyPayload)
+        : company;
+
       await this.queueDispatch.dispatchCacheInvalidation({
         keys: [`account:profile:${userId}`, `user:detail:${userId}`],
         prefixes: ['user:list:'],
       });
+
       return {
-        id: updated.id,
-        careerCategoriesId: updated.careerCategoriesId,
-        companyName: updated.companyName,
-        taxCode: updated.taxCode,
+        phone: updatedUser.phone,
+        careerCategoriesId: updatedCompany.careerCategoriesId,
+        companyName: updatedCompany.companyName,
+        taxCode: updatedCompany.taxCode,
         logoUrl: await this.toPreviewUrl(
-          updated.logoUrl,
+          updatedCompany.logoUrl,
           EBucketType.COMPANY_LOGO,
         ),
-        bannerUrl: await this.toPreviewUrl(updated.bannerUrl, EBucketType.BANNER),
-        location: updated.location,
-        description: updated.description,
-        websiteUrl: updated.websiteUrl,
+        bannerUrl: await this.toPreviewUrl(
+          updatedCompany.bannerUrl,
+          EBucketType.BANNER,
+        ),
+        location: updatedCompany.location,
+        description: updatedCompany.description,
+        websiteUrl: updatedCompany.websiteUrl,
       };
     });
   }

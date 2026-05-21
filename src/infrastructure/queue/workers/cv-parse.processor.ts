@@ -109,7 +109,9 @@ export class CvParseProcessor extends WorkerHost {
 
     await this.cvSkillRepository.deleteByCvId(cvId);
     for (const skill of analysis.skills) {
-      const matched = await this.skillRepository.findByName(skill.normalizedName);
+      const matched = await this.skillRepository.findByName(
+        skill.normalizedName,
+      );
       if (!matched) {
         continue;
       }

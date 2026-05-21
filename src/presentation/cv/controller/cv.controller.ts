@@ -9,6 +9,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type {
+  IResponseApiCVDownloadDto,
+  IResponseApiCVDto,
+  IResponseApiCVPreviewDto,
+  IResponseListApiCVDto,
+} from 'src/application/dtos/cv/res.cv.dto';
 import { GetCVsQuery } from 'src/application/queries/cv/get-cvs.query';
 // import { GetCVByIdQuery } from 'src/application/queries/cv/get-cv-by-id.query';
 import { GetCVDownloadUrlQuery } from 'src/application/queries/cv/get-cv-download-url.query';
@@ -17,6 +23,7 @@ import { DeleteCVUseCase } from 'src/application/use-cases/cv/delete-cv.usecase'
 import { UpdateCVUseCase } from 'src/application/use-cases/cv/update-cv.usecase';
 import { SetDefaultCVUseCase } from 'src/application/use-cases/cv/set-default-cv.usecase';
 import { BaseController } from 'src/common/base/base.controller';
+import { ApiResponseBooleanDto } from 'src/common/dto/response.dto';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -50,8 +57,11 @@ export class CVController extends BaseController {
   async getMyCVs(
     @AuthCurrentUser() user: ICurrentUser,
     @Query() query: RequestGetCVsDto,
-  ): Promise<ResponseListApiCVDto> {
-    return this.getCVsQuery.execute({ ...query, userId: user.id });
+  ): Promise<IResponseListApiCVDto> {
+    return await this.getCVsQuery.execute({
+      ...query,
+      userId: user.id,
+    });
   }
 
   @Get(':id/download')
@@ -61,8 +71,8 @@ export class CVController extends BaseController {
   async getDownloadUrl(
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
-  ): Promise<ResponseApiCVDownloadDto> {
-    return this.getCVDownloadUrlQuery.execute(id, user.id);
+  ): Promise<IResponseApiCVDownloadDto> {
+    return await this.getCVDownloadUrlQuery.execute(id, user.id);
   }
 
   @Get(':id/preview')
@@ -72,8 +82,8 @@ export class CVController extends BaseController {
   async getPreviewUrl(
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
-  ): Promise<ResponseApiCVPreviewDto> {
-    return this.getCVPreviewUrlQuery.execute(id, user.id);
+  ): Promise<IResponseApiCVPreviewDto> {
+    return await this.getCVPreviewUrlQuery.execute(id, user.id);
   }
 
   @Patch(':id')
@@ -84,18 +94,19 @@ export class CVController extends BaseController {
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
     @Body() dto: RequestUpdateCVDto,
-  ): Promise<ResponseApiCVDto> {
-    return this.updateCVUseCase.execute(id, user.id, dto);
+  ): Promise<IResponseApiCVDto> {
+    return await this.updateCVUseCase.execute(id, user.id, dto);
   }
 
   @Delete(':id')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({ summary: 'Delete CV' })
+  @ApiResponse({ status: 200, type: ApiResponseBooleanDto })
   async deleteCV(
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
   ): Promise<{ data: { success: boolean; message: string } }> {
-    return this.deleteCVUseCase.execute(id, user.id);
+    return await this.deleteCVUseCase.execute(id, user.id);
   }
 
   @Patch(':id/default')
@@ -105,7 +116,7 @@ export class CVController extends BaseController {
   async setDefaultCV(
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
-  ): Promise<{ data: any }> {
-    return this.setDefaultCVUseCase.execute(id, user.id);
+  ): Promise<IResponseApiCVDto> {
+    return await this.setDefaultCVUseCase.execute(id, user.id);
   }
 }

@@ -1,8 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
-import { RequestPaginationDto } from 'src/common/dto/request.dto';
-import { ApiResponseDto, MetaDto } from 'src/common/dto/response.dto';
+import { ApiResponseDto } from 'src/common/dto/response.dto';
 
 export class ResponseUserDto {
   @ApiProperty()
@@ -36,18 +35,12 @@ export class ResponseUserDto {
   deletedAt?: Date;
 }
 
-export class ResponseApiUserDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseApiUserDto extends ApiResponseDto<ResponseUserDto> {
   @ApiProperty({ type: ResponseUserDto })
   declare data: ResponseUserDto;
 }
 
-export class ResponseApiArrayUserDto extends ApiResponseDto<ResponseUserDto[]> {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseListApiUserDto extends ApiResponseDto<ResponseUserDto[]> {
   @ApiProperty({ type: [ResponseUserDto] })
   declare data: ResponseUserDto[];
 }

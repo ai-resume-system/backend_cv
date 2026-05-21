@@ -116,6 +116,15 @@ export class UserTypeormRepository
     await this.ormRepository.update(id, { password });
   }
 
+  async updateProfile(
+    id: string,
+    data: { phone?: string },
+  ): Promise<IUserEntity> {
+    await this.ormRepository.update(id, { phone: data.phone });
+    const updated = await this.ormRepository.findOne({ where: { id } });
+    return this.toDomain(updated as UserOrmEntity);
+  }
+
   protected toDomain(orm: UserOrmEntity): IUserEntity {
     return {
       id: orm.id,

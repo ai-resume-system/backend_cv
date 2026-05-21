@@ -1,9 +1,10 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { IUpdateUserStatusDto } from 'src/application/dtos/user/req.user.dto';
+import { AppException } from 'src/common/exceptions/app.exception';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
@@ -22,7 +23,7 @@ export class UpdateUserStatusUseCase extends BaseUsecase {
     return this.runSafe('[Update User Status]:', async () => {
       const user = await this.userRepository.findById(userId);
       if (!user) {
-        throw new NotFoundException(ERROR_CODES.USER_NOT_FOUND.message);
+        throw new AppException(ERROR_CODES.USER_NOT_FOUND);
       }
 
       await this.userRepository.updateStatus(userId, dto.status);

@@ -1,9 +1,4 @@
-export enum EUploadType {
-  CV = 'CV',
-  AVATAR = 'AVATAR',
-  LOGO = 'LOGO',
-  BANNER = 'BANNER',
-}
+import { EUploadType } from 'src/common/constants/enum/upload.enum';
 
 export interface IRequestUploadFileDto {
   type: EUploadType;

@@ -1,10 +1,15 @@
-export interface IRequestUpdateMyProfileDto {
+export interface IRequestUpdateProfileBaseDto {
+  phone?: string;
+}
+
+export interface IRequestUpdateMyProfileDto extends IRequestUpdateProfileBaseDto {
+  phone?: string;
   fullName?: string;
   avatarUrl?: string;
   bio?: string;
 }
 
-export interface IRequestUpdateMyCompanyDto {
+export interface IRequestUpdateMyCompanyDto extends IRequestUpdateProfileBaseDto {
   careerCategoriesId?: string;
   companyName?: string;
   taxCode?: string;

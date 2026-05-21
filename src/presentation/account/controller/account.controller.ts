@@ -4,14 +4,19 @@ import {
   Get,
   Logger,
   Patch,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type {
+  IMyProfileResponseDto,
+  IResponseMyCompanyDto,
+  IResponseMyProfileDto,
+} from 'src/application/dtos/account/res.account.dto';
 import { GetMyProfileQuery } from 'src/application/queries/account/get-my-profile.query';
 import { UpdateMyProfileUseCase } from 'src/application/use-cases/account/update-my-profile.usecase';
 import { UpdateMyCompanyUseCase } from 'src/application/use-cases/account/update-my-company.usecase';
 import { ChangePasswordUseCase } from 'src/application/use-cases/account/change-password.usecase';
 import { BaseController } from 'src/common/base/base.controller';
+import { ResponseApiNullDto } from 'src/common/dto/response.dto';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -21,9 +26,9 @@ import {
   RequestChangePasswordDto,
 } from '../dtos/req.account.dto';
 import {
-  ResponseCompanyDto,
-  ResponseMyProfileDto,
-  ResponseProfileDto,
+  ResponseApiCompanyDto,
+  ResponseApiMyProfileDto,
+  ResponseApiProfileDto,
 } from '../dtos/res.account.dto';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 
@@ -45,11 +50,11 @@ export class AccountController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Get my profile successfully',
-    type: ResponseMyProfileDto,
+    type: ResponseApiMyProfileDto,
   })
   async getMyProfile(
     @AuthCurrentUser() user: ICurrentUser,
-  ): Promise<ResponseMyProfileDto> {
+  ): Promise<IMyProfileResponseDto> {
     return await this.getMyProfileQuery.execute(user.id);
   }
 
@@ -59,12 +64,12 @@ export class AccountController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Profile updated successfully',
-    type: ResponseProfileDto,
+    type: ResponseApiProfileDto,
   })
   async updateMyProfile(
     @AuthCurrentUser() user: ICurrentUser,
     @Body() dto: RequestUpdateMyProfileDto,
-  ): Promise<ResponseProfileDto> {
+  ): Promise<IResponseMyProfileDto> {
     return await this.updateMyProfileUseCase.execute(user.id, dto);
   }
 
@@ -74,12 +79,12 @@ export class AccountController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Company updated successfully',
-    type: ResponseCompanyDto,
+    type: ResponseApiCompanyDto,
   })
   async updateMyCompany(
     @AuthCurrentUser() user: ICurrentUser,
     @Body() dto: RequestUpdateMyCompanyDto,
-  ): Promise<ResponseCompanyDto> {
+  ): Promise<IResponseMyCompanyDto> {
     return await this.updateMyCompanyUseCase.execute(user.id, dto);
   }
 
@@ -89,6 +94,7 @@ export class AccountController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Password changed successfully',
+    type: ResponseApiNullDto,
   })
   async changePassword(
     @AuthCurrentUser() user: ICurrentUser,

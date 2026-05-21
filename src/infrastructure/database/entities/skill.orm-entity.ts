@@ -52,7 +52,10 @@ export class SkillOrmEntity implements ISkillEntity {
   })
   deletedAt?: Date;
 
-  @ManyToOne(() => CareerCategoryOrmEntity, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => CareerCategoryOrmEntity, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'career_categories_id' })
   careerCategory?: CareerCategoryOrmEntity;
 

@@ -28,7 +28,7 @@ export interface IMyProfileResponseDto {
 
 // For Job Seeker
 export interface IResponseMyProfileDto {
-  // id: string;
+  phone?: string;
   fullName?: string;
   avatarUrl?: string;
   bio?: string;
@@ -36,7 +36,7 @@ export interface IResponseMyProfileDto {
 
 // For Recruiter
 export interface IResponseMyCompanyDto {
-  // id: string;
+  phone?: string;
   careerCategoriesId?: string;
   companyName?: string;
   taxCode?: string;

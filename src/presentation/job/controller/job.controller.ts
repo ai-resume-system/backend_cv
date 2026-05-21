@@ -10,6 +10,10 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type {
+  IResponseApiJobDto,
+  IResponseListApiJobDto,
+} from 'src/application/dtos/job/res.job.dto';
 import { GetJobByIdQuery } from 'src/application/queries/job/get-job-by-id.query';
 import { GetJobsQuery } from 'src/application/queries/job/get-jobs.query';
 import { CreateJobUseCase } from 'src/application/use-cases/job/create-job.usecase';
@@ -17,6 +21,7 @@ import { DeleteJobUseCase } from 'src/application/use-cases/job/delete-job.useca
 import { ReviewJobUseCase } from 'src/application/use-cases/job/review-job.usecase';
 import { UpdateJobUseCase } from 'src/application/use-cases/job/update-job.usecase';
 import { BaseController } from 'src/common/base/base.controller';
+import { ApiResponseBooleanDto } from 'src/common/dto/response.dto';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
@@ -49,8 +54,8 @@ export class JobController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseListApiJobDto })
   async getPublicJobs(
     @Query() query: RequestGetJobsDto,
-  ): Promise<ResponseListApiJobDto> {
-    return this.getJobsQuery.execute(
+  ): Promise<IResponseListApiJobDto> {
+    return await this.getJobsQuery.execute(
       { ...query, status: query.status || EJobStatus.OPEN },
       'public',
     );
@@ -63,8 +68,8 @@ export class JobController extends BaseController {
   async getMyJobs(
     @AuthCurrentUser() user: ICurrentUser,
     @Query() query: RequestGetJobsDto,
-  ): Promise<ResponseListApiJobDto> {
-    return this.getJobsQuery.executeForRecruiter(user.id, query);
+  ): Promise<IResponseListApiJobDto> {
+    return await this.getJobsQuery.executeForRecruiter(user.id, query);
   }
 
   @Get('admin')
@@ -73,15 +78,15 @@ export class JobController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseListApiJobDto })
   async getAdminJobs(
     @Query() query: RequestGetJobsDto,
-  ): Promise<ResponseListApiJobDto> {
-    return this.getJobsQuery.execute(query, 'admin');
+  ): Promise<IResponseListApiJobDto> {
+    return await this.getJobsQuery.execute(query, 'admin');
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get job detail' })
   @ApiResponse({ status: 200, type: ResponseApiJobDto })
-  async getJob(@Param('id') id: string): Promise<ResponseApiJobDto> {
-    return this.getJobByIdQuery.execute(id);
+  async getJob(@Param('id') id: string): Promise<IResponseApiJobDto> {
+    return await this.getJobByIdQuery.execute(id);
   }
 
   @Post()
@@ -91,8 +96,8 @@ export class JobController extends BaseController {
   async createJob(
     @AuthCurrentUser() user: ICurrentUser,
     @Body() dto: RequestCreateJobDto,
-  ): Promise<ResponseApiJobDto> {
-    return this.createJobUseCase.execute(user.id, {
+  ): Promise<IResponseApiJobDto> {
+    return await this.createJobUseCase.execute(user.id, {
       ...dto,
       expiredAt: dto.expiredAt ? new Date(dto.expiredAt) : undefined,
     });
@@ -106,8 +111,8 @@ export class JobController extends BaseController {
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
     @Body() dto: RequestUpdateJobDto,
-  ): Promise<ResponseApiJobDto> {
-    return this.updateJobUseCase.execute(id, user.id, {
+  ): Promise<IResponseApiJobDto> {
+    return await this.updateJobUseCase.execute(id, user.id, {
       ...dto,
       expiredAt: dto.expiredAt ? new Date(dto.expiredAt) : undefined,
     });
@@ -116,19 +121,20 @@ export class JobController extends BaseController {
   @Delete(':id')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({ summary: 'Delete recruiter job' })
+  @ApiResponse({ status: 200, type: ApiResponseBooleanDto })
   async deleteJob(
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
   ): Promise<{ data: { success: boolean; message: string } }> {
-    return this.deleteJobUseCase.execute(id, user.id);
+    return await this.deleteJobUseCase.execute(id, user.id);
   }
 
   @Patch(':id/approve')
   @AuthRequired(EUserRole.ADMIN)
   @ApiOperation({ summary: 'Approve job' })
   @ApiResponse({ status: 200, type: ResponseApiJobDto })
-  async approveJob(@Param('id') id: string): Promise<ResponseApiJobDto> {
-    return this.reviewJobUseCase.approve(id);
+  async approveJob(@Param('id') id: string): Promise<IResponseApiJobDto> {
+    return await this.reviewJobUseCase.approve(id);
   }
 
   @Patch(':id/reject')
@@ -138,15 +144,15 @@ export class JobController extends BaseController {
   async rejectJob(
     @Param('id') id: string,
     @Body() dto: RequestRejectJobDto,
-  ): Promise<ResponseApiJobDto> {
-    return this.reviewJobUseCase.reject(id, dto);
+  ): Promise<IResponseApiJobDto> {
+    return await this.reviewJobUseCase.reject(id, dto);
   }
 
   @Patch(':id/close')
   @AuthRequired(EUserRole.ADMIN, EUserRole.RECRUITER)
   @ApiOperation({ summary: 'Close job' })
   @ApiResponse({ status: 200, type: ResponseApiJobDto })
-  async closeJob(@Param('id') id: string): Promise<ResponseApiJobDto> {
-    return this.reviewJobUseCase.close(id);
+  async closeJob(@Param('id') id: string): Promise<IResponseApiJobDto> {
+    return await this.reviewJobUseCase.close(id);
   }
 }

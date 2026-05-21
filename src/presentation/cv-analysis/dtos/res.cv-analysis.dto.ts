@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
-import { MetaDto } from 'src/common/dto/response.dto';
+import { ApiResponseDto } from 'src/common/dto/response.dto';
 
 export class ResponseCVAnalysisSkillDto {
   @ApiProperty()
@@ -88,12 +88,9 @@ export class ResponseCVAnalysisDto {
   updatedAt: Date;
 }
 
-export class ResponseApiCVAnalysisDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseApiCVAnalysisDto extends ApiResponseDto<ResponseCVAnalysisDto> {
   @ApiProperty({ type: ResponseCVAnalysisDto })
-  data: ResponseCVAnalysisDto;
+  declare data: ResponseCVAnalysisDto;
 }
 
 export class ResponseCVAnalyzeActionDto {
@@ -107,10 +104,7 @@ export class ResponseCVAnalyzeActionDto {
   message: string;
 }
 
-export class ResponseApiCVAnalyzeActionDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseApiCVAnalyzeActionDto extends ApiResponseDto<ResponseCVAnalyzeActionDto> {
   @ApiProperty({ type: ResponseCVAnalyzeActionDto })
-  data: ResponseCVAnalyzeActionDto;
+  declare data: ResponseCVAnalyzeActionDto;
 }

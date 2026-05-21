@@ -24,7 +24,7 @@ export class JobApplicationTypeormRepository
       where: {
         id,
         deletedAt: IsNull(),
-      } as FindOptionsWhere<JobApplicationOrmEntity>,
+      },
     });
     return orm ? this.toDomain(orm) : null;
   }
@@ -90,7 +90,7 @@ export class JobApplicationTypeormRepository
         jobId,
         userId,
         deletedAt: IsNull(),
-      } as FindOptionsWhere<JobApplicationOrmEntity>,
+      },
     });
     return orm ? this.toDomain(orm) : null;
   }

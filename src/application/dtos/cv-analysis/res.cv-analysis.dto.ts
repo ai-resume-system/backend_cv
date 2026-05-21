@@ -45,12 +45,10 @@ export interface ICVAnalyzeActionResultDto {
   message: string;
 }
 
-export interface IResponseApiCVAnalysisDto
-  extends IApiResponse<ICVAnalysisResultDto> {
+export interface IResponseApiCVAnalysisDto extends IApiResponse<ICVAnalysisResultDto> {
   data: ICVAnalysisResultDto;
 }
 
-export interface IResponseApiCVAnalyzeActionDto
-  extends IApiResponse<ICVAnalyzeActionResultDto> {
+export interface IResponseApiCVAnalyzeActionDto extends IApiResponse<ICVAnalyzeActionResultDto> {
   data: ICVAnalyzeActionResultDto;
 }

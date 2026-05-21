@@ -2,12 +2,12 @@ import {
   Inject,
   Injectable,
   Logger,
-  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { IChangePasswordDto } from 'src/application/dtos/account/req.account.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
+import { AppException } from 'src/common/exceptions/app.exception';
 import type { IRefreshTokenRepository } from 'src/domain/repositories/refresh-token.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
@@ -34,7 +34,7 @@ export class ChangePasswordUseCase extends BaseUsecase {
       async () => {
         const user = await this.userRepository.findByIdWithPassword(userId);
         if (!user) {
-          throw new UnauthorizedException(ERROR_CODES.USER_NOT_FOUND.message);
+          throw new AppException(ERROR_CODES.USER_NOT_FOUND);
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -42,9 +42,7 @@ export class ChangePasswordUseCase extends BaseUsecase {
           user.password,
         );
         if (!isPasswordValid) {
-          throw new UnauthorizedException(
-            ERROR_CODES.AUTH_OLD_PASSWORD_INCORRECT.message,
-          );
+          throw new AppException(ERROR_CODES.AUTH_OLD_PASSWORD_INCORRECT);
         }
 
         const hashedPassword = await bcrypt.hash(dto.newPassword, 10);

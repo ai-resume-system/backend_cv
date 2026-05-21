@@ -1,4 +1,5 @@
 import {
+  HttpStatus,
   INestApplication,
   Logger,
   VersioningType,
@@ -91,11 +92,13 @@ function setGlobalPipes(app: INestApplication<any>, logger: Logger) {
         const message =
           Object.values(firstError.constraints ?? {})[0] ??
           ERROR_CODES.VALIDATION_ERROR.message;
-        return new AppException({
-          code: ERROR_CODES.VALIDATION_ERROR.code,
-          message,
-          status: 422,
-        });
+        return new AppException(
+          {
+            ...ERROR_CODES.VALIDATION_ERROR,
+            message,
+          },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
       },
     }),
   );

@@ -14,13 +14,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { IResponseApiUploadDto } from 'src/application/dtos/upload/res.upload.dto';
 import { UploadFileUseCase } from 'src/application/use-cases/upload/upload-file.usecase';
 import { BaseController } from 'src/common/base/base.controller';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
-import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RequestUploadFileDto } from '../dtos/req.upload.dto';
+import { IResponseApiUploadDto } from 'src/application/dtos/upload/res.upload.dto';
 import { ResponseApiUploadFileDto } from '../dtos/res.upload.dto';
 
 const MAX_UPLOAD_FILE_SIZE = 5 * 1024 * 1024;
@@ -46,6 +46,9 @@ export class UploadController extends BaseController {
     @AuthCurrentUser() user: ICurrentUser,
     @Body() dto: RequestUploadFileDto,
   ): Promise<IResponseApiUploadDto> {
-    return this.uploadFileUseCase.execute(user.id, { ...dto, file });
+    return await this.uploadFileUseCase.execute(user.id, {
+      ...dto,
+      file,
+    });
   }
 }

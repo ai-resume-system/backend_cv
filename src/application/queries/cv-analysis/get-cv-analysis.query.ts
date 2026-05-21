@@ -42,7 +42,10 @@ export class GetCVAnalysisQuery extends BaseUsecase {
     super(new Logger(GetCVAnalysisQuery.name));
   }
 
-  async execute(id: string, userId: string): Promise<IResponseApiCVAnalysisDto> {
+  async execute(
+    id: string,
+    userId: string,
+  ): Promise<IResponseApiCVAnalysisDto> {
     return this.runSafe('[Get CV Analysis]:', async () => {
       const cv = await this.cvRepository.findById(id);
       if (!cv || cv.userId !== userId) {
@@ -51,16 +54,16 @@ export class GetCVAnalysisQuery extends BaseUsecase {
 
       const version = await this.redis.getVersion(CACHE_VERSION_KEYS.CV_DETAIL);
       const cacheKey = `${CACHE_KEYS.CV_DETAIL}:analysis:v${version}:${cv.id}:${cv.updatedAt.getTime()}`;
-      const cached = await this.redis.safeGetJson<IResponseApiCVAnalysisDto>(
-        cacheKey,
-      );
+      const cached =
+        await this.redis.safeGetJson<IResponseApiCVAnalysisDto>(cacheKey);
       if (cached) {
         return cached;
       }
 
       const parsedData = await this.cvParsedDataRepository.findByCvId(cv.id);
       const cvSkills = await this.cvSkillRepository.findByCvId(cv.id);
-      const parsedJson = (parsedData?.parsedJson || {}) as IParsedAnalysisPayload;
+      const parsedJson = (parsedData?.parsedJson ||
+        {}) as IParsedAnalysisPayload;
       const skillNames = await Promise.all(
         cvSkills.map(async (cvSkill) => {
           const skill = await this.skillRepository.findById(cvSkill.skillId);
@@ -93,7 +96,9 @@ export class GetCVAnalysisQuery extends BaseUsecase {
           summary: cv.summary,
           score:
             parsedData?.score ??
-            (typeof parsedJson.score === 'number' ? parsedJson.score : undefined),
+            (typeof parsedJson.score === 'number'
+              ? parsedJson.score
+              : undefined),
           skills: skillNames.length ? skillNames : parsedSkills,
           education: Array.isArray(parsedJson.education)
             ? parsedJson.education

@@ -1,8 +1,3 @@
-export interface IApiResponseMeta {
-  status: boolean;
-  message: string;
-}
-
 export interface IApiResponsePagination {
   page: number;
   limit: number;
@@ -11,7 +6,13 @@ export interface IApiResponsePagination {
 }
 
 export interface IApiResponse<T> {
-  meta?: IApiResponseMeta;
+  status?: 'success';
+  message?: string;
   data: T;
   pagination?: IApiResponsePagination;
+}
+
+export interface IApiErrorResponse {
+  status: 'error';
+  message: string;
 }

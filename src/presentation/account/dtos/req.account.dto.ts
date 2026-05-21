@@ -1,7 +1,31 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
+import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 
-export class RequestUpdateMyProfileDto {
+export class RequestUpdateProfileBaseDto {
+  @ApiPropertyOptional({ example: '0987654321' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^(\+84)(3|5|7|8|9)[0-9]{8}$/, ERROR_CODES.AUTH_PHONE_INVALID)
+  @Transform(({ value }) => {
+    if (!value) return value;
+    let phone = value.replace(/\s+/g, '');
+    if (phone.startsWith('0')) {
+      phone = '+84' + phone.slice(1);
+    }
+    return phone;
+  })
+  phone?: string;
+}
+
+export class RequestUpdateMyProfileDto extends RequestUpdateProfileBaseDto {
   @ApiPropertyOptional({ example: 'Nguyen Van A' })
   @IsOptional()
   @IsString()
@@ -18,7 +42,7 @@ export class RequestUpdateMyProfileDto {
   bio?: string;
 }
 
-export class RequestUpdateMyCompanyDto {
+export class RequestUpdateMyCompanyDto extends RequestUpdateProfileBaseDto {
   @ApiPropertyOptional({ example: 'uuid-of-career-category' })
   @IsOptional()
   @IsString()

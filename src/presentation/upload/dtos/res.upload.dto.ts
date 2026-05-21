@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EUploadType } from 'src/application/dtos/upload/req.upload.dto';
-import { MetaDto } from 'src/common/dto/response.dto';
+import { EUploadType } from 'src/common/constants/enum/upload.enum';
+import { ApiResponseDto } from 'src/common/dto/response.dto';
 import { EBucketType } from 'src/infrastructure/storage/s3-storage.service';
 
 export class ResponseUploadFileDto {
@@ -32,10 +32,7 @@ export class ResponseUploadFileDto {
   size: number;
 }
 
-export class ResponseApiUploadFileDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseApiUploadFileDto extends ApiResponseDto<ResponseUploadFileDto> {
   @ApiProperty({ type: ResponseUploadFileDto })
-  data: ResponseUploadFileDto;
+  declare data: ResponseUploadFileDto;
 }

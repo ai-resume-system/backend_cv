@@ -20,6 +20,7 @@ export interface IUserRepository extends IBaseRepository<IUserEntity> {
   createWithPassword(data: ICreateUserDto): Promise<IUserEntity>;
   updateStatus(id: string, status: EUserStatus): Promise<void>;
   updatePassword(id: string, password: string): Promise<void>;
+  updateProfile(id: string, data: { phone?: string }): Promise<IUserEntity>;
   // findWithPagination(params: {
   //   skip: number;
   //   take: number;

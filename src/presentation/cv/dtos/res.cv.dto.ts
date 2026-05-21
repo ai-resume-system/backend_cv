@@ -3,7 +3,7 @@ import {
   ECVStatus,
   EProcessingStatus,
 } from 'src/common/constants/enum/cv.enum';
-import { MetaDto, PaginationDto } from 'src/common/dto/response.dto';
+import { ApiResponseDto, PaginationDto } from 'src/common/dto/response.dto';
 
 export class ResponseCVDto {
   @ApiProperty()
@@ -46,23 +46,17 @@ export class ResponseCVDto {
   updatedAt: Date;
 }
 
-export class ResponseApiCVDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseApiCVDto extends ApiResponseDto<ResponseCVDto> {
   @ApiProperty({ type: ResponseCVDto })
-  data: ResponseCVDto;
+  declare data: ResponseCVDto;
 }
 
-export class ResponseListApiCVDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseListApiCVDto extends ApiResponseDto<ResponseCVDto[]> {
   @ApiProperty({ type: [ResponseCVDto] })
-  data: ResponseCVDto[];
+  declare data: ResponseCVDto[];
 
   @ApiProperty({ type: PaginationDto })
-  pagination?: PaginationDto;
+  declare pagination?: PaginationDto;
 }
 
 export class ResponseCVDownloadDto {
@@ -73,12 +67,9 @@ export class ResponseCVDownloadDto {
   expiresIn: number;
 }
 
-export class ResponseApiCVDownloadDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseApiCVDownloadDto extends ApiResponseDto<ResponseCVDownloadDto> {
   @ApiProperty({ type: ResponseCVDownloadDto })
-  data: ResponseCVDownloadDto;
+  declare data: ResponseCVDownloadDto;
 }
 
 export class ResponseCVPreviewDto {
@@ -89,10 +80,7 @@ export class ResponseCVPreviewDto {
   expiresIn: number;
 }
 
-export class ResponseApiCVPreviewDto {
-  @ApiProperty({ type: MetaDto })
-  meta?: MetaDto;
-
+export class ResponseApiCVPreviewDto extends ApiResponseDto<ResponseCVPreviewDto> {
   @ApiProperty({ type: ResponseCVPreviewDto })
-  data: ResponseCVPreviewDto;
+  declare data: ResponseCVPreviewDto;
 }

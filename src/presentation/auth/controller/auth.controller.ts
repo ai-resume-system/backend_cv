@@ -1,6 +1,7 @@
 import { Body, Controller, Logger, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { IResponseAuthDto } from 'src/application/dtos/auth/res.auth.dto';
 import { LoginUseCase } from 'src/application/use-cases/auth/login.usecase';
 import { LogoutUseCase } from 'src/application/use-cases/auth/logout.usecase';
 import { RefreshTokenUseCase } from 'src/application/use-cases/auth/refresh-token.usecase';
@@ -10,6 +11,7 @@ import { VerifyOtpUseCase } from 'src/application/use-cases/auth/verify-otp.usec
 import { ForgotPasswordUseCase } from 'src/application/use-cases/auth/forgot-password.usecase';
 import { BaseController } from 'src/common/base/base.controller';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
+import { ResponseApiNullDto } from 'src/common/dto/response.dto';
 import {
   RequestLoginDto,
   RequestRefreshTokenDto,
@@ -19,11 +21,13 @@ import {
   RequestVerifyOtpDto,
   RequestForgotPasswordDto,
 } from 'src/presentation/auth/dtos/req.auth.dto';
-import { ResponseAuthDto } from '../dtos/res.auth.dto';
+import {
+  ResponseApiAuthDto,
+  ResponseApiVerifyOtpDto,
+} from '../dtos/res.auth.dto';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
-import { IResponseAuthDto } from 'src/application/dtos/auth/res.auth.dto';
 
 @Controller({
   path: 'auth',
@@ -48,6 +52,7 @@ export class AuthController extends BaseController {
   @ApiResponse({
     status: 201,
     description: 'Register successfully',
+    type: ResponseApiNullDto,
   })
   async registerJobSeeker(
     @Body() dto: RequestRegisterJobSeekerDto,
@@ -63,6 +68,7 @@ export class AuthController extends BaseController {
   @ApiResponse({
     status: 201,
     description: 'Register successfully',
+    type: ResponseApiNullDto,
   })
   async registerRecruiter(
     @Body() dto: RequestRegisterRecruiterDto,
@@ -76,8 +82,9 @@ export class AuthController extends BaseController {
   @Post('send-otp')
   @ApiOperation({ summary: 'Send OTP to email (register/forgot password)' })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description: 'OTP sent successfully',
+    type: ResponseApiNullDto,
   })
   async sendOtp(
     @Body() dto: RequestSendOtpDto,
@@ -93,21 +100,22 @@ export class AuthController extends BaseController {
   @Post('verify-otp')
   @ApiOperation({ summary: 'Verify OTP' })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description: 'OTP verified successfully',
+    type: ResponseApiVerifyOtpDto,
   })
   async verifyOtp(
     @Body() dto: RequestVerifyOtpDto,
-  ): Promise<{ signKey?: string; message: string }> {
+  ): Promise<{ message: string; signKey?: string }> {
     return await this.verifyOtpUseCase.execute(dto);
   }
 
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description: 'Login successfully',
-    type: ResponseAuthDto,
+    type: ResponseApiAuthDto,
   })
   async login(
     @Body() dto: RequestLoginDto,
@@ -116,8 +124,7 @@ export class AuthController extends BaseController {
     const ip =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
-    const result = await this.loginUseCase.execute(dto, ip!);
-    return result;
+    return await this.loginUseCase.execute(dto, ip!);
   }
 
   @Post('refresh-token')
@@ -125,33 +132,44 @@ export class AuthController extends BaseController {
   @ApiResponse({
     status: 201,
     description: 'Refresh token successfully',
-    type: ResponseAuthDto,
+    type: ResponseApiAuthDto,
   })
   async refreshToken(
     @Body() dto: RequestRefreshTokenDto,
   ): Promise<IResponseAuthDto> {
-    const result = await this.refreshTokenUseCase.execute(dto);
-    return result;
+    return await this.refreshTokenUseCase.execute(dto);
   }
 
   @Post('forgot-password')
   @ApiOperation({ summary: 'Reset password with email OTP signKey' })
-  @ApiResponse({ status: 201, description: 'Password reset successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Password reset successfully',
+    type: ResponseApiNullDto,
+  })
   async forgotPassword(
     @Body() dto: RequestForgotPasswordDto,
   ): Promise<{ message: string }> {
-    return this.forgotPasswordUseCase.execute(dto);
+    return await this.forgotPasswordUseCase.execute(dto);
   }
 
   @Post('logout')
   @ApiOperation({ summary: 'Logout account' })
   @AuthRequired()
+  @ApiResponse({
+    status: 201,
+    description: 'Logout successfully',
+    type: ResponseApiNullDto,
+  })
   async logout(
     @AuthCurrentUser() user: ICurrentUser,
     @Req() req: Request,
   ): Promise<{ message: string }> {
     const authHeader = req.headers['authorization'] as string;
     const accessToken = authHeader?.replace('Bearer ', '');
-    return await this.logoutUseCase.execute({ userId: user.id, accessToken });
+    return await this.logoutUseCase.execute({
+      userId: user.id,
+      accessToken,
+    });
   }
 }

@@ -1,6 +1,6 @@
 import { Controller, Get, Logger, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import {
+import type {
   IResponseApiCVAnalysisDto,
   IResponseApiCVAnalyzeActionDto,
 } from 'src/application/dtos/cv-analysis/res.cv-analysis.dto';
@@ -34,7 +34,7 @@ export class CVAnalysisController extends BaseController {
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
   ): Promise<IResponseApiCVAnalysisDto> {
-    return this.getCVAnalysisQuery.execute(id, user.id);
+    return await this.getCVAnalysisQuery.execute(id, user.id);
   }
 
   @Post(':id/analyze')
@@ -45,6 +45,6 @@ export class CVAnalysisController extends BaseController {
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
   ): Promise<IResponseApiCVAnalyzeActionDto> {
-    return this.analyzeCVUseCase.execute(id, user.id);
+    return await this.analyzeCVUseCase.execute(id, user.id);
   }
 }

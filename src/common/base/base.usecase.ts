@@ -1,5 +1,5 @@
 import { HttpException, Logger } from '@nestjs/common';
-import { AppException } from '../exceptions/app.exception';
+import { AppError, AppException } from '../exceptions/app.exception';
 import { ERROR_CODES } from '../constants/error-codes.constants';
 
 export class BaseUsecase {
@@ -13,7 +13,7 @@ export class BaseUsecase {
   protected async runSafe<T>(
     context: string,
     fn: () => Promise<T>,
-    fallbackError = ERROR_CODES.INTERNAL_SERVER_ERROR,
+    fallbackError: AppError = ERROR_CODES.INTERNAL_SERVER_ERROR,
   ): Promise<T> {
     try {
       return await fn();
