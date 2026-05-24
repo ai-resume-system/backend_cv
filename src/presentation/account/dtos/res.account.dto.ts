@@ -5,70 +5,77 @@ import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 
 //Response base
 export class ResponseBaseProfileDto {
-  @ApiPropertyOptional({ example: '0987654321' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   phone?: string;
 }
 
-//Response for Job Seeker
-export class ResponseProfileDto extends ResponseBaseProfileDto {
-  @ApiPropertyOptional({ example: 'Nguyen Van A' })
-  @IsOptional()
-  @IsString()
+//Response UPDATE for Job Seeker
+export class ResponseUpdateProfileDto extends ResponseBaseProfileDto {
+  @ApiPropertyOptional()
   fullName?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
+  bio?: string;
+}
+
+//Response UPDATE for Recruiter
+export class ResponseUpdateCompanyDto extends ResponseBaseProfileDto {
+  @ApiPropertyOptional()
+  careerCategoriesId?: string;
+
+  @ApiPropertyOptional()
+  companyName?: string;
+
+  @ApiPropertyOptional()
+  taxCode?: string;
+
+  @ApiPropertyOptional()
+  location?: string;
+
+  @ApiPropertyOptional()
+  description?: string;
+
+  @ApiPropertyOptional()
+  websiteUrl?: string;
+}
+
+//Response GET for account
+//Response for Job Seeker
+export class ResponseProfileDto extends ResponseBaseProfileDto {
+  @ApiPropertyOptional()
+  fullName?: string;
+
+  @ApiPropertyOptional()
   avatarUrl?: string;
 
-  @ApiPropertyOptional({ example: 'Experienced developer...' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   bio?: string;
 }
 
 //Response for Recruiter
 export class ResponseCompanyDto extends ResponseBaseProfileDto {
-  @ApiPropertyOptional({ example: 'uuid-of-career-category' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   careerCategoriesId?: string;
 
-  @ApiPropertyOptional({ example: 'Tech Company' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   companyName?: string;
 
-  @ApiPropertyOptional({ example: '0123456789' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   taxCode?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   logoUrl?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/banner.jpg' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   bannerUrl?: string;
 
-  @ApiPropertyOptional({ example: 'Hanoi' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   location?: string;
 
-  @ApiPropertyOptional({ example: 'Leading tech company...' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   description?: string;
 
-  @ApiPropertyOptional({ example: 'https://company.com' })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional()
   websiteUrl?: string;
 }
 
@@ -110,12 +117,12 @@ export class ResponseApiMyProfileDto extends ApiResponseDto<ResponseMyProfileDto
   declare data: ResponseMyProfileDto;
 }
 
-export class ResponseApiProfileDto extends ApiResponseDto<ResponseProfileDto> {
-  @ApiProperty({ type: ResponseProfileDto })
-  declare data: ResponseProfileDto;
+export class ResponseApiUpdateProfileDto extends ApiResponseDto<ResponseUpdateProfileDto> {
+  @ApiProperty({ type: ResponseUpdateProfileDto })
+  declare data: ResponseUpdateProfileDto;
 }
 
-export class ResponseApiCompanyDto extends ApiResponseDto<ResponseCompanyDto> {
-  @ApiProperty({ type: ResponseCompanyDto })
-  declare data: ResponseCompanyDto;
+export class ResponseApiUpdateCompanyDto extends ApiResponseDto<ResponseUpdateCompanyDto> {
+  @ApiProperty({ type: ResponseUpdateCompanyDto })
+  declare data: ResponseUpdateCompanyDto;
 }

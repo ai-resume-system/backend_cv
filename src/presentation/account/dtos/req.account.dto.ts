@@ -31,11 +31,6 @@ export class RequestUpdateMyProfileDto extends RequestUpdateProfileBaseDto {
   @IsString()
   fullName?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg' })
-  @IsOptional()
-  @IsString()
-  avatarUrl?: string;
-
   @ApiPropertyOptional({ example: 'Experienced developer...' })
   @IsOptional()
   @IsString()
@@ -57,16 +52,6 @@ export class RequestUpdateMyCompanyDto extends RequestUpdateProfileBaseDto {
   @IsOptional()
   @IsString()
   taxCode?: string;
-
-  @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
-  @IsOptional()
-  @IsString()
-  logoUrl?: string;
-
-  @ApiPropertyOptional({ example: 'https://example.com/banner.jpg' })
-  @IsOptional()
-  @IsString()
-  bannerUrl?: string;
 
   @ApiPropertyOptional({ example: 'Hanoi' })
   @IsOptional()

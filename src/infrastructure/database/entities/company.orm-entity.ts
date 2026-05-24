@@ -35,10 +35,10 @@ export class CompanyOrmEntity implements ICompanyEntity {
   companyName?: string;
 
   @Column({ name: 'logo_url', type: 'text', nullable: true })
-  logoUrl?: string;
+  logoUrl?: string | null;
 
   @Column({ name: 'banner_url', type: 'text', nullable: true })
-  bannerUrl?: string;
+  bannerUrl?: string | null;
 
   @Column({ name: 'location', type: 'text', nullable: true })
   location?: string;

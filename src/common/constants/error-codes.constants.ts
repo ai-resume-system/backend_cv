@@ -3,309 +3,309 @@ import { HttpStatus } from '@nestjs/common';
 export const ERROR_CODES = {
   // AUTH - REGISTER
   AUTH_EMAIL_ALREADY_EXISTS: {
-    message: 'Email đã tồn tại trên hệ thống.',
+    message: 'Email already exists in the system.',
     status: HttpStatus.CONFLICT,
   },
   AUTH_PHONE_INVALID: {
-    message:
-      'Số điện thoại không hợp lệ. Định dạng: +84xxxxxxxxx hoặc 0xxxxxxxxx.',
+    message: 'Invalid phone number. Format: +84xxxxxxxxx or 0xxxxxxxxx.',
     status: HttpStatus.BAD_REQUEST,
   },
   AUTH_PASSWORD_WEAK: {
     message:
-      'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.',
+      'Password must be at least 8 characters long, including uppercase letters, lowercase letters, and numbers.',
     status: HttpStatus.BAD_REQUEST,
   },
   AUTH_REGISTER_FAILED: {
-    message: 'Đăng ký thất bại.',
+    message: 'Registration failed.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
 
   // AUTH - OTP / VERIFY
   INVALID_OTP_TYPE: {
-    message: 'Loại OTP không hợp lệ.',
+    message: 'Invalid OTP type.',
     status: HttpStatus.BAD_REQUEST,
   },
   AUTH_OTP_INVALID: {
-    message: 'Mã OTP không hợp lệ hoặc đã hết hạn.',
+    message: 'Invalid or expired OTP code.',
     status: HttpStatus.UNAUTHORIZED,
   },
   AUTH_OTP_EXPIRED: {
-    message: 'Mã OTP đã hết hạn.',
+    message: 'OTP code has expired.',
     status: HttpStatus.UNAUTHORIZED,
   },
   AUTH_ACCOUNT_NOT_FOUND: {
-    message: 'Tài khoản không tồn tại.',
+    message: 'Account does not exist.',
     status: HttpStatus.NOT_FOUND,
   },
   AUTH_OTP_LOCKED: {
-    message: 'Tài khoản bị khóa do nhập sai OTP quá nhiều lần.',
+    message: 'Account is locked due to too many incorrect OTP attempts.',
     status: HttpStatus.FORBIDDEN,
   },
   AUTH_OTP_RESEND_LIMIT_EXCEEDED: {
-    message: 'Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau.',
+    message: 'Too many requests. Please try again later.',
     status: HttpStatus.TOO_MANY_REQUESTS,
   },
   AUTH_OTP_COOLDOWN: {
-    message: 'Vui lòng đợi 60 giây trước khi yêu cầu OTP mới.',
+    message: 'Please wait 60 seconds before requesting a new OTP.',
     status: HttpStatus.TOO_MANY_REQUESTS,
   },
   AUTH_USER_UNVERIFIED: {
-    message: 'Tài khoản chưa được xác thực. Không thể thực hiện hành động này',
+    message: 'Account is unverified. Cannot perform this action.',
     status: HttpStatus.FORBIDDEN,
   },
   AUTH_USER_ALREADY_VERIFIED: {
-    message: 'Tài khoản đã được xác thực. Không thể thực hiện hành động này',
+    message: 'Account is already verified. Cannot perform this action.',
     status: HttpStatus.CONFLICT,
   },
   AUTH_SIGN_KEY_INVALID: {
-    message: 'Khoá xác thực (sign key) không hợp lệ hoặc đã hết hạn.',
+    message: 'Invalid or expired signature verification key.',
     status: HttpStatus.UNAUTHORIZED,
   },
   AUTH_USER_LOCKED: {
     message:
-      'Tài khoản người dùng đã bị khóa. Không thể thực hiện hành động này. Vui lòng liên hệ bộ phân hỗ trợ!',
+      'User account has been locked. Cannot perform this action. Please contact support!',
     status: HttpStatus.FORBIDDEN,
   },
 
   // AUTH - LOGIN
   AUTH_INVALID_CREDENTIALS: {
-    message: 'Email hoặc mật khẩu không chính xác.',
+    message: 'Incorrect email or password.',
     status: HttpStatus.UNAUTHORIZED,
   },
   AUTH_USER_INACTIVE: {
-    message: 'Tài khoản đã bị khóa hoặc ngừng hoạt động.',
+    message: 'Account is locked or inactive.',
     status: HttpStatus.FORBIDDEN,
   },
   AUTH_LOGIN_FAILED: {
-    message: 'Đăng nhập thất bại.',
+    message: 'Login failed.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   AUTH_LOGIN_LOCKED_10M: {
     message:
-      'Tài khoản bị khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 10 phút.',
+      'Account locked due to too many failed login attempts. Please try again in 10 minutes.',
     status: HttpStatus.FORBIDDEN,
   },
 
   // AUTH - TOKEN
   AUTH_INVALID_TOKEN: {
-    message: 'Token không hợp lệ hoặc đã hết hạn.',
+    message: 'Invalid or expired token.',
     status: HttpStatus.UNAUTHORIZED,
   },
   ACCESS_TOKEN_INVALID_OR_EXPIRED: {
-    message: 'Access token không hợp lệ hoặc đã hết hạn.',
+    message: 'Invalid or expired access token.',
     status: HttpStatus.UNAUTHORIZED,
   },
   AUTH_REFRESH_TOKEN_INVALID_OR_EXPIRED: {
-    message: 'Refresh token không hợp lệ hoặc đã hết hạn.',
+    message: 'Invalid or expired refresh token.',
     status: HttpStatus.UNAUTHORIZED,
   },
 
   // AUTH - PASSWORD
   AUTH_CHANGE_PASSWORD_FAILED: {
-    message: 'Đổi mật khẩu thất bại.',
+    message: 'Failed to change password.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   AUTH_OLD_PASSWORD_INCORRECT: {
-    message: 'Mật khẩu cũ không chính xác.',
+    message: 'Incorrect old password.',
     status: HttpStatus.BAD_REQUEST,
   },
 
   // USER
   USER_NOT_FOUND: {
-    message: 'Không tìm thấy người dùng.',
+    message: 'User not found.',
     status: HttpStatus.NOT_FOUND,
   },
   USER_ALREADY_EXISTS: {
-    message: 'Người dùng đã tồn tại.',
+    message: 'User already exists.',
     status: HttpStatus.CONFLICT,
   },
 
   // JOB
   JOB_NOT_FOUND: {
-    message: 'Không tìm thấy công việc.',
+    message: 'Job not found.',
     status: HttpStatus.NOT_FOUND,
   },
   JOB_ALREADY_EXISTS: {
-    message: 'Công việc đã tồn tại.',
+    message: 'Job already exists.',
     status: HttpStatus.CONFLICT,
   },
   JOB_CREATE_FAILED: {
-    message: 'Tạo công việc thất bại.',
+    message: 'Failed to create job.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   JOB_UPDATE_FAILED: {
-    message: 'Cập nhật công việc thất bại.',
+    message: 'Failed to update job.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   JOB_DELETE_FAILED: {
-    message: 'Xóa công việc thất bại.',
+    message: 'Failed to delete job.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
 
   // CV
   CV_NOT_FOUND: {
-    message: 'Không tìm thấy CV.',
+    message: 'CV not found.',
     status: HttpStatus.NOT_FOUND,
   },
   CV_ALREADY_EXISTS: {
-    message: 'CV đã tồn tại.',
+    message: 'CV already exists.',
     status: HttpStatus.CONFLICT,
   },
   CV_CREATE_FAILED: {
-    message: 'Tạo CV thất bại.',
+    message: 'Failed to create CV.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   CV_UPDATE_FAILED: {
-    message: 'Cập nhật CV thất bại.',
+    message: 'Failed to update CV.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   CV_DELETE_FAILED: {
-    message: 'Xóa CV thất bại.',
+    message: 'Failed to delete CV.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   CV_FILE_TOO_LARGE: {
-    message: 'Dung lượng file CV tối đa 5MB.',
+    message: 'Maximum CV file size is 5MB.',
     status: HttpStatus.BAD_REQUEST,
   },
   CV_FILE_TYPE_INVALID: {
-    message: 'Định dạng file không hợp lệ. Chỉ chấp nhận PDF, DOC, DOCX.',
+    message: 'Invalid file format. Only PDF, DOC, and DOCX are accepted.',
     status: HttpStatus.BAD_REQUEST,
   },
   CV_ACCESS_DENIED: {
-    message: 'Bạn không có quyền truy cập CV này.',
+    message: 'You do not have permission to access this CV.',
     status: HttpStatus.FORBIDDEN,
   },
   RATE_LIMIT_EXCEEDED: {
-    message: 'Đã vượt quá số lần tải file trong 1 phút. Vui lòng thử lại sau.',
+    message:
+      'File download limit exceeded within 1 minute. Please try again later.',
     status: HttpStatus.TOO_MANY_REQUESTS,
   },
 
   // CV ANALYSIS
   CV_ANALYSIS_ALREADY_PROCESSING_ERROR: {
-    message: 'CV dang duoc phan tich. Vui long doi job hien tai hoan tat.',
+    message:
+      'CV analysis is in progress. Please wait for the current job to complete.',
     status: HttpStatus.CONFLICT,
   },
-
   CV_ANALYSIS_FILE_MISSING_ERROR: {
-    message: 'CV khong co file hop le de thuc hien phan tich.',
+    message: 'CV is missing a valid file to perform analysis.',
     status: HttpStatus.BAD_REQUEST,
   },
-
   CV_ANALYSIS_TRIGGER_FAILED_ERROR: {
-    message: 'Khong the khoi tao qua trinh phan tich CV.',
+    message: 'Failed to initialize the CV analysis process.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
 
   // CAREER CATEGORY
   CAREER_CATEGORY_NOT_FOUND: {
-    message: 'Không tìm thấy ngành nghề.',
+    message: 'Career category not found.',
     status: HttpStatus.NOT_FOUND,
   },
   CAREER_CATEGORY_ALREADY_EXISTS: {
-    message: 'Ngành nghề đã tồn tại.',
+    message: 'Career category already exists.',
     status: HttpStatus.CONFLICT,
   },
   CAREER_CATEGORY_CREATE_FAILED: {
-    message: 'Tạo ngành nghề thất bại.',
+    message: 'Failed to create career category.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   CAREER_CATEGORY_UPDATE_FAILED: {
-    message: 'Cập nhật ngành nghề thất bại.',
+    message: 'Failed to update career category.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   CAREER_CATEGORY_DELETE_FAILED: {
-    message: 'Xóa ngành nghề thất bại.',
+    message: 'Failed to delete career category.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
 
   // JOB APPLICATION
   JOB_APPLICATION_NOT_FOUND: {
-    message: 'Không tìm thấy đơn ứng tuyển.',
+    message: 'Job application not found.',
     status: HttpStatus.NOT_FOUND,
   },
   JOB_APPLICATION_ALREADY_EXISTS: {
-    message: 'Bạn đã ứng tuyển công việc này rồi.',
+    message: 'You have already applied for this job.',
     status: HttpStatus.CONFLICT,
   },
   JOB_APPLICATION_CREATE_FAILED: {
-    message: 'Ứng tuyển thất bại.',
+    message: 'Failed to apply for the job.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   JOB_APPLICATION_UPDATE_FAILED: {
-    message: 'Cập nhật đơn ứng tuyển thất bại.',
+    message: 'Failed to update job application.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   JOB_APPLICATION_WITHDRAW_FAILED: {
-    message: 'Rút đơn ứng tuyển thất bại.',
+    message: 'Failed to withdraw job application.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   JOB_APPLICATION_JOB_NOT_OPEN: {
-    message: 'Công việc này không còn nhận ứng viên.',
+    message: 'This job is no longer accepting applications.',
     status: HttpStatus.BAD_REQUEST,
   },
   JOB_APPLICATION_JOB_EXPIRED: {
-    message: 'Công việc này đã hết hạn ứng tuyển.',
+    message: 'This job application period has expired.',
     status: HttpStatus.BAD_REQUEST,
   },
   JOB_APPLICATION_CV_IN_USE: {
-    message: 'CV này đang được sử dụng cho đơn ứng tuyển khác.',
+    message: 'This CV is currently being used for another application.',
     status: HttpStatus.CONFLICT,
   },
   JOB_APPLICATION_CANNOT_WITHDRAW: {
-    message: 'Không thể rút đơn. Đơn đã được chuyển trạng thái.',
+    message:
+      'Cannot withdraw application. The application status has already been changed.',
     status: HttpStatus.BAD_REQUEST,
   },
   JOB_APPLICATION_STATUS_INVALID: {
-    message: 'Trạng thái đơn ứng tuyển không hợp lệ.',
+    message: 'Invalid job application status.',
     status: HttpStatus.BAD_REQUEST,
   },
 
   // MEDIA / ROLE
   MEDIA_FILE_REQUIRED: {
-    message: 'File tai len khong duoc de trong.',
+    message: 'Uploaded file cannot be empty.',
     status: HttpStatus.BAD_REQUEST,
   },
   MEDIA_FILE_TOO_LARGE: {
-    message: 'Dung luong file toi da 5MB.',
+    message: 'Maximum file size allowed is 5MB.',
     status: HttpStatus.BAD_REQUEST,
   },
   MEDIA_FILE_TYPE_INVALID: {
-    message: 'Dinh dang file khong hop le. Chi chap nhan file anh.',
+    message: 'Invalid file format. Only image files are accepted.',
     status: HttpStatus.BAD_REQUEST,
   },
   MEDIA_TYPE_INVALID: {
-    message: 'Loai media khong hop le.',
+    message: 'Invalid media type.',
     status: HttpStatus.BAD_REQUEST,
   },
   MEDIA_UPLOAD_FAILED: {
-    message: 'Tai media that bai.',
+    message: 'Failed to upload media.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   ROLE_UNABLE_TO_DETERMINE: {
-    message: 'Không xác định được quyền hạn của người dùng.',
+    message: 'Unable to determine user permissions.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   ROLE_INSUFFICIENT_PERMISSIONS: {
-    message: 'Bạn không có quyền thực hiện thao tác này.',
+    message: 'You do not have permission to perform this action.',
     status: HttpStatus.FORBIDDEN,
   },
 
   // SYSTEM
   IP_NOT_FOUND: {
-    message: 'Không tìm thấy IP.',
+    message: 'IP address not found.',
     status: HttpStatus.NOT_FOUND,
   },
   INTERNAL_SERVER_ERROR: {
-    message: 'Lỗi hệ thống, vui lòng thử lại sau.',
+    message: 'Internal server error. Please try again later.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   VALIDATION_ERROR: {
-    message: 'Dữ liệu không hợp lệ.',
+    message: 'Invalid input data.',
     status: HttpStatus.BAD_REQUEST,
   },
   SYSTEM_BUSY: {
-    message: 'Hệ thống bận, vui lòng thử lại sau.',
+    message: 'System is busy, please try again later.',
     status: HttpStatus.SERVICE_UNAVAILABLE,
   },
 } as const;

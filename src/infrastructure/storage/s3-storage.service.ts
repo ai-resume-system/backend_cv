@@ -8,14 +8,8 @@ import {
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { EBucketType } from 'src/common/constants/enum/upload.enum';
 import { Readable } from 'stream';
-
-export enum EBucketType {
-  CV = 'cv',
-  COMPANY_LOGO = 'company_logo',
-  AVATAR = 'avatar',
-  BANNER = 'banner',
-}
 
 export interface IUploadObjectParams {
   key: string;

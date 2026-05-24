@@ -4,7 +4,7 @@ import { IApiResponse } from 'src/common/interface/api-response.interface';
 export interface IJobCompanyDto {
   id: string;
   companyName?: string;
-  logoUrl?: string;
+  logoUrl?: string | null;
   location?: string;
   websiteUrl?: string;
 }

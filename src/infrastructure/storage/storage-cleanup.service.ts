@@ -5,7 +5,8 @@ import { IsNull, Repository } from 'typeorm';
 import { CompanyOrmEntity } from '../database/entities/company.orm-entity';
 import { CVOrmEntity } from '../database/entities/cv.orm-entity';
 import { UserProfileOrmEntity } from '../database/entities/user_profile.orm-entity';
-import { EBucketType, S3StorageService } from './s3-storage.service';
+import { EBucketType } from 'src/common/constants/enum/upload.enum';
+import { S3StorageService } from './s3-storage.service';
 
 const ORPHAN_FILE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
@@ -107,7 +108,7 @@ export class StorageCleanupService {
   private addReferencedKey(
     result: Map<EBucketType, Set<string>>,
     bucketType: EBucketType,
-    value?: string,
+    value?: string | null,
   ): void {
     if (!value || this.storage.isExternalUrl(value)) return;
     result

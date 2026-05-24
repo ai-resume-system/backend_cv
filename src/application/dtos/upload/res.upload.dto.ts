@@ -1,5 +1,7 @@
-import { EUploadType } from 'src/common/constants/enum/upload.enum';
-import { EBucketType } from 'src/infrastructure/storage/s3-storage.service';
+import {
+  EUploadType,
+  EBucketType,
+} from 'src/common/constants/enum/upload.enum';
 import { IResponseApiCVDto } from '../cv/res.cv.dto';
 
 export interface IUploadFileResponseDto {

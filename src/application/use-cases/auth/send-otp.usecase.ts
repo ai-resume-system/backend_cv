@@ -1,6 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { randomInt } from 'crypto';
-import { createHash } from 'crypto';
 import { ISendOtpDto } from 'src/application/dtos/auth/req.auth.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
@@ -8,11 +7,13 @@ import { EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { TTL_10M, TTL_1M, TTL_30S } from 'src/common/constants/ttl.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { hashOtp } from 'src/common/utils/hash.utils';
+import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { MailService } from 'src/infrastructure/mail/mail.service';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.repository.interface';
-import { hashOtp } from 'src/common/utils/hash.utils';
+
+const OTP_EXPIRES_IN_SECONDS = 300;
 
 @Injectable()
 export class SendOtpUseCase extends BaseUsecase {
@@ -117,7 +118,7 @@ export class SendOtpUseCase extends BaseUsecase {
 
         const otp = randomInt(100000, 1000000).toString();
         const codeHash = hashOtp(otp, dto.email);
-        const expiresAt = new Date(Date.now() + TTL_10M * 1000);
+        const expiresAt = new Date(Date.now() + OTP_EXPIRES_IN_SECONDS * 1000);
 
         await this.otpCodeRepository.create({
           email: dto.email,
@@ -128,7 +129,11 @@ export class SendOtpUseCase extends BaseUsecase {
 
         const cooldownTtl = dto.type === EOtpType.REGISTER ? TTL_30S : TTL_1M;
         try {
-          await this.redis.setOtpCache(dto.email, codeHash, TTL_10M);
+          await this.redis.setOtpCache(
+            dto.email,
+            codeHash,
+            OTP_EXPIRES_IN_SECONDS,
+          );
           await this.redis.setCooldown(dto.email, cooldownTtl);
         } catch (error) {
           this.logger.warn(

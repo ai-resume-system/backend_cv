@@ -8,12 +8,11 @@ import type { ICompanyRepository } from 'src/domain/repositories/company.reposit
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import {
-  EBucketType,
-  S3StorageService,
-} from 'src/infrastructure/storage/s3-storage.service';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
+import { EBucketType } from 'src/common/constants/enum/upload.enum';
 
-const ACCOUNT_PROFILE_CACHE_TTL_SECONDS = 900;
+const ACCOUNT_PROFILE_CACHE_TTL_SECONDS = 600;
+const ACCOUNT_IMAGE_PREVIEW_TTL_SECONDS = 900;
 
 @Injectable()
 export class GetMyProfileQuery extends BaseUsecase {
@@ -115,16 +114,16 @@ export class GetMyProfileQuery extends BaseUsecase {
   }
 
   private async toPreviewUrl(
-    value: string | undefined,
+    value: string | null | undefined,
     bucketType: EBucketType,
-  ): Promise<string | undefined> {
+  ): Promise<string | null | undefined> {
     if (!value || this.storage.isExternalUrl(value)) {
       return value;
     }
     return this.storage.createPrivatePreviewUrl(
       value,
       bucketType,
-      ACCOUNT_PROFILE_CACHE_TTL_SECONDS,
+      ACCOUNT_IMAGE_PREVIEW_TTL_SECONDS,
     );
   }
 }

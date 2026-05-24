@@ -7,12 +7,6 @@ import { AppException } from 'src/common/exceptions/app.exception';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
-import {
-  EBucketType,
-  S3StorageService,
-} from 'src/infrastructure/storage/s3-storage.service';
-
-const ACCOUNT_IMAGE_PREVIEW_TTL_SECONDS = 900;
 
 @Injectable()
 export class UpdateMyProfileUseCase extends BaseUsecase {
@@ -22,7 +16,6 @@ export class UpdateMyProfileUseCase extends BaseUsecase {
     @Inject('IUserProfileRepository')
     private readonly profileRepository: IUserProfileRepository,
     private readonly queueDispatch: QueueDispatchService,
-    private readonly storage: S3StorageService,
   ) {
     super(new Logger(UpdateMyProfileUseCase.name));
   }
@@ -42,20 +35,18 @@ export class UpdateMyProfileUseCase extends BaseUsecase {
         throw new AppException(ERROR_CODES.USER_NOT_FOUND);
       }
 
-      const { phone, fullName, avatarUrl, bio } = dto;
+      const { phone, fullName, bio } = dto;
 
       const updatedUser =
         phone !== undefined
           ? await this.userRepository.updateProfile(userId, { phone })
           : user;
 
-      const hasProfileFields =
-        fullName !== undefined || avatarUrl !== undefined || bio !== undefined;
+      const hasProfileFields = fullName !== undefined || bio !== undefined;
 
       const updatedProfile = hasProfileFields
         ? await this.profileRepository.updateWithUserId(userId, {
             fullName,
-            avatarUrl,
             bio,
           })
         : profile;
@@ -68,20 +59,8 @@ export class UpdateMyProfileUseCase extends BaseUsecase {
       return {
         phone: updatedUser.phone,
         fullName: updatedProfile.fullName,
-        avatarUrl: await this.toPreviewUrl(updatedProfile.avatarUrl),
         bio: updatedProfile.bio,
       };
     });
-  }
-
-  private async toPreviewUrl(value?: string): Promise<string | undefined> {
-    if (!value || this.storage.isExternalUrl(value)) {
-      return value;
-    }
-    return this.storage.createPrivatePreviewUrl(
-      value,
-      EBucketType.AVATAR,
-      ACCOUNT_IMAGE_PREVIEW_TTL_SECONDS,
-    );
   }
 }

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -31,8 +32,6 @@ export class RequestRegisterJobSeekerDto extends RequestRegisterDto {
   @ApiProperty({ example: 'Nguyen Van A' })
   @IsNotEmpty()
   @IsString()
-  @MinLength(2)
-  @MaxLength(100)
   fullName: string;
 }
 
@@ -98,12 +97,18 @@ export class RequestLoginDto {
   @IsString()
   @MinLength(6)
   password: string;
+
+  @ApiProperty({ example: false, required: false })
+  @IsOptional()
+  @IsBoolean()
+  rememberMe?: boolean;
 }
 
 export class RequestRefreshTokenDto {
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
+  @IsOptional()
   @IsString()
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 export class RequestChangePasswordDto {

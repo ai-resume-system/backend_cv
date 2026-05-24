@@ -5,16 +5,19 @@ import { IRequestUploadFileDto } from 'src/application/dtos/upload/req.upload.dt
 import { IResponseApiUploadDto } from 'src/application/dtos/upload/res.upload.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
-import { EUploadType } from 'src/common/constants/enum/upload.enum';
-import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
-import { AppException } from 'src/common/exceptions/app.exception';
-import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
-import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import { FileValidationService } from 'src/infrastructure/storage/file-validation.service';
 import {
   EBucketType,
-  S3StorageService,
-} from 'src/infrastructure/storage/s3-storage.service';
+  EUploadType,
+} from 'src/common/constants/enum/upload.enum';
+import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
+import { AppException } from 'src/common/exceptions/app.exception';
+import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
+import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
+import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
+import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { FileValidationService } from 'src/infrastructure/storage/file-validation.service';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 
 const UPLOAD_RATE_LIMIT_WINDOW_SECONDS = 60;
 const UPLOAD_RATE_LIMIT_MAX = 5;
@@ -23,10 +26,15 @@ const UPLOAD_RATE_LIMIT_MAX = 5;
 export class UploadFileUseCase extends BaseUsecase {
   constructor(
     @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
+    @Inject('IUserProfileRepository')
+    private readonly profileRepository: IUserProfileRepository,
+    @Inject('ICompanyRepository')
+    private readonly companyRepository: ICompanyRepository,
     private readonly fileValidation: FileValidationService,
     private readonly storage: S3StorageService,
     private readonly redis: RedisAdapter,
     private readonly configService: ConfigService,
+    private readonly queueDispatch: QueueDispatchService,
   ) {
     super(new Logger(UploadFileUseCase.name));
   }
@@ -90,6 +98,7 @@ export class UploadFileUseCase extends BaseUsecase {
       contentType: validated.mime,
       bucketType,
     });
+    await this.persistImageUrl(userId, type, objectKey);
 
     const expiresIn = this.configService.get<number>(
       'S3_PRESIGNED_TTL_SECONDS',
@@ -114,6 +123,44 @@ export class UploadFileUseCase extends BaseUsecase {
         size: file.size,
       },
     };
+  }
+
+  private async persistImageUrl(
+    userId: string,
+    type: EUploadType,
+    objectKey: string,
+  ): Promise<void> {
+    if (type === EUploadType.AVATAR) {
+      await this.profileRepository.updateWithUserId(userId, {
+        avatarUrl: objectKey,
+      });
+      await this.queueDispatch.dispatchCacheInvalidation({
+        keys: [`account:profile:${userId}`],
+        prefixes: [],
+      });
+      return;
+    }
+
+    if (type === EUploadType.LOGO) {
+      await this.companyRepository.updateWithUserId(userId, {
+        logoUrl: objectKey,
+      });
+      await this.queueDispatch.dispatchCacheInvalidation({
+        keys: [`account:profile:${userId}`],
+        prefixes: [],
+      });
+      return;
+    }
+
+    if (type === EUploadType.BANNER) {
+      await this.companyRepository.updateWithUserId(userId, {
+        bannerUrl: objectKey,
+      });
+      await this.queueDispatch.dispatchCacheInvalidation({
+        keys: [`account:profile:${userId}`],
+        prefixes: [],
+      });
+    }
   }
 
   private resolveBucketType(type: EUploadType): EBucketType {

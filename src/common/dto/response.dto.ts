@@ -112,7 +112,7 @@ export class ResponseBooleanDto {
   success: boolean;
 }
 
-export class ApiResponseBooleanDto {
+export class ResponseApiBooleanDto {
   @ApiProperty({
     description: 'Response status',
     example: 'success',

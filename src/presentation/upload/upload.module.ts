@@ -4,8 +4,10 @@ import { UploadFileUseCase } from 'src/application/use-cases/upload/upload-file.
 import { JwtAuthModule } from 'src/common/guards/jwt-auth.module';
 import { CVOrmEntity } from 'src/infrastructure/database/entities/cv.orm-entity';
 import { CVTypeormRepository } from 'src/infrastructure/database/repositories/cv.typeorm-repository';
+import { QueueModule } from 'src/infrastructure/queue/queue.module';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
 import { StorageModule } from 'src/infrastructure/storage/storage.module';
+import { UsersModule } from 'src/presentation/user/users.module';
 import { UploadController } from './controller/upload.controller';
 
 @Module({
@@ -14,6 +16,8 @@ import { UploadController } from './controller/upload.controller';
     JwtAuthModule,
     RedisModule,
     StorageModule,
+    QueueModule,
+    UsersModule,
   ],
   controllers: [UploadController],
   providers: [

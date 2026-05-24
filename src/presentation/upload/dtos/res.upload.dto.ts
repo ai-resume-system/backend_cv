@@ -1,13 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EUploadType } from 'src/common/constants/enum/upload.enum';
+import {
+  EBucketType,
+  EUploadType,
+} from 'src/common/constants/enum/upload.enum';
 import { ApiResponseDto } from 'src/common/dto/response.dto';
-import { EBucketType } from 'src/infrastructure/storage/s3-storage.service';
 
 export class ResponseUploadFileDto {
-  @ApiProperty({ enum: EUploadType })
+  @ApiProperty({
+    enum: Object.values(EUploadType),
+    example: Object.values(EUploadType).join(' | '),
+  })
   type: EUploadType;
 
-  @ApiProperty({ enum: EBucketType })
+  @ApiProperty({
+    enum: Object.values(EBucketType),
+    example: Object.values(EBucketType).join(' | '),
+  })
   bucketType: EBucketType;
 
   @ApiProperty()

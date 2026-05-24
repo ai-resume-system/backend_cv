@@ -21,7 +21,10 @@ export class ResponseJobApplicationDto {
   @ApiPropertyOptional()
   notes?: string;
 
-  @ApiProperty({ enum: EJobApplicationStatus })
+  @ApiProperty({
+    enum: Object.values(EJobApplicationStatus),
+    example: Object.values(EJobApplicationStatus).join(' | '),
+  })
   status: EJobApplicationStatus;
 
   @ApiPropertyOptional()

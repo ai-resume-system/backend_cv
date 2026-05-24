@@ -1,10 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Logger,
-  Patch,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Patch } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type {
   IMyProfileResponseDto,
@@ -12,25 +6,28 @@ import type {
   IResponseMyProfileDto,
 } from 'src/application/dtos/account/res.account.dto';
 import { GetMyProfileQuery } from 'src/application/queries/account/get-my-profile.query';
-import { UpdateMyProfileUseCase } from 'src/application/use-cases/account/update-my-profile.usecase';
-import { UpdateMyCompanyUseCase } from 'src/application/use-cases/account/update-my-company.usecase';
 import { ChangePasswordUseCase } from 'src/application/use-cases/account/change-password.usecase';
+import { DeleteAvatarUseCase } from 'src/application/use-cases/account/delete-avatar.usecase';
+import { DeleteCompanyBannerUseCase } from 'src/application/use-cases/account/delete-company-banner.usecase';
+import { DeleteCompanyLogoUseCase } from 'src/application/use-cases/account/delete-company-logo.usecase';
+import { UpdateMyCompanyUseCase } from 'src/application/use-cases/account/update-my-company.usecase';
+import { UpdateMyProfileUseCase } from 'src/application/use-cases/account/update-my-profile.usecase';
 import { BaseController } from 'src/common/base/base.controller';
-import { ResponseApiNullDto } from 'src/common/dto/response.dto';
+import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
-import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
+import { ResponseApiBooleanDto } from 'src/common/dto/response.dto';
 import {
-  RequestUpdateMyProfileDto,
-  RequestUpdateMyCompanyDto,
   RequestChangePasswordDto,
+  RequestUpdateMyCompanyDto,
+  RequestUpdateMyProfileDto,
 } from '../dtos/req.account.dto';
 import {
-  ResponseApiCompanyDto,
+  ResponseApiUpdateCompanyDto,
   ResponseApiMyProfileDto,
-  ResponseApiProfileDto,
+  ResponseApiUpdateProfileDto,
 } from '../dtos/res.account.dto';
-import { EUserRole } from 'src/common/constants/enum/user.enum';
 
 @Controller({ path: 'account', version: '1' })
 @ApiTags('Account')
@@ -40,6 +37,9 @@ export class AccountController extends BaseController {
     private readonly updateMyProfileUseCase: UpdateMyProfileUseCase,
     private readonly updateMyCompanyUseCase: UpdateMyCompanyUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
+    private readonly deleteAvatarUseCase: DeleteAvatarUseCase,
+    private readonly deleteCompanyLogoUseCase: DeleteCompanyLogoUseCase,
+    private readonly deleteCompanyBannerUseCase: DeleteCompanyBannerUseCase,
   ) {
     super(new Logger(AccountController.name));
   }
@@ -64,7 +64,7 @@ export class AccountController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Profile updated successfully',
-    type: ResponseApiProfileDto,
+    type: ResponseApiUpdateProfileDto,
   })
   async updateMyProfile(
     @AuthCurrentUser() user: ICurrentUser,
@@ -79,7 +79,7 @@ export class AccountController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Company updated successfully',
-    type: ResponseApiCompanyDto,
+    type: ResponseApiUpdateCompanyDto,
   })
   async updateMyCompany(
     @AuthCurrentUser() user: ICurrentUser,
@@ -94,12 +94,39 @@ export class AccountController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Password changed successfully',
-    type: ResponseApiNullDto,
+    type: ResponseApiBooleanDto,
   })
   async changePassword(
     @AuthCurrentUser() user: ICurrentUser,
     @Body() dto: RequestChangePasswordDto,
-  ): Promise<{ message: string }> {
+  ): Promise<{ data: { success: boolean; message: string } }> {
     return await this.changePasswordUseCase.execute(user.id, dto);
+  }
+
+  @Delete('me/avatar')
+  @ApiOperation({ summary: 'Delete avatar' })
+  @AuthRequired(EUserRole.JOB_SEEKER)
+  async deleteAvatar(
+    @AuthCurrentUser() user: ICurrentUser,
+  ): Promise<{ data: { success: boolean; message: string } }> {
+    return await this.deleteAvatarUseCase.execute(user.id);
+  }
+
+  @Delete('me/logo')
+  @ApiOperation({ summary: 'Delete company logo' })
+  @AuthRequired(EUserRole.RECRUITER)
+  async deleteCompanyLogo(
+    @AuthCurrentUser() user: ICurrentUser,
+  ): Promise<{ data: { success: boolean; message: string } }> {
+    return await this.deleteCompanyLogoUseCase.execute(user.id);
+  }
+
+  @Delete('me/banner')
+  @ApiOperation({ summary: 'Delete company banner' })
+  @AuthRequired(EUserRole.RECRUITER)
+  async deleteCompanyBanner(
+    @AuthCurrentUser() user: ICurrentUser,
+  ): Promise<{ data: { success: boolean; message: string } }> {
+    return await this.deleteCompanyBannerUseCase.execute(user.id);
   }
 }

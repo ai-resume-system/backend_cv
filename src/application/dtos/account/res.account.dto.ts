@@ -8,19 +8,19 @@ export interface IMyProfileResponseDto {
   role: EUserRole;
   profile?: {
     fullName?: string;
-    avatarUrl?: string;
+    avatarUrl?: string | null;
     bio?: string;
-  };
+  } | null;
   company?: {
     careerCategoriesId?: string;
     companyName?: string;
-    logoUrl?: string;
-    bannerUrl?: string;
+    logoUrl?: string | null;
+    bannerUrl?: string | null;
     location?: string;
     description?: string;
     taxCode?: string;
     websiteUrl?: string;
-  };
+  } | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
@@ -30,7 +30,6 @@ export interface IMyProfileResponseDto {
 export interface IResponseMyProfileDto {
   phone?: string;
   fullName?: string;
-  avatarUrl?: string;
   bio?: string;
 }
 
@@ -40,8 +39,6 @@ export interface IResponseMyCompanyDto {
   careerCategoriesId?: string;
   companyName?: string;
   taxCode?: string;
-  logoUrl?: string;
-  bannerUrl?: string;
   location?: string;
   description?: string;
   websiteUrl?: string;

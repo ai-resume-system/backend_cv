@@ -3,8 +3,8 @@ export interface ICompanyEntity {
   userId: string;
   careerCategoriesId?: string;
   companyName?: string;
-  logoUrl?: string;
-  bannerUrl?: string;
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
   location?: string;
   description?: string;
   taxCode?: string;

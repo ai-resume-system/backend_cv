@@ -1,12 +1,12 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
+import { IResponseApiCareerCategoryDto } from 'src/application/dtos/career-category/res.career-category.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
-import { IRequestUpdateCareerCategoryDto } from '../../dtos/career-category/req.career-category.dto';
-import { ResponseApiCareerCategoryDto } from 'src/presentation/career-category/dtos/res.career-category.dto';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { IRequestUpdateCareerCategoryDto } from '../../dtos/career-category/req.career-category.dto';
 
 @Injectable()
 export class UpdateCareerCategoryUseCase extends BaseUsecase {
@@ -21,7 +21,7 @@ export class UpdateCareerCategoryUseCase extends BaseUsecase {
   async execute(
     id: string,
     dto: IRequestUpdateCareerCategoryDto,
-  ): Promise<ResponseApiCareerCategoryDto> {
+  ): Promise<IResponseApiCareerCategoryDto> {
     return this.runSafe('[Update Career Category]:', async () => {
       const existing = await this.careerCategoryRepository.findById(id);
       if (!existing) {

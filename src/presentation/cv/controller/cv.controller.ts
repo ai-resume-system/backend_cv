@@ -16,14 +16,13 @@ import type {
   IResponseListApiCVDto,
 } from 'src/application/dtos/cv/res.cv.dto';
 import { GetCVsQuery } from 'src/application/queries/cv/get-cvs.query';
-// import { GetCVByIdQuery } from 'src/application/queries/cv/get-cv-by-id.query';
 import { GetCVDownloadUrlQuery } from 'src/application/queries/cv/get-cv-download-url.query';
 import { GetCVPreviewUrlQuery } from 'src/application/queries/cv/get-cv-preview-url.query';
 import { DeleteCVUseCase } from 'src/application/use-cases/cv/delete-cv.usecase';
 import { UpdateCVUseCase } from 'src/application/use-cases/cv/update-cv.usecase';
 import { SetDefaultCVUseCase } from 'src/application/use-cases/cv/set-default-cv.usecase';
 import { BaseController } from 'src/common/base/base.controller';
-import { ApiResponseBooleanDto } from 'src/common/dto/response.dto';
+import { ResponseApiBooleanDto } from 'src/common/dto/response.dto';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -98,17 +97,6 @@ export class CVController extends BaseController {
     return await this.updateCVUseCase.execute(id, user.id, dto);
   }
 
-  @Delete(':id')
-  @AuthRequired(EUserRole.JOB_SEEKER)
-  @ApiOperation({ summary: 'Delete CV' })
-  @ApiResponse({ status: 200, type: ApiResponseBooleanDto })
-  async deleteCV(
-    @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
-  ): Promise<{ data: { success: boolean; message: string } }> {
-    return await this.deleteCVUseCase.execute(id, user.id);
-  }
-
   @Patch(':id/default')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({ summary: 'Set CV as default' })
@@ -118,5 +106,16 @@ export class CVController extends BaseController {
     @Param('id') id: string,
   ): Promise<IResponseApiCVDto> {
     return await this.setDefaultCVUseCase.execute(id, user.id);
+  }
+
+  @Delete(':id')
+  @AuthRequired(EUserRole.JOB_SEEKER)
+  @ApiOperation({ summary: 'Delete CV' })
+  @ApiResponse({ status: 200, type: ResponseApiBooleanDto })
+  async deleteCV(
+    @AuthCurrentUser() user: ICurrentUser,
+    @Param('id') id: string,
+  ): Promise<{ data: { success: boolean; message: string } }> {
+    return await this.deleteCVUseCase.execute(id, user.id);
   }
 }

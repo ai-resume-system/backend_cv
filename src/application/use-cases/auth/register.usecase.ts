@@ -9,7 +9,6 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
-import { TTL_10M } from 'src/common/constants/ttl.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.repository.interface';
 import type { IRegistrationSessionRepository } from 'src/domain/repositories/registration-session.repository.interface';
@@ -19,6 +18,7 @@ import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { hashOtp } from 'src/common/utils/hash.utils';
 
 export type IRegisterDto = IRegisterJobSeekerDto | IRegisterRecruiterDto;
+const OTP_EXPIRES_IN_SECONDS = 300;
 
 @Injectable()
 export class RegisterUseCase extends BaseUsecase {
@@ -112,7 +112,7 @@ export class RegisterUseCase extends BaseUsecase {
   ): Promise<void> {
     const otp = randomInt(100000, 1000000).toString();
     const codeHash = hashOtp(otp, email);
-    const expiresAt = new Date(Date.now() + TTL_10M * 1000);
+    const expiresAt = new Date(Date.now() + OTP_EXPIRES_IN_SECONDS * 1000);
 
     await this.otpCodeRepository.create({
       email,
@@ -129,8 +129,12 @@ export class RegisterUseCase extends BaseUsecase {
     }
 
     try {
-      await this.redis.setTempProfile(email, tempPayload, TTL_10M);
-      await this.redis.setOtpCache(email, codeHash, TTL_10M);
+      await this.redis.setTempProfile(
+        email,
+        tempPayload,
+        OTP_EXPIRES_IN_SECONDS,
+      );
+      await this.redis.setOtpCache(email, codeHash, OTP_EXPIRES_IN_SECONDS);
     } catch (error) {
       this.logger.warn(
         `Redis register OTP cache unavailable for ${email}: ${error.message}`,

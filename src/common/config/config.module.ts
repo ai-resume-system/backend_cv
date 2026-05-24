@@ -32,6 +32,7 @@ import {
         WEB_ENV: Joi.string()
           .valid('development', 'production', 'test')
           .default('development'),
+        CORS_ALLOWED_ORIGINS: Joi.string().allow('').optional(),
 
         JWT_SECRET: Joi.string().required(),
         JWT_ACCESS_EXPIRATION: Joi.string().default('15m'),

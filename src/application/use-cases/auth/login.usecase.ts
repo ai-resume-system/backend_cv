@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { createHash } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { ILoginDto } from 'src/application/dtos/auth/req.auth.dto';
 import { IResponseAuthDto } from 'src/application/dtos/auth/res.auth.dto';
@@ -8,7 +7,7 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { JwtTokenUsecase } from 'src/common/guards/jwt-token.usecase';
 import { BaseUsecase } from 'src/common/base/base.usecase';
-import { TTL_10M, TTL_24H } from 'src/common/constants/ttl.constants';
+import { TTL_10M, TTL_24H, TTL_30D } from 'src/common/constants/ttl.constants';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import type { IRefreshTokenRepository } from 'src/domain/repositories/refresh-token.repository.interface';
@@ -133,14 +132,17 @@ export class LoginUseCase extends BaseUsecase {
           );
         }
 
+        const refreshTtl = dto.rememberMe ? TTL_30D : 7 * TTL_24H;
+        const refreshTokenExpiration = dto.rememberMe ? '30d' : undefined;
+
         const { accessToken, refreshToken } =
-          await this.jwtTokenUsecase.generateTokens({
-            id: user.id,
-            role: user.role,
-          });
+          await this.jwtTokenUsecase.generateTokens(
+            { id: user.id, role: user.role },
+            refreshTokenExpiration,
+          );
 
         const tokenHash = hashToken(refreshToken);
-        const expiresAt = new Date(Date.now() + 7 * TTL_24H * 1000);
+        const expiresAt = new Date(Date.now() + refreshTtl * 1000);
 
         const activeCount = await this.refreshTokenRepository.countActiveByUser(
           user.id,
@@ -178,10 +180,6 @@ export class LoginUseCase extends BaseUsecase {
         return {
           accessToken,
           refreshToken,
-          user: {
-            id: user.id,
-            role: user.role,
-          },
         };
       },
       ERROR_CODES.AUTH_LOGIN_FAILED,

@@ -6,10 +6,8 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import {
-  EBucketType,
-  S3StorageService,
-} from 'src/infrastructure/storage/s3-storage.service';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
+import { EBucketType } from 'src/common/constants/enum/upload.enum';
 
 @Injectable()
 export class GetCVPreviewUrlQuery extends BaseUsecase {

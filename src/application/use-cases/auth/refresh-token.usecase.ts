@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { createHash } from 'crypto';
 import { IRefreshTokenDto } from 'src/application/dtos/auth/req.auth.dto';
 import { IResponseAuthDto } from 'src/application/dtos/auth/res.auth.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
@@ -155,10 +154,6 @@ export class RefreshTokenUseCase extends BaseUsecase {
         return {
           accessToken,
           refreshToken: newRefreshToken,
-          user: {
-            id: existingUser.id,
-            role: existingUser.role,
-          },
         };
       },
       ERROR_CODES.INTERNAL_SERVER_ERROR,

@@ -2,51 +2,89 @@ import {
   HttpStatus,
   INestApplication,
   Logger,
-  VersioningType,
   ValidationPipe,
+  VersioningType,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { GlobalExceptionFilter } from './common/exceptions/global-exception.filter';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
+import { AppModule } from './app.module';
 import { ERROR_CODES } from './common/constants/error-codes.constants';
 import { AppException } from './common/exceptions/app.exception';
+import { GlobalExceptionFilter } from './common/exceptions/global-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { ConfigService } from '@nestjs/config';
 
 // Hàm cấu hình global prefix (thêm /api vào đầu mỗi route)
-function setGlobalPrefix(app: INestApplication<any>, logger: Logger) {
-  logger.debug(`[setGlobalPrefix] Start set global prefix ...`);
+function setGlobalPrefix(app: INestApplication, logger: Logger) {
+  logger.debug('[setGlobalPrefix] Start set global prefix ...');
   app.setGlobalPrefix('api', {
     exclude: ['/'],
   });
-  logger.debug(`[setGlobalPrefix] Finish set global prefix.`);
+  logger.debug('[setGlobalPrefix] Finish set global prefix.');
 }
 
 // Cấu hình CORS để cho phép gọi API từ các domain khác
-function setCors(app: INestApplication<any>, logger: Logger) {
-  logger.debug(`[setCors] Start set cors...`);
+function setCors(
+  app: INestApplication,
+  logger: Logger,
+  configService: ConfigService,
+) {
+  const appEnv = configService.get<string>('app.env') || 'development';
+  const allowedOrigins =
+    configService.get<string[]>('app.corsAllowedOrigins') || [];
+  const isProduction = appEnv === 'production';
+
+  logger.debug('[setCors] Start set cors...');
+  if (isProduction) {
+    logger.debug(
+      `[setCors] Env=${appEnv}, allowedOrigins=${allowedOrigins.length}`,
+    );
+  } else {
+    logger.debug('[setCors] Non-production mode: reflecting request origin.');
+  }
+
   app.enableCors({
-    origin: '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (!isProduction) {
+        callback(null, true);
+        return;
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
   });
-  logger.debug(`[setCors] Finish set cors.`);
+  logger.debug('[setCors] Finish set cors.');
 }
 
 // Versioning cho API
-function setVersioning(app: INestApplication<any>, logger: Logger) {
-  logger.debug(`[setVersioning] Start set versioning...`);
+function setVersioning(app: INestApplication, logger: Logger) {
+  logger.debug('[setVersioning] Start set versioning...');
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: '1',
   });
-  logger.debug(`[setVersioning] Finish set versioning.`);
+  logger.debug('[setVersioning] Finish set versioning.');
 }
 
 // 📘 Cấu hình Swagger UI để xem tài liệu API tại /api/docs
-function setSwagger(app: INestApplication<any>, logger: Logger) {
-  logger.debug(`[setSwagger] Start set swagger ...`);
+function setSwagger(app: INestApplication, logger: Logger) {
+  logger.debug('[setSwagger] Start set swagger ...');
   const swaggerConfig = new DocumentBuilder()
     .setTitle('AI Resume System API')
     .setDescription('API documentation for AI Resume System')
@@ -65,22 +103,22 @@ function setSwagger(app: INestApplication<any>, logger: Logger) {
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('/api/docs', app, document);
-  logger.debug(`[setSwagger] Finish set swagger.`);
+  logger.debug('[setSwagger] Finish set swagger.');
 }
 
 // Cấu hình global interceptors - giúp log thời gian request và response
-function setGlobalInterceptors(app: INestApplication<any>, logger: Logger) {
-  logger.debug(`[setGlobalInterceptors] Start set global interceptors ...`);
+function setGlobalInterceptors(app: INestApplication, logger: Logger) {
+  logger.debug('[setGlobalInterceptors] Start set global interceptors ...');
   app.useGlobalInterceptors(
     new LoggingInterceptor(),
     new TransformInterceptor(),
   );
-  logger.debug(`[setGlobalInterceptors] Finish set global interceptors.`);
+  logger.debug('[setGlobalInterceptors] Finish set global interceptors.');
 }
 
 // Bật ValidationPipe toàn cục (tự validate DTO bằng class-validator)
-function setGlobalPipes(app: INestApplication<any>, logger: Logger) {
-  logger.debug(`[setGlobalPipes] Start set global pipes ...`);
+function setGlobalPipes(app: INestApplication, logger: Logger) {
+  logger.debug('[setGlobalPipes] Start set global pipes ...');
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -102,19 +140,21 @@ function setGlobalPipes(app: INestApplication<any>, logger: Logger) {
       },
     }),
   );
-  logger.debug(`[setGlobalPipes] Finish set global pipes.`);
+  logger.debug('[setGlobalPipes] Finish set global pipes.');
 }
 
 // Hàm chính khởi chạy toàn bộ ứng dụng NestJS
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    cors: true,
     bufferLogs: true,
     rawBody: true,
   });
   const logger = new Logger('MAIN');
+  const configService = app.get(ConfigService);
+
+  app.use(cookieParser());
   setGlobalPrefix(app, logger);
-  setCors(app, logger);
+  setCors(app, logger, configService);
   setVersioning(app, logger);
   setGlobalInterceptors(app, logger);
   setGlobalPipes(app, logger);
@@ -125,11 +165,10 @@ async function bootstrap() {
     setSwagger(app, logger);
   }
 
-  const configService = app.get(ConfigService);
-
   const host = configService.get<string>('app.host') || 'localhost';
   const port = configService.get<number>('app.port') || 3000;
   await app.listen(port, host);
   logger.log(`[DOCS] Documentation: http://${host}:${port}/api/docs`);
 }
-bootstrap();
+
+void bootstrap();

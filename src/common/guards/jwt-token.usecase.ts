@@ -33,14 +33,18 @@ export class JwtTokenUsecase extends BaseUsecase {
     });
   }
 
-  generateTokens(payload: IGenerateTokensPayload): IResponseGenerateTokens {
+  generateTokens(
+    payload: IGenerateTokensPayload,
+    refreshTokenExpiration?: string,
+  ): IResponseGenerateTokens {
     const accessToken = this.generateToken(
       { ...payload, type: 'access' },
       this.configService.get<string>('jwt.accessTokenExpiration', '15m'),
     );
     const refreshToken = this.generateToken(
-      { ...payload, type: 'refresh' },
-      this.configService.get<string>('jwt.refreshTokenExpiration', '7d'),
+      { ...payload, type: 'refresh', jti: crypto.randomUUID() }, // thêm id để tránh trường hợp f5 liên tục bị trùng refresh
+      refreshTokenExpiration ??
+        this.configService.get<string>('jwt.refreshTokenExpiration', '7d'),
     );
     return {
       accessToken,

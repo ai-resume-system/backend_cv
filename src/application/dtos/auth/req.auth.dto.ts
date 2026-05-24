@@ -31,6 +31,7 @@ export interface ISendOtpDto {
 export interface ILoginDto {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface IRefreshTokenDto {

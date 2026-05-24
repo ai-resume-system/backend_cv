@@ -10,7 +10,7 @@ export class ResponseJobCompanyDto {
   companyName?: string;
 
   @ApiPropertyOptional()
-  logoUrl?: string;
+  logoUrl?: string | null;
 
   @ApiPropertyOptional()
   location?: string;
@@ -55,7 +55,10 @@ export class ResponseJobDto {
   @ApiPropertyOptional()
   expiredAt?: Date;
 
-  @ApiProperty({ enum: EJobStatus })
+  @ApiProperty({
+    enum: Object.values(EJobStatus),
+    example: Object.values(EJobStatus).join(' | '),
+  })
   status: EJobStatus;
 
   @ApiProperty()
@@ -79,7 +82,4 @@ export class ResponseApiJobDto extends ApiResponseDto<ResponseJobDto> {
 export class ResponseListApiJobDto extends ApiResponseDto<ResponseJobDto[]> {
   @ApiProperty({ type: [ResponseJobDto] })
   declare data: ResponseJobDto[];
-
-  @ApiProperty({ type: PaginationDto })
-  declare pagination?: PaginationDto;
 }

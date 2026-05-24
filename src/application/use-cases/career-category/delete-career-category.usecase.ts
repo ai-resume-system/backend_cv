@@ -17,7 +17,9 @@ export class DeleteCareerCategoryUseCase extends BaseUsecase {
     super(new Logger(DeleteCareerCategoryUseCase.name));
   }
 
-  async execute(id: string): Promise<{ message: string }> {
+  async execute(
+    id: string,
+  ): Promise<{ data: { success: boolean; message: string } }> {
     return this.runSafe('[Delete Career Category]:', async () => {
       const existing = await this.careerCategoryRepository.findById(id);
       if (!existing) {
@@ -29,7 +31,12 @@ export class DeleteCareerCategoryUseCase extends BaseUsecase {
 
       await this.careerCategoryRepository.delete(id);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_LIST);
-      return { message: 'Xóa ngành nghề thành công.' };
+      return {
+        data: {
+          success: true,
+          message: 'Career category deleted successfully.',
+        },
+      };
     });
   }
 }

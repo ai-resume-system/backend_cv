@@ -5,7 +5,6 @@ export interface IRequestUpdateProfileBaseDto {
 export interface IRequestUpdateMyProfileDto extends IRequestUpdateProfileBaseDto {
   phone?: string;
   fullName?: string;
-  avatarUrl?: string;
   bio?: string;
 }
 
@@ -13,8 +12,6 @@ export interface IRequestUpdateMyCompanyDto extends IRequestUpdateProfileBaseDto
   careerCategoriesId?: string;
   companyName?: string;
   taxCode?: string;
-  logoUrl?: string;
-  bannerUrl?: string;
   location?: string;
   description?: string;
   websiteUrl?: string;

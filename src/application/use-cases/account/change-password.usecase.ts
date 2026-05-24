@@ -1,8 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { IChangePasswordDto } from 'src/application/dtos/account/req.account.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
@@ -28,7 +24,7 @@ export class ChangePasswordUseCase extends BaseUsecase {
   async execute(
     userId: string,
     dto: IChangePasswordDto,
-  ): Promise<{ message: string }> {
+  ): Promise<{ data: { success: boolean; message: string } }> {
     return this.runSafe(
       'ChangePassword',
       async () => {
@@ -55,8 +51,11 @@ export class ChangePasswordUseCase extends BaseUsecase {
         });
 
         return {
-          message:
-            'Doi mat khau thanh cong. Tat ca phien dang nhap da bi vo hieu hoa.',
+          data: {
+            success: true,
+            message:
+              'Password changed successfully. All sessions have been logged out.',
+          },
         };
       },
       ERROR_CODES.AUTH_CHANGE_PASSWORD_FAILED,

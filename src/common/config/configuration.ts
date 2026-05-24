@@ -4,6 +4,10 @@ export const appConfig = registerAs('app', () => ({
   host: process.env.IP_ADDRESS || 'localhost',
   port: parseInt(process.env.WEB_PORT || '3001', 10),
   env: process.env.WEB_ENV || 'development',
+  corsAllowedOrigins: (process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
 }));
 
 export const jwtConfig = registerAs('jwt', () => ({

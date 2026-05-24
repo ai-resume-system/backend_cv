@@ -22,7 +22,7 @@ export interface IGetUserByIdResponseDto {
   profile?: {
     id: string;
     fullName?: string;
-    avatarUrl?: string;
+    avatarUrl?: string | null;
     bio?: string;
   };
   company?: {
@@ -30,8 +30,8 @@ export interface IGetUserByIdResponseDto {
     careerCategoriesId?: string;
     companyName?: string;
     taxCode?: string;
-    logoUrl?: string;
-    bannerUrl?: string;
+    logoUrl?: string | null;
+    bannerUrl?: string | null;
     location?: string;
     description?: string;
     websiteUrl?: string;

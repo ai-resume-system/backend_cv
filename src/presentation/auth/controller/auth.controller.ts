@@ -1,7 +1,10 @@
-import { Body, Controller, Logger, Post, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Logger, Post, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { IResponseAuthDto } from 'src/application/dtos/auth/res.auth.dto';
+import type {
+  IPublicAuthResponseDto,
+  IResponseAuthDto,
+} from 'src/application/dtos/auth/res.auth.dto';
 import { LoginUseCase } from 'src/application/use-cases/auth/login.usecase';
 import { LogoutUseCase } from 'src/application/use-cases/auth/logout.usecase';
 import { RefreshTokenUseCase } from 'src/application/use-cases/auth/refresh-token.usecase';
@@ -28,6 +31,13 @@ import {
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
+import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
+import { AppException } from 'src/common/exceptions/app.exception';
+import {
+  clearRefreshTokenCookie,
+  REFRESH_TOKEN_COOKIE_NAME,
+  setRefreshTokenCookie,
+} from 'src/common/utils/cookie.utils';
 
 @Controller({
   path: 'auth',
@@ -45,6 +55,14 @@ export class AuthController extends BaseController {
     private readonly logoutUseCase: LogoutUseCase,
   ) {
     super(new Logger(AuthController.name));
+  }
+
+  private toPublicAuthResponse(
+    payload: IResponseAuthDto,
+  ): IPublicAuthResponseDto {
+    return {
+      accessToken: payload.accessToken,
+    };
   }
 
   @Post('register/job-seeker')
@@ -120,11 +138,19 @@ export class AuthController extends BaseController {
   async login(
     @Body() dto: RequestLoginDto,
     @Req() req: Request,
-  ): Promise<IResponseAuthDto> {
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<IPublicAuthResponseDto> {
     const ip =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
-    return await this.loginUseCase.execute(dto, ip!);
+    const result = await this.loginUseCase.execute(dto, ip!);
+
+    const cookieMaxAge = dto.rememberMe
+      ? 30 * 24 * 60 * 60 * 1000
+      : undefined;
+    setRefreshTokenCookie(res, result.refreshToken, cookieMaxAge);
+
+    return this.toPublicAuthResponse(result);
   }
 
   @Post('refresh-token')
@@ -135,9 +161,22 @@ export class AuthController extends BaseController {
     type: ResponseApiAuthDto,
   })
   async refreshToken(
+    @Req() req: Request,
     @Body() dto: RequestRefreshTokenDto,
-  ): Promise<IResponseAuthDto> {
-    return await this.refreshTokenUseCase.execute(dto);
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<IPublicAuthResponseDto> {
+    const refreshToken =
+      req.cookies?.[REFRESH_TOKEN_COOKIE_NAME] ?? dto.refreshToken;
+
+    if (!refreshToken) {
+      throw new AppException(ERROR_CODES.AUTH_REFRESH_TOKEN_INVALID_OR_EXPIRED);
+    }
+
+    const result = await this.refreshTokenUseCase.execute({ refreshToken });
+
+    setRefreshTokenCookie(res, result.refreshToken);
+
+    return this.toPublicAuthResponse(result);
   }
 
   @Post('forgot-password')
@@ -164,9 +203,11 @@ export class AuthController extends BaseController {
   async logout(
     @AuthCurrentUser() user: ICurrentUser,
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
     const authHeader = req.headers['authorization'] as string;
     const accessToken = authHeader?.replace('Bearer ', '');
+    clearRefreshTokenCookie(res);
     return await this.logoutUseCase.execute({
       userId: user.id,
       accessToken,

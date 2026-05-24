@@ -109,7 +109,9 @@ export class CareerCategoryController extends BaseController {
     description: 'Career category deleted successfully',
     type: ResponseApiNullDto,
   })
-  async deleteCareerCategory(@Param('id') id: string): Promise<{ message: string }> {
+  async deleteCareerCategory(
+    @Param('id') id: string,
+  ): Promise<{ data: { success: boolean; message: string } }> {
     return await this.deleteCareerCategoryUseCase.execute(id);
   }
 }

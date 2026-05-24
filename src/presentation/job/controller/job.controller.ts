@@ -21,7 +21,7 @@ import { DeleteJobUseCase } from 'src/application/use-cases/job/delete-job.useca
 import { ReviewJobUseCase } from 'src/application/use-cases/job/review-job.usecase';
 import { UpdateJobUseCase } from 'src/application/use-cases/job/update-job.usecase';
 import { BaseController } from 'src/common/base/base.controller';
-import { ApiResponseBooleanDto } from 'src/common/dto/response.dto';
+import { ResponseApiBooleanDto } from 'src/common/dto/response.dto';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
@@ -121,7 +121,7 @@ export class JobController extends BaseController {
   @Delete(':id')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({ summary: 'Delete recruiter job' })
-  @ApiResponse({ status: 200, type: ApiResponseBooleanDto })
+  @ApiResponse({ status: 200, type: ResponseApiBooleanDto })
   async deleteJob(
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,

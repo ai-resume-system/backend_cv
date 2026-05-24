@@ -6,10 +6,8 @@ import {
   STORAGE_DELETE_DLQ,
   STORAGE_DELETE_QUEUE,
 } from '../queue.constants';
-import {
-  EBucketType,
-  S3StorageService,
-} from 'src/infrastructure/storage/s3-storage.service';
+import { EBucketType } from 'src/common/constants/enum/upload.enum';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 
 @Processor(STORAGE_DELETE_QUEUE)
 export class StorageDeleteProcessor extends WorkerHost {

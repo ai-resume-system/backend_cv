@@ -23,7 +23,7 @@ export class UserProfileOrmEntity implements IUserProfileEntity {
   fullName?: string;
 
   @Column({ name: 'avatar_url', type: 'text', nullable: true })
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 
   @Column({ name: 'bio', type: 'text', nullable: true })
   bio?: string;

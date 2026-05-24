@@ -6,7 +6,7 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import { EBucketType } from 'src/infrastructure/storage/s3-storage.service';
+import { EBucketType } from 'src/common/constants/enum/upload.enum';
 
 @Injectable()
 export class DeleteCVUseCase extends BaseUsecase {
@@ -23,7 +23,7 @@ export class DeleteCVUseCase extends BaseUsecase {
     userId: string,
   ): Promise<{ data: { success: boolean; message: string } }> {
     return this.runSafe(
-      'Delete CV',
+      '[Delete CV]:',
       async () => {
         const cv = await this.cvRepository.findById(id);
         if (!cv || cv.userId !== userId) {
