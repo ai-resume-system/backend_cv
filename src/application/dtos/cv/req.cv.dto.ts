@@ -17,5 +17,4 @@ export interface IRequestCreateCVDto {
 
 export interface IRequestUpdateCVDto {
   title?: string;
-  status?: ECVStatus;
 }

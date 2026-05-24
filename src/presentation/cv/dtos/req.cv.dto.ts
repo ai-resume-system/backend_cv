@@ -55,12 +55,4 @@ export class RequestUpdateCVDto {
   @IsOptional()
   @IsString()
   title?: string;
-
-  @ApiPropertyOptional({
-    enum: ECVStatus,
-    example: Object.values(ECVStatus).join(' | '),
-  })
-  @IsOptional()
-  @IsEnum(ECVStatus)
-  status?: ECVStatus;
 }

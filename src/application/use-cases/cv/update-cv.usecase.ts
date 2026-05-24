@@ -32,7 +32,6 @@ export class UpdateCVUseCase extends BaseUsecase {
 
         const updateData = {
           ...(dto.title ? { title: this.removeExtension(dto.title) } : {}),
-          ...(dto.status ? { status: dto.status } : {}),
         };
 
         if (!Object.keys(updateData).length) {
