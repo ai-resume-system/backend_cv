@@ -133,3 +133,15 @@ Let me analyze the structure:
   app.controller/service/module Entry point của NestJS app
   Luồng dữ liệu: modules → application → domain ← infrastructure
   domain là lớp trung tâm, không phụ thuộc các lớp khác. infrastructure implement các interface trong domain.
+# Production services setup
+
+Required services for CV/Job production flow:
+
+- PostgreSQL: source of truth, run migrations with `npm run migration:run`.
+- Redis: cache, auth best-effort cache, BullMQ connection.
+- Elasticsearch: indexes `jobs` and `cvs`; workers create/update documents async.
+- AWS S3: private bucket for CV files, public bucket/prefix for avatar/logo assets via CloudFront.
+
+Required env keys are listed in `.env.example`: `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_PRIVATE_BUCKET`, `AWS_S3_PUBLIC_BUCKET`, `CLOUDFRONT_PUBLIC_URL`, `S3_PRESIGNED_TTL_SECONDS`, Redis and Elasticsearch variables.
+
+---
