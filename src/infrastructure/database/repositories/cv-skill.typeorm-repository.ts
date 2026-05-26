@@ -26,6 +26,13 @@ export class CVSkillTypeormRepository implements ICVSkillRepository {
     return orms.map((orm) => this.toDomain(orm));
   }
 
+  async findBySkillId(skillId: string): Promise<ICVSkillEntity[]> {
+    const orms = await this.ormRepository.find({
+      where: { skillId, deletedAt: IsNull() },
+    });
+    return orms.map((orm) => this.toDomain(orm));
+  }
+
   async create(cvSkill: Partial<ICVSkillEntity>): Promise<ICVSkillEntity> {
     const created = this.ormRepository.create(cvSkill);
     const saved = await this.ormRepository.save(created);

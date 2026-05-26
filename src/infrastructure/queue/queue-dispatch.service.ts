@@ -9,7 +9,9 @@ import {
   CV_PARSE_QUEUE,
   ICvParseJob,
   ICacheInvalidateJob,
+  IJobApplicationStatusEmailJob,
   IStorageDeleteJob,
+  JOB_APPLICATION_STATUS_EMAIL_QUEUE,
   STORAGE_DELETE_QUEUE,
 } from './queue.constants';
 
@@ -25,6 +27,7 @@ export const OUTBOX_EVENT_TYPES = {
   CV_PARSE: 'cv.parse',
   CACHE_INVALIDATE: 'cache.invalidate',
   STORAGE_DELETE: 'storage.delete',
+  JOB_APPLICATION_STATUS_EMAIL: 'job-application.status-email',
 } as const;
 
 @Injectable()
@@ -38,6 +41,8 @@ export class QueueDispatchService {
     private readonly cacheInvalidateQueue: Queue<ICacheInvalidateJob>,
     @InjectQueue(STORAGE_DELETE_QUEUE)
     private readonly storageDeleteQueue: Queue<IStorageDeleteJob>,
+    @InjectQueue(JOB_APPLICATION_STATUS_EMAIL_QUEUE)
+    private readonly jobApplicationStatusEmailQueue: Queue<IJobApplicationStatusEmailJob>,
     @Inject('IOutboxEventRepository')
     private readonly outboxRepository: IOutboxEventRepository,
   ) {}
@@ -75,6 +80,19 @@ export class QueueDispatchService {
     await this.enqueueStorageDelete(data, event);
   }
 
+  async dispatchJobApplicationStatusEmail(
+    data: IJobApplicationStatusEmailJob,
+  ): Promise<void> {
+    const event = await this.outboxRepository.create({
+      aggregateType: 'job_application',
+      aggregateId: data.aggregateId,
+      eventType: OUTBOX_EVENT_TYPES.JOB_APPLICATION_STATUS_EMAIL,
+      payload: data as unknown as Record<string, unknown>,
+      maxAttempts: 20,
+    });
+    await this.enqueueJobApplicationStatusEmail(data, event);
+  }
+
   async enqueueOutboxEvent(event: IOutboxEventEntity): Promise<void> {
     switch (event.eventType) {
       case OUTBOX_EVENT_TYPES.CV_PARSE:
@@ -90,6 +108,13 @@ export class QueueDispatchService {
       case OUTBOX_EVENT_TYPES.STORAGE_DELETE:
         await this.enqueueStorageDelete(
           event.payload as unknown as IStorageDeleteJob,
+          event,
+          true,
+        );
+        return;
+      case OUTBOX_EVENT_TYPES.JOB_APPLICATION_STATUS_EMAIL:
+        await this.enqueueJobApplicationStatusEmail(
+          event.payload as unknown as IJobApplicationStatusEmailJob,
           event,
           true,
         );
@@ -135,6 +160,21 @@ export class QueueDispatchService {
       event,
       () =>
         this.storageDeleteQueue.add('delete', data, { ...DEFAULT_JOB_OPTIONS }),
+      rethrow,
+    );
+  }
+
+  private async enqueueJobApplicationStatusEmail(
+    data: IJobApplicationStatusEmailJob,
+    event: IOutboxEventEntity,
+    rethrow = false,
+  ): Promise<void> {
+    await this.enqueueBestEffort(
+      event,
+      () =>
+        this.jobApplicationStatusEmailQueue.add('send', data, {
+          ...DEFAULT_JOB_OPTIONS,
+        }),
       rethrow,
     );
   }

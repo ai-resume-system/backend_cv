@@ -16,6 +16,18 @@ export class ResponseJobApplicationDto {
   jobId: string;
 
   @ApiPropertyOptional()
+  fullName?: string;
+
+  @ApiPropertyOptional()
+  contactEmail?: string;
+
+  @ApiPropertyOptional()
+  contactPhone?: string;
+
+  @ApiPropertyOptional()
+  coverLetter?: string;
+
+  @ApiPropertyOptional()
   matchingScore?: number;
 
   @ApiPropertyOptional()
@@ -41,6 +53,60 @@ export class ResponseJobApplicationDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiPropertyOptional({
+    type: Object,
+    example: {
+      id: 'uuid',
+      title: 'CV React Developer',
+      fileUrl: 'https://example.com/cv.pdf',
+      summary: 'Senior frontend developer',
+    },
+  })
+  cv?: {
+    id: string;
+    title?: string;
+    fileUrl?: string;
+    summary?: string;
+  };
+
+  @ApiPropertyOptional({
+    type: Object,
+    example: {
+      id: 'uuid',
+      title: 'Frontend Developer',
+      location: 'Ho Chi Minh City',
+      company: {
+        id: 'uuid',
+        companyName: 'OpenAI VN',
+        logoUrl: 'https://example.com/logo.png',
+      },
+    },
+  })
+  job?: {
+    id: string;
+    title: string;
+    location?: string;
+    company?: {
+      id: string;
+      companyName?: string;
+      logoUrl?: string | null;
+    };
+  };
+
+  @ApiPropertyOptional({
+    type: Object,
+    example: {
+      id: 'uuid',
+      email: 'candidate@example.com',
+      phone: '+84901234567',
+    },
+  })
+  user?: {
+    id: string;
+    email: string;
+    phone?: string;
+  };
 }
 
 export class ResponseApiJobApplicationDto extends ApiResponseDto<ResponseJobApplicationDto> {

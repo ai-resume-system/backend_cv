@@ -1,18 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IGetJobsDto } from 'src/application/dtos/job/req.job.dto';
 import { IResponseListApiJobDto } from 'src/application/dtos/job/res.job.dto';
-import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
+import { BaseUsecase } from 'src/common/base/base.usecase';
 import {
   CACHE_KEYS,
   CACHE_TTL,
   CACHE_VERSION_KEYS,
 } from 'src/common/constants/cache-keys.constants';
-import { BaseUsecase } from 'src/common/base/base.usecase';
+import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { stableHash } from 'src/common/utils/hash.utils';
-import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
-import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
+import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
+import type { IFavouriteJobRepository } from 'src/domain/repositories/favourite-job.repository.interface';
+import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
@@ -24,6 +25,8 @@ export class GetJobsQuery extends BaseUsecase {
     private readonly companyRepository: ICompanyRepository,
     @Inject('ICareerCategoryRepository')
     private readonly careerCategoryRepository: ICareerCategoryRepository,
+    @Inject('IFavouriteJobRepository')
+    private readonly favouriteRepository: IFavouriteJobRepository,
     private readonly redis: RedisAdapter,
   ) {
     super(new Logger(GetJobsQuery.name));
@@ -32,6 +35,7 @@ export class GetJobsQuery extends BaseUsecase {
   async execute(
     dto: IGetJobsDto,
     scope: 'public' | 'admin' | 'company' = 'public',
+    userId?: string,
   ): Promise<IResponseListApiJobDto> {
     const page = dto.page || 1;
     const limit = dto.limit || 10;
@@ -64,7 +68,21 @@ export class GetJobsQuery extends BaseUsecase {
     const cacheKey = `${CACHE_KEYS.JOB_LIST}:v${version}:${cacheScope}:${stableHash(normalizedDto)}`;
 
     const cached = await this.redis.safeGet(cacheKey);
-    if (cached) return JSON.parse(cached) as IResponseListApiJobDto;
+    if (cached) {
+      const parse = JSON.parse(cached) as IResponseListApiJobDto;
+      if (userId) {
+        const favouriteJobIds =
+          await this.favouriteRepository.findJobIdsByUserId(userId);
+        const favouriteSet = new Set(favouriteJobIds);
+        parse.data = parse.data.map((job) => ({
+          ...job,
+          isFavourited: favouriteSet.has(job.id),
+        }));
+      } else {
+        parse.data = parse.data.map((job) => ({ ...job, isFavourited: false }));
+      }
+      return parse;
+    }
 
     const dbResult = await this.jobRepository.find({
       pagination: { page, limit },
@@ -74,11 +92,16 @@ export class GetJobsQuery extends BaseUsecase {
         status: dto.status,
         careerCategoryId: resolvedCareerCategoryId,
         location: dto.location,
+        skillIds: dto.skillIds,
+        salaryMin: dto.salaryMin,
+        salaryMax: dto.salaryMax,
+        experienceYears: dto.experienceYears,
+        jobType: dto.jobType,
         ...(scope === 'public' ? { notExpired: true } : {}),
       },
+      sort: { sortBy: dto.sortBy, sortOrder: dto.sortOrder },
     });
 
-    // Lấy companyId từ dbResult
     const companyIds = [...new Set(dbResult.data.map((job) => job.companyId))];
     const careerCategoryIds = [
       ...new Set(
@@ -88,7 +111,6 @@ export class GetJobsQuery extends BaseUsecase {
       ),
     ];
 
-    //
     const [companies, careerCategories] = await Promise.all([
       this.companyRepository.findByIds(companyIds),
       this.careerCategoryRepository.findByIds(careerCategoryIds),
@@ -107,8 +129,9 @@ export class GetJobsQuery extends BaseUsecase {
     const data = dbResult.data.map((job) => {
       const company = companiesMap.get(job.companyId);
       if (!company) {
-        throw new AppException(ERROR_CODES.USER_NOT_FOUND); //tạm
+        throw new AppException(ERROR_CODES.ROLE_UNABLE_TO_DETERMINE);
       }
+
       const careerCategory = job.careerCategoryId
         ? careerCategoryMap.get(job.careerCategoryId)
         : undefined;
@@ -117,11 +140,14 @@ export class GetJobsQuery extends BaseUsecase {
         id: job.id,
         title: job.title,
         shortDescription: job.shortDescription,
+        description: job.description,
         location: job.location,
         salaryMin: job.salaryMin,
         salaryMax: job.salaryMax,
         experienceYears: job.experienceYears,
         expiredAt: job.expiredAt,
+        jobType: job.jobType,
+        rejectReason: job.rejectReason,
         status: job.status,
         createdAt: job.createdAt,
         updatedAt: job.updatedAt,
@@ -151,6 +177,20 @@ export class GetJobsQuery extends BaseUsecase {
         totalPages: Math.ceil(dbResult.total / limit),
       },
     };
+    if (userId) {
+      const favouriteJobs =
+        await this.favouriteRepository.findJobIdsByUserId(userId);
+      const favouritedSet = new Set(favouriteJobs);
+      response.data = response.data.map((job) => ({
+        ...job,
+        isFavourited: favouritedSet.has(job.id),
+      }));
+    } else {
+      response.data = response.data.map((job) => ({
+        ...job,
+        isFavourited: false,
+      }));
+    }
     await this.redis.safeSet(
       cacheKey,
       JSON.stringify(response),

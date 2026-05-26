@@ -48,6 +48,28 @@ export class JobApplicationOrmEntity implements IJobApplicationEntity {
   })
   matchingScore?: number;
 
+  @Column({ name: 'full_name', type: 'varchar', length: 255, nullable: true })
+  fullName?: string;
+
+  @Column({
+    name: 'contact_email',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  contactEmail?: string;
+
+  @Column({
+    name: 'contact_phone',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  contactPhone?: string;
+
+  @Column({ name: 'cover_letter', type: 'text', nullable: true })
+  coverLetter?: string;
+
   @Column({ name: 'notes', type: 'text', nullable: true })
   notes?: string;
 

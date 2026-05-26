@@ -54,10 +54,12 @@ export class JobController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseListApiJobDto })
   async getPublicJobs(
     @Query() query: RequestGetJobsDto,
+    @AuthCurrentUser() user?: ICurrentUser,
   ): Promise<IResponseListApiJobDto> {
     return await this.getJobsQuery.execute(
       { ...query, status: query.status || EJobStatus.OPEN },
       'public',
+      user?.id,
     );
   }
 
@@ -85,8 +87,11 @@ export class JobController extends BaseController {
   @Get(':id')
   @ApiOperation({ summary: 'Get job detail' })
   @ApiResponse({ status: 200, type: ResponseApiJobDto })
-  async getJob(@Param('id') id: string): Promise<IResponseApiJobDto> {
-    return await this.getJobByIdQuery.execute(id);
+  async getJob(
+    @Param('id') id: string,
+    @AuthCurrentUser() user?: ICurrentUser,
+  ): Promise<IResponseApiJobDto> {
+    return await this.getJobByIdQuery.execute(id, user?.id);
   }
 
   @Post()

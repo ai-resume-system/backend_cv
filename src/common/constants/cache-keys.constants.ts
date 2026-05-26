@@ -1,6 +1,8 @@
 export const CACHE_KEYS = {
   JOB_LIST: 'job:list',
   JOB_DETAIL: 'job:detail',
+  SKILL_LIST: 'skill:list',
+  SKILL_DETAIL: 'skill:detail',
   CV_LIST: 'cv:list',
   CV_DETAIL: 'cv:detail',
   USER_LIST: 'user:list',
@@ -12,6 +14,8 @@ export const CACHE_KEYS = {
 export const CACHE_VERSION_KEYS = {
   JOB_LIST: 'job:list',
   JOB_DETAIL: 'job:detail',
+  SKILL_LIST: 'skill:list',
+  SKILL_DETAIL: 'skill:detail',
   CV_LIST: 'cv:list',
   CV_DETAIL: 'cv:detail',
   USER_LIST: 'user:list',

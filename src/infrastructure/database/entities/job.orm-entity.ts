@@ -10,11 +10,12 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { EJobStatus } from 'src/common/constants/enum/job.enum';
+import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
 import type { IJobEntity } from 'src/domain/entities/job.entity';
 import { CompanyOrmEntity } from './company.orm-entity';
 import { CareerCategoryOrmEntity } from './career-category.orm-entity';
 import { JobApplicationOrmEntity } from './job-application.orm-entity';
+import { JobSkillOrmEntity } from './job-skill.orm-entity';
 
 @Entity('jobs')
 @Index(['deletedAt', 'status'])
@@ -78,6 +79,14 @@ export class JobOrmEntity implements IJobEntity {
   @Column({ name: 'expired_at', type: 'timestamptz', nullable: true })
   expiredAt?: Date;
 
+  @Column({
+    name: 'job_type',
+    type: 'varchar',
+    length: 20,
+    default: EJobType.FULL_TIME,
+  })
+  jobType: EJobType;
+
   @Column({ name: 'reject_reason', type: 'text', nullable: true })
   rejectReason?: string;
 
@@ -126,4 +135,7 @@ export class JobOrmEntity implements IJobEntity {
     (jobApplication) => jobApplication.job,
   )
   jobApplications: JobApplicationOrmEntity[];
+
+  @OneToMany(() => JobSkillOrmEntity, (jobSkill) => jobSkill.job)
+  jobSkills: JobSkillOrmEntity[];
 }

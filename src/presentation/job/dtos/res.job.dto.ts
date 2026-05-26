@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { EJobStatus } from 'src/common/constants/enum/job.enum';
+import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
 import { ApiResponseDto, PaginationDto } from 'src/common/dto/response.dto';
 
 export class ResponseJobCompanyDto {
@@ -30,6 +30,17 @@ export class ResponseJobCareerCategoryDto {
   slug?: string;
 }
 
+export class ResponseJobSkillDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiPropertyOptional()
+  weight?: number;
+}
+
 export class ResponseJobDto {
   @ApiProperty()
   id: string;
@@ -39,6 +50,9 @@ export class ResponseJobDto {
 
   @ApiPropertyOptional()
   shortDescription?: string;
+
+  @ApiPropertyOptional()
+  description?: string;
 
   @ApiPropertyOptional()
   location?: string;
@@ -54,6 +68,15 @@ export class ResponseJobDto {
 
   @ApiPropertyOptional()
   expiredAt?: Date;
+
+  @ApiProperty({
+    enum: Object.values(EJobType),
+    example: Object.values(EJobType).join(' | '),
+  })
+  jobType: EJobType;
+
+  @ApiPropertyOptional()
+  rejectReason?: string;
 
   @ApiProperty({
     enum: Object.values(EJobStatus),
@@ -72,6 +95,12 @@ export class ResponseJobDto {
 
   @ApiPropertyOptional({ type: ResponseJobCareerCategoryDto })
   careerCategory?: ResponseJobCareerCategoryDto;
+
+  @ApiPropertyOptional({ type: [ResponseJobSkillDto] })
+  skills?: ResponseJobSkillDto[];
+
+  @ApiPropertyOptional()
+  isFavourited?: boolean;
 }
 
 export class ResponseApiJobDto extends ApiResponseDto<ResponseJobDto> {

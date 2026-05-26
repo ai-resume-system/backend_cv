@@ -1,4 +1,4 @@
-import { EJobStatus } from 'src/common/constants/enum/job.enum';
+import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
 
 export interface IJobEntity {
   id: string;
@@ -12,6 +12,7 @@ export interface IJobEntity {
   salaryMax?: number;
   experienceYears?: number;
   expiredAt?: Date;
+  jobType: EJobType;
   rejectReason?: string;
   status: EJobStatus;
   createdAt: Date;

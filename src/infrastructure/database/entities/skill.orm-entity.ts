@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { CareerCategoryOrmEntity } from './career-category.orm-entity';
 import { CVSkillOrmEntity } from './cv-skill.orm-entity';
+import { JobSkillOrmEntity } from './job-skill.orm-entity';
 
 @Entity({ name: 'skills' })
 @Index('idx_skills_name', ['name'], { unique: true })
@@ -65,4 +66,7 @@ export class SkillOrmEntity implements ISkillEntity {
 
   @OneToMany(() => CVSkillOrmEntity, (cvSkill) => cvSkill.skill)
   cvSkills: CVSkillOrmEntity[];
+
+  @OneToMany(() => JobSkillOrmEntity, (jobSkill) => jobSkill.skill)
+  jobSkills: JobSkillOrmEntity[];
 }

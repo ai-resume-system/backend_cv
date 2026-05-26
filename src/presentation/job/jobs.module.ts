@@ -14,13 +14,21 @@ import { JobTypeormRepository } from 'src/infrastructure/database/repositories/j
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
 import { CareerCategoriesModule } from 'src/presentation/career-category/career-categories.module';
 import { JobController } from 'src/presentation/job/controller/job.controller';
+import { FavouriteJobOrmEntity } from 'src/infrastructure/database/entities/favourite-job.orm-entity';
+import { FavouriteJobTypeormRepository } from 'src/infrastructure/database/repositories/favourite-job.typeorm-repository';
+import { SkillModule } from 'src/presentation/skill/modules/skill.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([JobOrmEntity, CompanyOrmEntity]),
+    TypeOrmModule.forFeature([
+      JobOrmEntity,
+      CompanyOrmEntity,
+      FavouriteJobOrmEntity,
+    ]),
     JwtAuthModule,
     RedisModule,
     CareerCategoriesModule,
+    SkillModule,
   ],
   controllers: [JobController],
   providers: [
@@ -32,7 +40,15 @@ import { JobController } from 'src/presentation/job/controller/job.controller';
     ReviewJobUseCase,
     { provide: 'IJobRepository', useClass: JobTypeormRepository },
     { provide: 'ICompanyRepository', useClass: CompanyTypeormRepository },
+    {
+      provide: 'IFavouriteJobRepository',
+      useClass: FavouriteJobTypeormRepository,
+    },
+    {
+      provide: 'IFavouriteRepository',
+      useClass: FavouriteJobTypeormRepository,
+    },
   ],
-  exports: ['IJobRepository', 'ICompanyRepository'],
+  exports: ['IJobRepository', 'ICompanyRepository', 'IFavouriteJobRepository'],
 })
 export class JobsModule {}

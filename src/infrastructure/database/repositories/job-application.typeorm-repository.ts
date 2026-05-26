@@ -126,8 +126,15 @@ export class JobApplicationTypeormRepository
   async updateStatus(
     id: string,
     status: EJobApplicationStatus,
+    data?: Partial<IJobApplicationEntity>,
   ): Promise<IJobApplicationEntity> {
-    await this.ormRepository.update(id, { status });
+    await this.ormRepository.update(id, {
+      status,
+      notes: data?.notes,
+      scheduleTime: data?.scheduleTime,
+      scheduleLocation: data?.scheduleLocation,
+      scheduleLink: data?.scheduleLink,
+    });
     return (await this.findById(id)) as IJobApplicationEntity;
   }
 
@@ -137,9 +144,16 @@ export class JobApplicationTypeormRepository
       cvId: orm.cvId,
       userId: orm.userId,
       jobId: orm.jobId,
+      fullName: orm.fullName,
+      contactEmail: orm.contactEmail,
+      contactPhone: orm.contactPhone,
+      coverLetter: orm.coverLetter,
       matchingScore: orm.matchingScore ? Number(orm.matchingScore) : undefined,
       notes: orm.notes,
       status: orm.status,
+      scheduleTime: orm.scheduleTime,
+      scheduleLocation: orm.scheduleLocation,
+      scheduleLink: orm.scheduleLink,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
       deletedAt: orm.deletedAt,
@@ -159,9 +173,16 @@ export class JobApplicationTypeormRepository
       cvId: orm.cvId,
       userId: orm.userId,
       jobId: orm.jobId,
+      fullName: orm.fullName,
+      contactEmail: orm.contactEmail,
+      contactPhone: orm.contactPhone,
+      coverLetter: orm.coverLetter,
       matchingScore: orm.matchingScore ? Number(orm.matchingScore) : undefined,
       notes: orm.notes,
       status: orm.status,
+      scheduleTime: orm.scheduleTime,
+      scheduleLocation: orm.scheduleLocation,
+      scheduleLink: orm.scheduleLink,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
       deletedAt: orm.deletedAt,

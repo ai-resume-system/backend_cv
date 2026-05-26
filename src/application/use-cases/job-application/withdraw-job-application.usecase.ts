@@ -3,17 +3,14 @@ import { IJobApplicationResponseDto } from 'src/application/dtos/job-application
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
-import { ECVStatus } from 'src/common/constants/enum/cv.enum';
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
-import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 
 @Injectable()
 export class WithdrawJobApplicationUseCase extends BaseUsecase {
   constructor(
     @Inject('IJobApplicationRepository')
     private readonly jobApplicationRepository: IJobApplicationRepository,
-    @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
   ) {
     super(new Logger(WithdrawJobApplicationUseCase.name));
   }
@@ -31,10 +28,13 @@ export class WithdrawJobApplicationUseCase extends BaseUsecase {
           throw new AppException(ERROR_CODES.JOB_APPLICATION_NOT_FOUND);
         }
         if (application.userId !== userId) {
-          throw new AppException(ERROR_CODES.CV_ACCESS_DENIED);
+          throw new AppException(ERROR_CODES.JOB_APPLICATION_ACCESS_DENIED);
         }
 
-        const withdrawableStatuses = [EJobApplicationStatus.APPLIED];
+        const withdrawableStatuses = [
+          EJobApplicationStatus.APPLIED,
+          EJobApplicationStatus.REVIEWING,
+        ];
         if (!withdrawableStatuses.includes(application.status)) {
           throw new AppException(ERROR_CODES.JOB_APPLICATION_CANNOT_WITHDRAW);
         }
@@ -43,16 +43,6 @@ export class WithdrawJobApplicationUseCase extends BaseUsecase {
           jobApplicationId,
           EJobApplicationStatus.WITHDRAWN,
         );
-
-        const activeJobApplications =
-          await this.jobApplicationRepository.findActiveByCvId(
-            application.cvId,
-          );
-        if (activeJobApplications.length === 0) {
-          await this.cvRepository.update(application.cvId, {
-            status: ECVStatus.ACTIVE,
-          });
-        }
 
         return { data: updated };
       },

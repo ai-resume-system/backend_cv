@@ -1,9 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import {
+  IRequestGetJobApplicationsDto,
+} from 'src/application/dtos/job-application/req.job-application.dto';
+import { IJobApplicationResponseDto } from 'src/application/dtos/job-application/res.job-application.dto';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
+import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
+import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 
 @Injectable()
 export class GetMyJobApplicationsQuery {
@@ -12,34 +18,41 @@ export class GetMyJobApplicationsQuery {
   constructor(
     @Inject('IJobApplicationRepository')
     private readonly jobApplicationRepository: IJobApplicationRepository,
+    @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
+    @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
+    @Inject('ICompanyRepository')
+    private readonly companyRepository: ICompanyRepository,
   ) {}
 
   async execute(
     userId: string,
-    query: { page?: number; limit?: number },
+    query: IRequestGetJobApplicationsDto,
   ): Promise<{ data: any[]; pagination: any }> {
     try {
       const page = query.page || 1;
       const limit = query.limit || 10;
-      const skip = (page - 1) * limit;
-
-      // TODO: Add proper pagination using repository
-      const jobApplications =
-        await this.jobApplicationRepository.findByUserId(userId);
-
-      // Apply pagination
-      const paginatedData = jobApplications.slice(skip, skip + limit);
-
-      // Map to response DTO
-      const data = paginatedData.map((app) => this.toResponseDto(app));
+      const result = await this.jobApplicationRepository.find({
+        filter: {
+          userId,
+          status: query.status,
+        },
+        pagination: { page, limit },
+        sort: {
+          sortBy: query.sortBy || 'createdAt',
+          sortOrder: query.sortOrder || 'DESC',
+        },
+      });
+      const data = await Promise.all(
+        result.data.map((app) => this.toResponseDto(app)),
+      );
 
       return {
         data,
         pagination: {
           page,
           limit,
-          totalItems: jobApplications.length,
-          totalPages: Math.ceil(jobApplications.length / limit),
+          totalItems: result.total,
+          totalPages: Math.ceil(result.total / limit),
         },
       };
     } catch (error) {
@@ -61,10 +74,10 @@ export class GetMyJobApplicationsQuery {
       }
 
       if (application.userId !== userId) {
-        throw new AppException(ERROR_CODES.CV_ACCESS_DENIED);
+        throw new AppException(ERROR_CODES.JOB_APPLICATION_ACCESS_DENIED);
       }
 
-      return { data: this.toResponseDto(application) };
+      return { data: await this.toResponseDto(application) };
     } catch (error) {
       if (error instanceof AppException) throw error;
       this.logger.error('[GetMyJobApplicationsById]:', error);
@@ -72,17 +85,54 @@ export class GetMyJobApplicationsQuery {
     }
   }
 
-  private toResponseDto(app: IJobApplicationEntity): any {
+  private async toResponseDto(
+    app: IJobApplicationEntity,
+  ): Promise<IJobApplicationResponseDto> {
+    const [cv, job] = await Promise.all([
+      this.cvRepository.findById(app.cvId),
+      this.jobRepository.findById(app.jobId),
+    ]);
+    const company =
+      job && job.companyId
+        ? await this.companyRepository.findById(job.companyId)
+        : null;
+
     return {
       id: app.id,
       cvId: app.cvId,
       userId: app.userId,
       jobId: app.jobId,
+      fullName: app.fullName,
+      contactEmail: app.contactEmail,
+      contactPhone: app.contactPhone,
+      coverLetter: app.coverLetter,
       matchingScore: app.matchingScore,
-      notes: app.notes,
       status: app.status,
+      scheduleTime: app.scheduleTime,
+      scheduleLocation: app.scheduleLocation,
+      scheduleLink: app.scheduleLink,
       createdAt: app.createdAt,
       updatedAt: app.updatedAt,
+      cv: cv
+        ? {
+            id: cv.id,
+            title: cv.title,
+          }
+        : undefined,
+      job: job
+        ? {
+            id: job.id,
+            title: job.title,
+            location: job.location,
+            company: company
+              ? {
+                  id: company.id,
+                  companyName: company.companyName,
+                  logoUrl: company.logoUrl,
+                }
+              : undefined,
+          }
+        : undefined,
     };
   }
 }

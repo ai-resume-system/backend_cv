@@ -141,7 +141,11 @@ export class SendOtpUseCase extends BaseUsecase {
           );
         }
 
-        await this.mailService.sendOtp(dto.email, otp);
+        if (dto.type === EOtpType.FORGOT_PASSWORD) {
+          await this.mailService.sendForgotPasswordOtp(dto.email, otp);
+        } else {
+          await this.mailService.sendOtp(dto.email, otp);
+        }
 
         return {
           message: 'Đã gửi mã xác thực, vui lòng kiểm tra email.',

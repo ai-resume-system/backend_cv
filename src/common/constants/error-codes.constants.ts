@@ -119,6 +119,10 @@ export const ERROR_CODES = {
     message: 'User already exists.',
     status: HttpStatus.CONFLICT,
   },
+  COMPANY_NOT_FOUND: {
+    message: 'Company not found.',
+    status: HttpStatus.NOT_FOUND,
+  },
 
   // JOB
   JOB_NOT_FOUND: {
@@ -140,6 +144,18 @@ export const ERROR_CODES = {
   JOB_DELETE_FAILED: {
     message: 'Failed to delete job.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  JOB_INVALID_STATUS_TRANSITION: {
+    message: 'Invalid job status transition.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_INVALID_EXPIRED_AT: {
+    message: 'Expired date must be greater than current time.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_INVALID_SALARY_RANGE: {
+    message: 'Minimum salary must be less than or equal to maximum salary.',
+    status: HttpStatus.BAD_REQUEST,
   },
 
   // CV
@@ -218,6 +234,50 @@ export const ERROR_CODES = {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
 
+  // SKILL
+  SKILL_NOT_FOUND: {
+    message: 'Skill not found.',
+    status: HttpStatus.NOT_FOUND,
+  },
+  SKILL_ALREADY_EXISTS: {
+    message: 'Skill already exists.',
+    status: HttpStatus.CONFLICT,
+  },
+  SKILL_CREATE_FAILED: {
+    message: 'Failed to create skill.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  SKILL_UPDATE_FAILED: {
+    message: 'Failed to update skill.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  SKILL_DELETE_FAILED: {
+    message: 'Failed to delete skill.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  SKILL_IN_USE: {
+    message: 'Skill is in use and cannot be deleted.',
+    status: HttpStatus.CONFLICT,
+  },
+
+  // FAVOURITE JOB
+  FAVOURITE_JOB_NOT_FOUND: {
+    message: 'Favourite job not found.',
+    status: HttpStatus.NOT_FOUND,
+  },
+  FAVOURITE_JOB_ALREADY_EXISTS: {
+    message: 'Job has already been added to favourites.',
+    status: HttpStatus.CONFLICT,
+  },
+  FAVOURITE_JOB_CREATE_FAILED: {
+    message: 'Failed to add favourite job.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  FAVOURITE_JOB_DELETE_FAILED: {
+    message: 'Failed to remove favourite job.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+
   // JOB APPLICATION
   JOB_APPLICATION_NOT_FOUND: {
     message: 'Job application not found.',
@@ -258,6 +318,19 @@ export const ERROR_CODES = {
   },
   JOB_APPLICATION_STATUS_INVALID: {
     message: 'Invalid job application status.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_APPLICATION_ACCESS_DENIED: {
+    message: 'You do not have permission to access this job application.',
+    status: HttpStatus.FORBIDDEN,
+  },
+  JOB_APPLICATION_INVALID_STATUS_TRANSITION: {
+    message: 'Invalid job application status transition.',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_APPLICATION_INTERVIEW_SCHEDULE_REQUIRED: {
+    message:
+      'Interview schedule time and location are required when scheduling an interview.',
     status: HttpStatus.BAD_REQUEST,
   },
 

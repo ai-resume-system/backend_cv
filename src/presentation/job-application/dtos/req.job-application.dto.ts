@@ -1,6 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsUUID, IsOptional, IsEnum } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
+import { RequestPaginationDto } from 'src/common/dto/request.dto';
 
 export class RequestCreateJobApplicationDto {
   @ApiProperty({ description: 'CV ID' })
@@ -11,29 +24,79 @@ export class RequestCreateJobApplicationDto {
   @IsUUID()
   jobId: string;
 
-  @ApiPropertyOptional({ description: 'Notes' })
+  @ApiProperty({ description: 'Applicant full name' })
+  @IsString()
+  @MaxLength(255)
+  fullName: string;
+
+  @ApiProperty({ description: 'Applicant contact email' })
+  @IsEmail()
+  @MaxLength(255)
+  contactEmail: string;
+
+  @ApiProperty({ description: 'Applicant contact phone number' })
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    const phone = value.replace(/\s+/g, '');
+    if (phone.startsWith('0')) {
+      return `+84${phone.slice(1)}`;
+    }
+    return phone;
+  })
+  @Matches(/^(\+84)(3|5|7|8|9)[0-9]{8}$/, ERROR_CODES.AUTH_PHONE_INVALID)
+  contactPhone: string;
+
+  @ApiPropertyOptional({ description: 'Applicant cover letter' })
   @IsOptional()
   @IsString()
-  notes?: string;
+  coverLetter?: string;
 }
 
 export class RequestUpdateJobApplicationStatusDto {
   @ApiProperty({ enum: EJobApplicationStatus, description: 'New status' })
   @IsEnum(EJobApplicationStatus)
   status: EJobApplicationStatus;
+
+  @ApiPropertyOptional({ description: 'Recruiter internal notes' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @ApiPropertyOptional({ description: 'Interview schedule time (ISO date)' })
+  @IsOptional()
+  @IsDateString()
+  scheduleTime?: string;
+
+  @ApiPropertyOptional({ description: 'Interview location' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  scheduleLocation?: string;
+
+  @ApiPropertyOptional({ description: 'Interview meeting link' })
+  @IsOptional()
+  @IsString()
+  scheduleLink?: string;
 }
 
-export class RequestGetJobApplicationsDto {
-  @ApiPropertyOptional({ default: 1 })
-  @IsOptional()
-  page?: number;
-
-  @ApiPropertyOptional({ default: 10 })
-  @IsOptional()
-  limit?: number;
-
+export class RequestGetJobApplicationsDto extends RequestPaginationDto {
   @ApiPropertyOptional({ description: 'Filter by status' })
   @IsOptional()
   @IsEnum(EJobApplicationStatus)
   status?: EJobApplicationStatus;
+
+  @ApiPropertyOptional({
+    enum: ['createdAt', 'matchingScore'],
+    default: 'createdAt',
+  })
+  @IsOptional()
+  @IsIn(['createdAt', 'matchingScore'])
+  sortBy?: 'createdAt' | 'matchingScore';
+
+  @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'DESC' })
+  @IsOptional()
+  @IsIn(['ASC', 'DESC'])
+  sortOrder?: 'ASC' | 'DESC';
 }

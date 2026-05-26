@@ -3,7 +3,7 @@ import { IRejectJobDto } from 'src/application/dtos/job/req.job.dto';
 import { IResponseApiJobDto } from 'src/application/dtos/job/res.job.dto';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
-import { EJobStatus } from 'src/common/constants/enum/job.enum';
+import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
@@ -44,6 +44,15 @@ export class ReviewJobUseCase extends BaseUsecase {
       if (!existing) {
         throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
       }
+      if (
+        (status === EJobStatus.OPEN || status === EJobStatus.REJECTED) &&
+        existing.status !== EJobStatus.PENDING
+      ) {
+        throw new AppException(ERROR_CODES.JOB_INVALID_STATUS_TRANSITION);
+      }
+      if (status === EJobStatus.CLOSED && existing.status !== EJobStatus.OPEN) {
+        throw new AppException(ERROR_CODES.JOB_INVALID_STATUS_TRANSITION);
+      }
       const job = await this.jobRepository.update(id, {
         status,
         rejectReason,
@@ -56,11 +65,14 @@ export class ReviewJobUseCase extends BaseUsecase {
         id: job.id,
         title: job.title,
         shortDescription: job.shortDescription,
+        description: job.description,
         location: job.location,
         salaryMin: job.salaryMin,
         salaryMax: job.salaryMax,
         experienceYears: job.experienceYears,
         expiredAt: job.expiredAt,
+        jobType: job.jobType || EJobType.FULL_TIME,
+        rejectReason: job.rejectReason,
         status: job.status,
         createdAt: job.createdAt,
         updatedAt: job.updatedAt,

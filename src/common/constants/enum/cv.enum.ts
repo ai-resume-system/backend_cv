@@ -1,6 +1,5 @@
 export enum ECVStatus {
   ACTIVE = 'active',
-  IN_USE = 'in_use',
 }
 
 export enum EProcessingStatus {

@@ -24,20 +24,59 @@ export class JobTypeormRepository
   }
 
   protected getSearchableColumns(): string[] {
-    return ['title', 'location'];
+    return ['title', 'location', 'description'];
   }
 
   async find(options?: IFindOptions): Promise<IPaginatedResult<IJobEntity>> {
-    const { notExpired, ...otherFilters } = options?.filter || {};
+    const {
+      notExpired,
+      skillIds,
+      q,
+      expiredAtBefore,
+      salaryMin,
+      salaryMax,
+      experienceYears,
+      ...otherFilters
+    } =
+      options?.filter || {};
 
-    if (notExpired === true) {
+    if (notExpired === true || skillIds || q || expiredAtBefore) {
       const now = new Date();
       const queryBuilder = this.ormRepository.createQueryBuilder('entity');
       queryBuilder.where('entity.deletedAt IS NULL');
-      queryBuilder.andWhere(
-        '(entity.expiredAt > :now OR entity.expiredAt IS NULL)',
-        { now },
-      );
+      if (notExpired === true) {
+        queryBuilder.andWhere(
+          '(entity.expiredAt > :now OR entity.expiredAt IS NULL)',
+          { now },
+        );
+      }
+      if (expiredAtBefore) {
+        queryBuilder.andWhere('entity.expiredAt < :expiredAtBefore', {
+          expiredAtBefore,
+        });
+      }
+      if (skillIds && Array.isArray(skillIds) && skillIds.length > 0) {
+        queryBuilder.innerJoin(
+          'job_skills',
+          'jobSkills',
+          'jobSkills.job_id = entity.id AND jobSkills.deleted_at IS NULL',
+        );
+        queryBuilder.andWhere('jobSkills.skill_id IN (:...skillIds)', {
+          skillIds,
+        });
+        queryBuilder.distinct(true);
+      }
+      if (salaryMin !== undefined) {
+        queryBuilder.andWhere('entity.salaryMin >= :salaryMin', { salaryMin });
+      }
+      if (salaryMax !== undefined) {
+        queryBuilder.andWhere('entity.salaryMax <= :salaryMax', { salaryMax });
+      }
+      if (experienceYears !== undefined) {
+        queryBuilder.andWhere('entity.experienceYears <= :experienceYears', {
+          experienceYears,
+        });
+      }
 
       Object.entries(otherFilters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -55,7 +94,7 @@ export class JobTypeormRepository
       const { sortBy = 'createdAt', sortOrder = 'DESC' } = options?.sort || {};
       const skip = (page - 1) * limit;
 
-      if (otherFilters.q) {
+      if (q) {
         const searchableColumns = this.getSearchableColumns();
         if (searchableColumns.length) {
           const searchConditions = searchableColumns
@@ -63,7 +102,7 @@ export class JobTypeormRepository
             .join(' OR ');
 
           queryBuilder.andWhere(`(${searchConditions})`, {
-            q: `%${otherFilters.q}%`,
+            q: `%${q}%`,
           });
         }
       }
@@ -119,6 +158,7 @@ export class JobTypeormRepository
       salaryMax: orm.salaryMax,
       experienceYears: orm.experienceYears,
       expiredAt: orm.expiredAt,
+      jobType: orm.jobType,
       rejectReason: orm.rejectReason,
       status: orm.status,
       createdAt: orm.createdAt,

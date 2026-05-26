@@ -16,5 +16,6 @@ export interface IJobApplicationRepository extends IBaseRepository<IJobApplicati
   updateStatus(
     id: string,
     status: EJobApplicationStatus,
+    data?: Partial<IJobApplicationEntity>,
   ): Promise<IJobApplicationEntity>;
 }

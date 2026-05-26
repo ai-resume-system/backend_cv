@@ -23,7 +23,7 @@ export class RequestRegisterDto {
   @ApiProperty({ example: '123456' })
   @IsNotEmpty()
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/, ERROR_CODES.AUTH_PASSWORD_WEAK)
   password: string;
 }
@@ -114,13 +114,13 @@ export class RequestRefreshTokenDto {
 export class RequestChangePasswordDto {
   @ApiProperty({ example: '123456' })
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   oldPassword: string;
 
   @ApiProperty({ example: 'NewPassword@123' })
   @IsNotEmpty()
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/, ERROR_CODES.AUTH_PASSWORD_WEAK)
   newPassword: string;
 }
@@ -138,7 +138,7 @@ export class RequestForgotPasswordDto {
   @ApiProperty({ example: 'NewPassword@123' })
   @IsNotEmpty()
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/, ERROR_CODES.AUTH_PASSWORD_WEAK)
   newPassword: string;
 }

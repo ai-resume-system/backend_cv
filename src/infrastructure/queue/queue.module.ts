@@ -22,12 +22,15 @@ import {
   CACHE_INVALIDATE_QUEUE,
   CV_PARSE_DLQ,
   CV_PARSE_QUEUE,
+  JOB_APPLICATION_STATUS_EMAIL_DLQ,
+  JOB_APPLICATION_STATUS_EMAIL_QUEUE,
   STORAGE_DELETE_DLQ,
   STORAGE_DELETE_QUEUE,
 } from './queue.constants';
 import { QueueDispatchService } from './queue-dispatch.service';
 import { CacheInvalidateProcessor } from './workers/cache-invalidate.processor';
 import { CvParseProcessor } from './workers/cv-parse.processor';
+import { JobApplicationStatusEmailProcessor } from './workers/job-application-status-email.processor';
 import { StorageDeleteProcessor } from './workers/storage-delete.processor';
 
 const queueRetryStrategy = (times: number): number | null => {
@@ -57,9 +60,11 @@ const queueRetryStrategy = (times: number): number | null => {
       { name: CV_PARSE_QUEUE },
       { name: CACHE_INVALIDATE_QUEUE },
       { name: STORAGE_DELETE_QUEUE },
+      { name: JOB_APPLICATION_STATUS_EMAIL_QUEUE },
       { name: CV_PARSE_DLQ },
       { name: CACHE_INVALIDATE_DLQ },
       { name: STORAGE_DELETE_DLQ },
+      { name: JOB_APPLICATION_STATUS_EMAIL_DLQ },
     ),
     TypeOrmModule.forFeature([
       CVOrmEntity,
@@ -78,6 +83,7 @@ const queueRetryStrategy = (times: number): number | null => {
     CvParseProcessor,
     CacheInvalidateProcessor,
     StorageDeleteProcessor,
+    JobApplicationStatusEmailProcessor,
     { provide: 'ICVRepository', useClass: CVTypeormRepository },
     {
       provide: 'ICVParsedDataRepository',
