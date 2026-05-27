@@ -3,7 +3,7 @@ import { randomInt } from 'crypto';
 import { ISendOtpDto } from 'src/application/dtos/auth/req.auth.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
-import { EUserStatus } from 'src/common/constants/enum/user.enum';
+import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { TTL_10M, TTL_1M, TTL_30S } from 'src/common/constants/ttl.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
@@ -44,6 +44,15 @@ export class SendOtpUseCase extends BaseUsecase {
             throw new AppException(ERROR_CODES.AUTH_USER_LOCKED);
         }
         break;
+    }
+  }
+
+  private validateForgotPasswordRole(
+    actualRole: EUserRole,
+    requestedRole?: EUserRole,
+  ): void {
+    if (requestedRole && actualRole !== requestedRole) {
+      throw new AppException(ERROR_CODES.AUTH_ACCOUNT_ROLE_MISMATCH);
     }
   }
 
@@ -99,6 +108,9 @@ export class SendOtpUseCase extends BaseUsecase {
         }
 
         this.validateUserForOtp(user, dto.type);
+        if (dto.type === EOtpType.FORGOT_PASSWORD) {
+          this.validateForgotPasswordRole(user.role, dto.role);
+        }
 
         try {
           const isLocked = await this.redis.isOtpLocked(dto.email);
@@ -129,11 +141,20 @@ export class SendOtpUseCase extends BaseUsecase {
 
         const cooldownTtl = dto.type === EOtpType.REGISTER ? TTL_30S : TTL_1M;
         try {
-          await this.redis.setOtpCache(
-            dto.email,
-            codeHash,
-            OTP_EXPIRES_IN_SECONDS,
-          );
+          if (dto.type === EOtpType.FORGOT_PASSWORD && dto.role) {
+            await this.redis.setScopedOtpCache(
+              dto.email,
+              dto.role,
+              codeHash,
+              OTP_EXPIRES_IN_SECONDS,
+            );
+          } else {
+            await this.redis.setOtpCache(
+              dto.email,
+              codeHash,
+              OTP_EXPIRES_IN_SECONDS,
+            );
+          }
           await this.redis.setCooldown(dto.email, cooldownTtl);
         } catch (error) {
           this.logger.warn(

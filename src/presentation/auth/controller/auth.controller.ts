@@ -35,9 +35,10 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import {
   clearRefreshTokenCookie,
-  REFRESH_TOKEN_COOKIE_NAME,
   setRefreshTokenCookie,
 } from 'src/common/utils/cookie.utils';
+import { resolveAuthClient } from 'src/common/utils/auth-client.utils';
+import { AUTH_CLIENT_COOKIE_NAMES } from 'src/common/constants/auth-client.constants';
 
 @Controller({
   path: 'auth',
@@ -62,6 +63,8 @@ export class AuthController extends BaseController {
   ): IPublicAuthResponseDto {
     return {
       accessToken: payload.accessToken,
+      expiresIn: payload.expiresIn,
+      expiresAt: payload.expiresAt,
     };
   }
 
@@ -140,6 +143,7 @@ export class AuthController extends BaseController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<IPublicAuthResponseDto> {
+    const authClient = resolveAuthClient(req);
     const ip =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
@@ -148,7 +152,7 @@ export class AuthController extends BaseController {
     const cookieMaxAge = dto.rememberMe
       ? 30 * 24 * 60 * 60 * 1000
       : undefined;
-    setRefreshTokenCookie(res, result.refreshToken, cookieMaxAge);
+    setRefreshTokenCookie(res, authClient, result.refreshToken, cookieMaxAge);
 
     return this.toPublicAuthResponse(result);
   }
@@ -165,8 +169,9 @@ export class AuthController extends BaseController {
     @Body() dto: RequestRefreshTokenDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<IPublicAuthResponseDto> {
+    const authClient = resolveAuthClient(req);
     const refreshToken =
-      req.cookies?.[REFRESH_TOKEN_COOKIE_NAME] ?? dto.refreshToken;
+      req.cookies?.[AUTH_CLIENT_COOKIE_NAMES[authClient]] ?? dto.refreshToken;
 
     if (!refreshToken) {
       throw new AppException(ERROR_CODES.AUTH_REFRESH_TOKEN_INVALID_OR_EXPIRED);
@@ -174,7 +179,7 @@ export class AuthController extends BaseController {
 
     const result = await this.refreshTokenUseCase.execute({ refreshToken });
 
-    setRefreshTokenCookie(res, result.refreshToken);
+    setRefreshTokenCookie(res, authClient, result.refreshToken);
 
     return this.toPublicAuthResponse(result);
   }
@@ -207,7 +212,7 @@ export class AuthController extends BaseController {
   ): Promise<{ message: string }> {
     const authHeader = req.headers['authorization'] as string;
     const accessToken = authHeader?.replace('Bearer ', '');
-    clearRefreshTokenCookie(res);
+    clearRefreshTokenCookie(res, resolveAuthClient(req));
     return await this.logoutUseCase.execute({
       userId: user.id,
       accessToken,

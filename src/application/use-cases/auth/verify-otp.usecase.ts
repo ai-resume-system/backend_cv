@@ -56,7 +56,10 @@ export class VerifyOtpUseCase extends BaseUsecase {
 
         let storedHash: string | null = null;
         try {
-          storedHash = await this.redis.getOtpCache(dto.email);
+          storedHash =
+            dto.type === EOtpType.FORGOT_PASSWORD && dto.role
+              ? await this.redis.getScopedOtpCache(dto.email, dto.role)
+              : await this.redis.getOtpCache(dto.email);
         } catch (error) {
           this.logger.warn(
             `Redis OTP cache unavailable for ${dto.email}: ${error.message}`,
@@ -98,6 +101,13 @@ export class VerifyOtpUseCase extends BaseUsecase {
         const user = await this.userRepository.findByEmail(dto.email);
         if (!user) {
           throw new AppException(ERROR_CODES.USER_NOT_FOUND);
+        }
+        if (
+          dto.type === EOtpType.FORGOT_PASSWORD &&
+          dto.role &&
+          user.role !== dto.role
+        ) {
+          throw new AppException(ERROR_CODES.AUTH_ACCOUNT_ROLE_MISMATCH);
         }
 
         otpRecord =
@@ -184,8 +194,18 @@ export class VerifyOtpUseCase extends BaseUsecase {
               expiresAt: new Date(Date.now() + 600 * 1000),
             });
             try {
-              await this.redis.setSignKey(dto.email, signKey, 600);
-              await this.redis.deleteOtpCache(dto.email);
+              if (dto.role) {
+                await this.redis.setScopedSignKey(
+                  dto.email,
+                  dto.role,
+                  signKey,
+                  600,
+                );
+                await this.redis.deleteScopedOtpCache(dto.email, dto.role);
+              } else {
+                await this.redis.setSignKey(dto.email, signKey, 600);
+                await this.redis.deleteOtpCache(dto.email);
+              }
             } catch (error) {
               this.logger.warn(
                 `Redis reset signKey unavailable for ${dto.email}: ${error.message}`,

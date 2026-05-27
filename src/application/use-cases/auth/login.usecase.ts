@@ -135,7 +135,12 @@ export class LoginUseCase extends BaseUsecase {
         const refreshTtl = dto.rememberMe ? TTL_30D : 7 * TTL_24H;
         const refreshTokenExpiration = dto.rememberMe ? '30d' : undefined;
 
-        const { accessToken, refreshToken } =
+        const {
+          accessToken,
+          refreshToken,
+          expiresAt: accessTokenExpiresAt,
+          expiresIn,
+        } =
           await this.jwtTokenUsecase.generateTokens(
             { id: user.id, role: user.role },
             refreshTokenExpiration,
@@ -180,6 +185,8 @@ export class LoginUseCase extends BaseUsecase {
         return {
           accessToken,
           refreshToken,
+          expiresAt: accessTokenExpiresAt,
+          expiresIn,
         };
       },
       ERROR_CODES.AUTH_LOGIN_FAILED,

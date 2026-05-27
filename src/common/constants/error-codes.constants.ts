@@ -61,6 +61,10 @@ export const ERROR_CODES = {
     message: 'Invalid or expired signature verification key.',
     status: HttpStatus.UNAUTHORIZED,
   },
+  AUTH_ACCOUNT_ROLE_MISMATCH: {
+    message: 'Account role does not match the current authentication flow.',
+    status: HttpStatus.FORBIDDEN,
+  },
   AUTH_USER_LOCKED: {
     message:
       'User account has been locked. Cannot perform this action. Please contact support!',

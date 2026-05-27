@@ -49,7 +49,7 @@ function setCors(
   app.enableCors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-client'],
     origin: (origin, callback) => {
       if (!origin) {
         callback(null, true);

@@ -14,6 +14,8 @@ export interface IGenerateTokensPayload {
 export interface IResponseGenerateTokens {
   accessToken: string;
   refreshToken: string;
+  expiresIn: number;
+  expiresAt: string;
 }
 
 @Injectable()
@@ -46,9 +48,14 @@ export class JwtTokenUsecase extends BaseUsecase {
       refreshTokenExpiration ??
         this.configService.get<string>('jwt.refreshTokenExpiration', '7d'),
     );
+    const decodedAccessToken = this.decodeToken(accessToken);
+    const accessExpMs = (decodedAccessToken?.exp ?? 0) * 1000;
+
     return {
       accessToken,
       refreshToken,
+      expiresIn: Math.max(0, Math.floor((accessExpMs - Date.now()) / 1000)),
+      expiresAt: new Date(accessExpMs).toISOString(),
     };
   }
 

@@ -1,6 +1,8 @@
 import type { CookieOptions, Response } from 'express';
-
-export const REFRESH_TOKEN_COOKIE_NAME = '__rt';
+import {
+  AUTH_CLIENT_COOKIE_NAMES,
+  type AuthClient,
+} from 'src/common/constants/auth-client.constants';
 
 const REFRESH_TOKEN_COOKIE_PATH = '/api/v1/auth';
 const REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
@@ -25,6 +27,7 @@ function buildRefreshTokenCookieOptions(): CookieOptions {
 
 export function setRefreshTokenCookie(
   response: Response,
+  client: AuthClient,
   refreshToken: string,
   maxAge?: number,
 ): void {
@@ -32,12 +35,15 @@ export function setRefreshTokenCookie(
   if (maxAge) {
     options.maxAge = maxAge;
   }
-  response.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, options);
+  response.cookie(AUTH_CLIENT_COOKIE_NAMES[client], refreshToken, options);
 }
 
-export function clearRefreshTokenCookie(response: Response): void {
+export function clearRefreshTokenCookie(
+  response: Response,
+  client: AuthClient,
+): void {
   response.clearCookie(
-    REFRESH_TOKEN_COOKIE_NAME,
+    AUTH_CLIENT_COOKIE_NAMES[client],
     buildRefreshTokenCookieOptions(),
   );
 }

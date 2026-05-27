@@ -30,7 +30,7 @@ export class ForgotPasswordUseCase extends BaseUsecase {
       async () => {
         let savedSignKey: string | null = null;
         try {
-          savedSignKey = await this.redis.getSignKey(dto.email);
+          savedSignKey = await this.redis.getScopedSignKey(dto.email, dto.role);
         } catch (error) {
           this.logger.warn(
             `Redis reset signKey unavailable for ${dto.email}: ${error.message}`,
@@ -51,6 +51,9 @@ export class ForgotPasswordUseCase extends BaseUsecase {
         if (!user) {
           throw new AppException(ERROR_CODES.USER_NOT_FOUND);
         }
+        if (user.role !== dto.role) {
+          throw new AppException(ERROR_CODES.AUTH_ACCOUNT_ROLE_MISMATCH);
+        }
 
         if (user.status !== EUserStatus.ACTIVE) {
           throw new AppException(ERROR_CODES.AUTH_USER_UNVERIFIED);
@@ -60,7 +63,7 @@ export class ForgotPasswordUseCase extends BaseUsecase {
         await this.userRepository.updatePassword(user.id, hashedPassword);
 
         try {
-          await this.redis.clearSignKey(dto.email);
+          await this.redis.clearScopedSignKey(dto.email, dto.role);
         } catch (error) {
           this.logger.warn(
             `Redis reset signKey clear failed for ${dto.email}: ${error.message}`,

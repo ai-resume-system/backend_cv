@@ -107,7 +107,12 @@ export class RefreshTokenUseCase extends BaseUsecase {
           );
         }
 
-        const { accessToken, refreshToken: newRefreshToken } =
+        const {
+          accessToken,
+          refreshToken: newRefreshToken,
+          expiresAt: accessTokenExpiresAt,
+          expiresIn,
+        } =
           await this.jwtTokenService.generateTokens({
             id: existingUser.id,
             role: existingUser.role,
@@ -154,6 +159,8 @@ export class RefreshTokenUseCase extends BaseUsecase {
         return {
           accessToken,
           refreshToken: newRefreshToken,
+          expiresAt: accessTokenExpiresAt,
+          expiresIn,
         };
       },
       ERROR_CODES.INTERNAL_SERVER_ERROR,

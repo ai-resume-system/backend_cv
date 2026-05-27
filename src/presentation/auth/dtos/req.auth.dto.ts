@@ -12,6 +12,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
+import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 
 export class RequestRegisterDto {
@@ -75,6 +76,15 @@ export class RequestVerifyOtpDto {
   @IsNotEmpty()
   @IsEnum(EOtpType)
   type: EOtpType;
+
+  @ApiProperty({
+    example: EUserRole.JOB_SEEKER,
+    enum: EUserRole,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(EUserRole)
+  role?: EUserRole;
 }
 
 export class RequestSendOtpDto {
@@ -86,6 +96,15 @@ export class RequestSendOtpDto {
   @IsNotEmpty()
   @IsEnum(EOtpType)
   type: EOtpType;
+
+  @ApiProperty({
+    example: EUserRole.JOB_SEEKER,
+    enum: EUserRole,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(EUserRole)
+  role?: EUserRole;
 }
 
 export class RequestLoginDto {
@@ -141,4 +160,9 @@ export class RequestForgotPasswordDto {
   @MinLength(6)
   @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/, ERROR_CODES.AUTH_PASSWORD_WEAK)
   newPassword: string;
+
+  @ApiProperty({ example: EUserRole.JOB_SEEKER, enum: EUserRole })
+  @IsNotEmpty()
+  @IsEnum(EUserRole)
+  role: EUserRole;
 }
