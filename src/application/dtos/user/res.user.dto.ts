@@ -27,14 +27,18 @@ export interface IGetUserByIdResponseDto {
   };
   company?: {
     id: string;
-    careerCategoriesId?: string;
-    companyName?: string;
+    careerCategoryId?: string;
+    name?: string;
     taxCode?: string;
     logoUrl?: string | null;
     bannerUrl?: string | null;
-    location?: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
     description?: string;
     websiteUrl?: string;
+    employeeMin?: number;
+    employeeMax?: number;
   };
 }
 

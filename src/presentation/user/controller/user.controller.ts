@@ -24,9 +24,10 @@ import {
   ResponseApiUserDto,
   ResponseListApiUserDto,
 } from '../dtos/res.user.dto';
+import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 
-@Controller({ path: 'users', version: '1' })
-@ApiTags('Users')
+@Controller({ path: 'admin/users', version: '1' })
+@ApiTags('Users - Admin')
 export class UserController extends BaseController {
   constructor(
     private readonly getUsersQuery: GetUsersQuery,
@@ -37,7 +38,9 @@ export class UserController extends BaseController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all users with pagination and filters' })
+  @ApiOperation({
+    summary: 'Get all users with pagination and filters. Access: Admin.',
+  })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
     status: 200,
@@ -51,21 +54,23 @@ export class UserController extends BaseController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get user by id' })
+  @ApiOperation({
+    summary: 'Get user detail by id. Access: Admin.',
+  })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
     status: 200,
     description: 'Get user successfully',
     type: ResponseApiUserDto,
   })
-  async getUserById(
-    @Param('id') id: string,
-  ): Promise<IGetUserByIdResponseDto> {
+  async getUserById(@Param('id') id: string): Promise<IGetUserByIdResponseDto> {
     return await this.getUserByIdQuery.execute(id);
   }
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update user status (lock/unlock)' })
+  @ApiOperation({
+    summary: 'Update user status such as lock or unlock. Access: Admin.',
+  })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
     status: 200,
@@ -75,7 +80,7 @@ export class UserController extends BaseController {
   async updateUserStatus(
     @Param('id') id: string,
     @Body() dto: RequestUpdateUserStatusDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.updateUserStatusUseCase.execute(id, dto);
   }
 }

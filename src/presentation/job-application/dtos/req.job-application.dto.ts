@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
-  IsDateString,
+  IsDate,
   IsEmail,
   IsEnum,
   IsIn,
@@ -14,6 +14,7 @@ import {
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
+import { parseVietnamDateTimeInput } from 'src/common/utils/date-time.util';
 
 export class RequestCreateJobApplicationDto {
   @ApiProperty({ description: 'CV ID' })
@@ -64,10 +65,24 @@ export class RequestUpdateJobApplicationStatusDto {
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({ description: 'Interview schedule time (ISO date)' })
+  @ApiPropertyOptional({
+    description:
+      'Interview schedule time. Neu khong kem timezone, backend hieu theo gio Viet Nam.',
+  })
   @IsOptional()
-  @IsDateString()
-  scheduleTime?: string;
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    try {
+      return parseVietnamDateTimeInput(value);
+    } catch {
+      return value;
+    }
+  })
+  @IsDate()
+  scheduleTime?: Date;
 
   @ApiPropertyOptional({ description: 'Interview location' })
   @IsOptional()

@@ -1,10 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IJobApplicationResponseDto } from 'src/application/dtos/job-application/res.job-application.dto';
+import { IResponseApiJobSeekerJobApplicationDto } from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import { toJobSeekerJobApplicationDto } from 'src/application/queries/job-application/job-application-response.mapper';
 
 @Injectable()
 export class WithdrawJobApplicationUseCase extends BaseUsecase {
@@ -18,7 +19,7 @@ export class WithdrawJobApplicationUseCase extends BaseUsecase {
   async execute(
     userId: string,
     jobApplicationId: string,
-  ): Promise<{ data: IJobApplicationResponseDto }> {
+  ): Promise<IResponseApiJobSeekerJobApplicationDto> {
     return this.runSafe(
       '[Withdraw Job Application]',
       async () => {
@@ -44,7 +45,7 @@ export class WithdrawJobApplicationUseCase extends BaseUsecase {
           EJobApplicationStatus.WITHDRAWN,
         );
 
-        return { data: updated };
+        return { data: toJobSeekerJobApplicationDto(updated) };
       },
       ERROR_CODES.JOB_APPLICATION_WITHDRAW_FAILED,
     );

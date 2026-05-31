@@ -31,7 +31,7 @@ export class RemoveFavouriteJobUseCase extends BaseUsecase {
 
         return {
           data: {
-            message: 'Da bo luu viec lam',
+            message: 'Remove favourite job successfully',
           },
         };
       },

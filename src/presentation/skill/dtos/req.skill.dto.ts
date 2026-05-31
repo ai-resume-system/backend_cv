@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 
@@ -30,10 +30,9 @@ export class RequestCreateSkillDto {
   @MaxLength(255)
   name: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  careerCategoryId?: string;
+  careerCategoryId: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -41,20 +40,10 @@ export class RequestCreateSkillDto {
   parentId?: string;
 }
 
-export class RequestUpdateSkillDto {
+export class RequestUpdateSkillDto extends PartialType(RequestCreateSkillDto) {
   @ApiPropertyOptional({ example: 'React Native' })
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  name?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  careerCategoryId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  parentId?: string;
+  override name?: string;
 }

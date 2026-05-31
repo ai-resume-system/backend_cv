@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, IsNull, Repository } from 'typeorm';
+import { FindOptionsWhere, In, IsNull, Repository } from 'typeorm';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import { JobApplicationOrmEntity } from '../entities/job-application.orm-entity';
@@ -17,16 +17,6 @@ export class JobApplicationTypeormRepository
     ormRepository: Repository<JobApplicationOrmEntity>,
   ) {
     super(ormRepository);
-  }
-
-  async findById(id: string): Promise<IJobApplicationEntity | null> {
-    const orm = await this.ormRepository.findOne({
-      where: {
-        id,
-        deletedAt: IsNull(),
-      },
-    });
-    return orm ? this.toDomain(orm) : null;
   }
 
   async findByJobId(jobId: string): Promise<IJobApplicationEntity[]> {
@@ -74,7 +64,7 @@ export class JobApplicationTypeormRepository
     const orms = await this.ormRepository.find({
       where: {
         cvId,
-        status: activeStatuses as any,
+        status: In(activeStatuses),
         deletedAt: IsNull(),
       } as FindOptionsWhere<JobApplicationOrmEntity>,
     });
@@ -107,7 +97,7 @@ export class JobApplicationTypeormRepository
       where: {
         jobId,
         userId,
-        status: activeStatuses as any,
+        status: In(activeStatuses),
         deletedAt: IsNull(),
       } as FindOptionsWhere<JobApplicationOrmEntity>,
     });

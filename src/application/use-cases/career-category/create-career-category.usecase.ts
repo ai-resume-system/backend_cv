@@ -8,7 +8,8 @@ import { HttpStatus } from '@nestjs/common';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import { IResponseApiCareerCategoryDto } from 'src/application/dtos/career-category/res.career-category.dto';
+import { IResponseApiAdminCareerCategoryDto } from 'src/application/dtos/career-category/res.career-category-admin.dto';
+import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
 
 @Injectable()
 export class CreateCareerCategoryUseCase extends BaseUsecase {
@@ -22,7 +23,7 @@ export class CreateCareerCategoryUseCase extends BaseUsecase {
 
   async execute(
     dto: IRequestCreateCareerCategoryDto,
-  ): Promise<IResponseApiCareerCategoryDto> {
+  ): Promise<IResponseApiAdminCareerCategoryDto> {
     return this.runSafe('[Create Career Category]:', async () => {
       const existing = await this.careerCategoryRepository.findByName(dto.name);
       if (existing) {
@@ -34,11 +35,17 @@ export class CreateCareerCategoryUseCase extends BaseUsecase {
 
       const created = await this.careerCategoryRepository.create({
         name: dto.name,
-        slug: dto.slug,
+        slug: await generateUniqueSlug(dto.name, 'career-category', (candidate) =>
+          this.careerCategoryRepository.isSlugTaken(candidate),
+        ),
         description: dto.description,
         status: ECareerCategoriesStatus.ACTIVE,
       });
-      await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_LIST);
+      await Promise.all([
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_LIST),
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_DETAIL),
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP),
+      ]);
       return { data: created };
     });
   }

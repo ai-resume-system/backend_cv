@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GetJobByIdQuery } from 'src/application/queries/job/get-job-by-id.query';
+import { GetJobBySlugQuery } from 'src/application/queries/job/get-job-by-slug.query';
 import { GetJobsQuery } from 'src/application/queries/job/get-jobs.query';
 import { CreateJobUseCase } from 'src/application/use-cases/job/create-job.usecase';
 import { DeleteJobUseCase } from 'src/application/use-cases/job/delete-job.usecase';
@@ -13,10 +13,12 @@ import { CompanyTypeormRepository } from 'src/infrastructure/database/repositori
 import { JobTypeormRepository } from 'src/infrastructure/database/repositories/job.typeorm-repository';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
 import { CareerCategoriesModule } from 'src/presentation/career-category/career-categories.module';
-import { JobController } from 'src/presentation/job/controller/job.controller';
+import { JobAdminController } from 'src/presentation/job/controller/job-admin.controller';
+import { JobPublicController } from 'src/presentation/job/controller/job-public.controller';
+import { JobRecruiterController } from 'src/presentation/job/controller/job-recruiter.controller';
 import { FavouriteJobOrmEntity } from 'src/infrastructure/database/entities/favourite-job.orm-entity';
 import { FavouriteJobTypeormRepository } from 'src/infrastructure/database/repositories/favourite-job.typeorm-repository';
-import { SkillModule } from 'src/presentation/skill/modules/skill.module';
+import { SkillModule } from 'src/presentation/skill/skill.module';
 
 @Module({
   imports: [
@@ -30,10 +32,14 @@ import { SkillModule } from 'src/presentation/skill/modules/skill.module';
     CareerCategoriesModule,
     SkillModule,
   ],
-  controllers: [JobController],
+  controllers: [
+    JobPublicController,
+    JobRecruiterController,
+    JobAdminController,
+  ],
   providers: [
     GetJobsQuery,
-    GetJobByIdQuery,
+    GetJobBySlugQuery,
     CreateJobUseCase,
     UpdateJobUseCase,
     DeleteJobUseCase,

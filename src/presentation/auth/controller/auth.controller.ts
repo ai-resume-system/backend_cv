@@ -5,6 +5,7 @@ import type {
   IPublicAuthResponseDto,
   IResponseAuthDto,
 } from 'src/application/dtos/auth/res.auth.dto';
+import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 import { LoginUseCase } from 'src/application/use-cases/auth/login.usecase';
 import { LogoutUseCase } from 'src/application/use-cases/auth/logout.usecase';
 import { RefreshTokenUseCase } from 'src/application/use-cases/auth/refresh-token.usecase';
@@ -69,7 +70,9 @@ export class AuthController extends BaseController {
   }
 
   @Post('register/job-seeker')
-  @ApiOperation({ summary: 'Register account with role job seeker' })
+  @ApiOperation({
+    summary: 'Register a new job seeker account. Access: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Register successfully',
@@ -77,7 +80,7 @@ export class AuthController extends BaseController {
   })
   async registerJobSeeker(
     @Body() dto: RequestRegisterJobSeekerDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.registerUseCase.execute({
       ...dto,
       role: EUserRole.JOB_SEEKER,
@@ -85,7 +88,9 @@ export class AuthController extends BaseController {
   }
 
   @Post('register/recruiter')
-  @ApiOperation({ summary: 'Register account with role recruiter' })
+  @ApiOperation({
+    summary: 'Register a new recruiter account. Access: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Register successfully',
@@ -93,7 +98,7 @@ export class AuthController extends BaseController {
   })
   async registerRecruiter(
     @Body() dto: RequestRegisterRecruiterDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.registerUseCase.execute({
       ...dto,
       role: EUserRole.RECRUITER,
@@ -101,7 +106,10 @@ export class AuthController extends BaseController {
   }
 
   @Post('send-otp')
-  @ApiOperation({ summary: 'Send OTP to email (register/forgot password)' })
+  @ApiOperation({
+    summary:
+      'Send OTP to email for register or forgot-password flow. Access: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'OTP sent successfully',
@@ -110,16 +118,18 @@ export class AuthController extends BaseController {
   async sendOtp(
     @Body() dto: RequestSendOtpDto,
     @Req() req: Request,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     const ip =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
-    console.log('ip', ip);
     return await this.sendOtpUseCase.execute(dto, ip!);
   }
 
   @Post('verify-otp')
-  @ApiOperation({ summary: 'Verify OTP' })
+  @ApiOperation({
+    summary:
+      'Verify OTP code for register or forgot-password flow. Access: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'OTP verified successfully',
@@ -127,12 +137,14 @@ export class AuthController extends BaseController {
   })
   async verifyOtp(
     @Body() dto: RequestVerifyOtpDto,
-  ): Promise<{ message: string; signKey?: string }> {
+  ): Promise<IResponseApiNullDto | { data: { signKey: string } }> {
     return await this.verifyOtpUseCase.execute(dto);
   }
 
   @Post('login')
-  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiOperation({
+    summary: 'Login with email and password. Access: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Login successfully',
@@ -149,16 +161,17 @@ export class AuthController extends BaseController {
       req.socket.remoteAddress;
     const result = await this.loginUseCase.execute(dto, ip!);
 
-    const cookieMaxAge = dto.rememberMe
-      ? 30 * 24 * 60 * 60 * 1000
-      : undefined;
+    const cookieMaxAge = dto.rememberMe ? 30 * 24 * 60 * 60 * 1000 : undefined;
     setRefreshTokenCookie(res, authClient, result.refreshToken, cookieMaxAge);
 
     return this.toPublicAuthResponse(result);
   }
 
   @Post('refresh-token')
-  @ApiOperation({ summary: 'Refresh token' })
+  @ApiOperation({
+    summary:
+      'Refresh access token by refresh token or auth cookie. Access: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Refresh token successfully',
@@ -185,7 +198,9 @@ export class AuthController extends BaseController {
   }
 
   @Post('forgot-password')
-  @ApiOperation({ summary: 'Reset password with email OTP signKey' })
+  @ApiOperation({
+    summary: 'Reset password with verified email OTP signKey. Access: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Password reset successfully',
@@ -193,12 +208,15 @@ export class AuthController extends BaseController {
   })
   async forgotPassword(
     @Body() dto: RequestForgotPasswordDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.forgotPasswordUseCase.execute(dto);
   }
 
   @Post('logout')
-  @ApiOperation({ summary: 'Logout account' })
+  @ApiOperation({
+    summary:
+      'Logout current account and clear refresh cookie. Access: Authenticated User.',
+  })
   @AuthRequired()
   @ApiResponse({
     status: 201,
@@ -209,7 +227,7 @@ export class AuthController extends BaseController {
     @AuthCurrentUser() user: ICurrentUser,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     const authHeader = req.headers['authorization'] as string;
     const accessToken = authHeader?.replace('Bearer ', '');
     clearRefreshTokenCookie(res, resolveAuthClient(req));

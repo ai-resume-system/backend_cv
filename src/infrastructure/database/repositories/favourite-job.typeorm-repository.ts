@@ -18,13 +18,6 @@ export class FavouriteJobTypeormRepository
     super(ormRepository);
   }
 
-  async findById(id: string): Promise<IFavouriteJobEntity | null> {
-    const orm = await this.ormRepository.findOne({
-      where: { id, deletedAt: IsNull() },
-    });
-    return orm ? this.toDomain(orm) : null;
-  }
-
   async findByUserIdAndJobId(
     userId: string,
     jobId: string,

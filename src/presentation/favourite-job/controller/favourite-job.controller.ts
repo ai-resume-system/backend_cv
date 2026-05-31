@@ -43,7 +43,9 @@ export class FavouriteJobController extends BaseController {
 
   @Post()
   @AuthRequired(EUserRole.JOB_SEEKER)
-  @ApiOperation({ summary: 'Add favourite job' })
+  @ApiOperation({
+    summary: 'Add a job to my favourites. Access: Job Seeker.',
+  })
   @ApiResponse({ status: 201, type: ResponseApiFavouriteJobDto })
   async addFavouriteJob(
     @AuthCurrentUser() user: ICurrentUser,
@@ -54,7 +56,9 @@ export class FavouriteJobController extends BaseController {
 
   @Delete(':jobId')
   @AuthRequired(EUserRole.JOB_SEEKER)
-  @ApiOperation({ summary: 'Remove favourite job' })
+  @ApiOperation({
+    summary: 'Remove a job from my favourites. Access: Job Seeker.',
+  })
   @ApiResponse({ status: 200, type: ResponseApiFavouriteJobDto })
   async removeFavouriteJob(
     @AuthCurrentUser() user: ICurrentUser,
@@ -65,7 +69,9 @@ export class FavouriteJobController extends BaseController {
 
   @Get()
   @AuthRequired(EUserRole.JOB_SEEKER)
-  @ApiOperation({ summary: 'Get my favourite jobs' })
+  @ApiOperation({
+    summary: 'Get my favourite jobs. Access: Job Seeker.',
+  })
   @ApiResponse({ status: 200, type: ResponseListApiFavouriteJobDto })
   async getFavouriteJobs(
     @AuthCurrentUser() user: ICurrentUser,

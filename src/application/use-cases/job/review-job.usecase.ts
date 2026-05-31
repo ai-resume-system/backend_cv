@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRejectJobDto } from 'src/application/dtos/job/req.job.dto';
-import { IResponseApiJobDto } from 'src/application/dtos/job/res.job.dto';
+import { IResponseApiManagedJobDto } from 'src/application/dtos/job/res.job.dto';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
@@ -10,6 +10,7 @@ import type { ICompanyRepository } from 'src/domain/repositories/company.reposit
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { toManagedJobDto } from 'src/application/queries/job/job-response.mapper';
 
 @Injectable()
 export class ReviewJobUseCase extends BaseUsecase {
@@ -22,15 +23,15 @@ export class ReviewJobUseCase extends BaseUsecase {
     super(new Logger(ReviewJobUseCase.name));
   }
 
-  async approve(id: string): Promise<IResponseApiJobDto> {
+  async approve(id: string): Promise<IResponseApiManagedJobDto> {
     return this.updateStatus(id, EJobStatus.OPEN);
   }
 
-  async close(id: string): Promise<IResponseApiJobDto> {
+  async close(id: string): Promise<IResponseApiManagedJobDto> {
     return this.updateStatus(id, EJobStatus.CLOSED);
   }
 
-  async reject(id: string, dto: IRejectJobDto): Promise<IResponseApiJobDto> {
+  async reject(id: string, dto: IRejectJobDto): Promise<IResponseApiManagedJobDto> {
     return this.updateStatus(id, EJobStatus.REJECTED, dto.rejectReason);
   }
 
@@ -38,7 +39,7 @@ export class ReviewJobUseCase extends BaseUsecase {
     id: string,
     status: EJobStatus,
     rejectReason?: string,
-  ): Promise<IResponseApiJobDto> {
+  ): Promise<IResponseApiManagedJobDto> {
     return this.runSafe('[Review Job]: ', async () => {
       const existing = await this.jobRepository.findById(id);
       if (!existing) {
@@ -59,32 +60,19 @@ export class ReviewJobUseCase extends BaseUsecase {
       });
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
 
       const company = await this.companyRepository.findById(job.companyId);
-      const data = {
-        id: job.id,
-        title: job.title,
-        shortDescription: job.shortDescription,
-        description: job.description,
-        location: job.location,
-        salaryMin: job.salaryMin,
-        salaryMax: job.salaryMax,
-        experienceYears: job.experienceYears,
-        expiredAt: job.expiredAt,
-        jobType: job.jobType || EJobType.FULL_TIME,
-        rejectReason: job.rejectReason,
-        status: job.status,
-        createdAt: job.createdAt,
-        updatedAt: job.updatedAt,
-        company: {
-          id: company?.id || job.companyId,
-          companyName: company?.companyName,
-          logoUrl: company?.logoUrl,
-          location: company?.location,
-          websiteUrl: company?.websiteUrl,
+      const data = toManagedJobDto(job, {
+        company: company ?? {
+          id: job.companyId,
+          userId: '',
+          name: '',
+          slug: '',
+          createdAt: job.createdAt,
+          updatedAt: job.updatedAt,
         },
-        careerCategory: undefined,
-      };
+      });
       return { data };
     });
   }
@@ -110,6 +98,7 @@ export class ReviewJobUseCase extends BaseUsecase {
       }
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
       this.logger.log(
         `[Auto Expire Jobs] Expired ${expireJobs.data.length} jobs`,
       );

@@ -1,17 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ICreateJobDto } from 'src/application/dtos/job/req.job.dto';
-import { IResponseApiJobDto } from 'src/application/dtos/job/res.job.dto';
+import { IResponseApiRecruiterJobDto } from 'src/application/dtos/job/res.job.dto';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import type { IJobSkillRepository } from 'src/domain/repositories/job-skill.repository.interface';
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { toRecruiterJobDetailDto } from 'src/application/queries/job/job-response.mapper';
 
 @Injectable()
 export class CreateJobUseCase extends BaseUsecase {
@@ -33,7 +35,7 @@ export class CreateJobUseCase extends BaseUsecase {
   async execute(
     userId: string,
     dto: Omit<ICreateJobDto, 'companyId'>,
-  ): Promise<IResponseApiJobDto> {
+  ): Promise<IResponseApiRecruiterJobDto> {
     return this.runSafe(
       '[Create Job]: ',
       async () => {
@@ -70,16 +72,34 @@ export class CreateJobUseCase extends BaseUsecase {
         if (skills.some((skill) => !skill)) {
           throw new AppException(ERROR_CODES.SKILL_NOT_FOUND);
         }
+        if (
+          dto.careerCategoryId &&
+          skills.some(
+            (skill) => skill && skill.careerCategoryId !== dto.careerCategoryId,
+          )
+        ) {
+          throw new AppException(ERROR_CODES.VALIDATION_ERROR);
+        }
 
         const { skills: _skills, ...jobData } = dto;
+        const slug = await generateUniqueSlug(
+          dto.title,
+          'job',
+          (candidate) => this.jobRepository.isSlugTaken(candidate),
+        );
         const job = await this.jobRepository.create({
           ...jobData,
+          slug,
           jobType: dto.jobType || EJobType.FULL_TIME,
           companyId: company.id,
           status: EJobStatus.PENDING,
         });
-        const jobSkills: Array<{ id: string; name: string; weight?: number }> =
-          [];
+        const jobSkills: Array<{
+          id: string;
+          name: string;
+          slug: string;
+          weight?: number;
+        }> = [];
         for (const skill of dto.skills || []) {
           const createdJobSkill = await this.jobSkillRepository.create({
             jobId: job.id,
@@ -93,43 +113,19 @@ export class CreateJobUseCase extends BaseUsecase {
             jobSkills.push({
               id: skillInfo.id,
               name: skillInfo.name,
+              slug: skillInfo.slug,
               weight: createdJobSkill.weight,
             });
           }
         }
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
-        const data = {
-          id: job.id,
-          title: job.title,
-          shortDescription: job.shortDescription,
-          description: job.description,
-          location: job.location,
-          salaryMin: job.salaryMin,
-          salaryMax: job.salaryMax,
-          experienceYears: job.experienceYears,
-          expiredAt: job.expiredAt,
-          jobType: job.jobType,
-          rejectReason: job.rejectReason,
-          status: job.status,
-          createdAt: job.createdAt,
-          updatedAt: job.updatedAt,
-          company: {
-            id: company.id,
-            companyName: company.companyName,
-            logoUrl: company.logoUrl,
-            location: company.location,
-            websiteUrl: company.websiteUrl,
-          },
-          careerCategory: careerCategory
-            ? {
-                id: careerCategory.id,
-                name: careerCategory.name,
-                slug: careerCategory.slug,
-              }
-            : undefined,
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+        const data = toRecruiterJobDetailDto(job, {
+          company,
+          careerCategory,
           skills: jobSkills,
-        };
+        });
         return { data };
       },
       ERROR_CODES.JOB_CREATE_FAILED,

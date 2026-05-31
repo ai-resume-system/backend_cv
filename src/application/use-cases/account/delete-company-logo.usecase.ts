@@ -5,6 +5,7 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 
 @Injectable()
 export class DeleteCompanyLogoUseCase extends BaseUsecase {
@@ -16,9 +17,7 @@ export class DeleteCompanyLogoUseCase extends BaseUsecase {
     super(new Logger(DeleteCompanyLogoUseCase.name));
   }
 
-  async execute(
-    userId: string,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  async execute(userId: string): Promise<IResponseApiNullDto> {
     return this.runSafe('[Delete Company Logo]:', async () => {
       const company = await this.companyRepository.findByUserId(userId);
       if (!company) {
@@ -45,12 +44,7 @@ export class DeleteCompanyLogoUseCase extends BaseUsecase {
         });
       }
 
-      return {
-        data: {
-          success: true,
-          message: 'Company logo deleted successfully',
-        },
-      };
+      return { data: null };
     });
   }
 }

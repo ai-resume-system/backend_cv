@@ -21,8 +21,9 @@ import { GetCVPreviewUrlQuery } from 'src/application/queries/cv/get-cv-preview-
 import { DeleteCVUseCase } from 'src/application/use-cases/cv/delete-cv.usecase';
 import { UpdateCVUseCase } from 'src/application/use-cases/cv/update-cv.usecase';
 import { SetDefaultCVUseCase } from 'src/application/use-cases/cv/set-default-cv.usecase';
+import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 import { BaseController } from 'src/common/base/base.controller';
-import { ResponseApiBooleanDto } from 'src/common/dto/response.dto';
+import { ResponseApiNullDto } from 'src/common/dto/response.dto';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -50,7 +51,9 @@ export class CVController extends BaseController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get my CV list' })
+  @ApiOperation({
+    summary: 'Get my CV list. Access: Job Seeker.',
+  })
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiResponse({ status: 200, type: ResponseListApiCVDto })
   async getMyCVs(
@@ -65,7 +68,9 @@ export class CVController extends BaseController {
 
   @Get(':id/download')
   @AuthRequired(EUserRole.JOB_SEEKER)
-  @ApiOperation({ summary: 'Get private CV download URL' })
+  @ApiOperation({
+    summary: 'Get private CV download URL. Access: Job Seeker.',
+  })
   @ApiResponse({ status: 200, type: ResponseApiCVDownloadDto })
   async getDownloadUrl(
     @AuthCurrentUser() user: ICurrentUser,
@@ -76,7 +81,9 @@ export class CVController extends BaseController {
 
   @Get(':id/preview')
   @AuthRequired(EUserRole.JOB_SEEKER)
-  @ApiOperation({ summary: 'Get CV metadata' })
+  @ApiOperation({
+    summary: 'Get private CV preview metadata. Access: Job Seeker.',
+  })
   @ApiResponse({ status: 200, type: ResponseApiCVPreviewDto })
   async getPreviewUrl(
     @AuthCurrentUser() user: ICurrentUser,
@@ -87,7 +94,9 @@ export class CVController extends BaseController {
 
   @Patch(':id')
   @AuthRequired(EUserRole.JOB_SEEKER)
-  @ApiOperation({ summary: 'Update CV metadata' })
+  @ApiOperation({
+    summary: 'Update CV metadata. Access: Job Seeker.',
+  })
   @ApiResponse({ status: 200, type: ResponseApiCVDto })
   async updateCV(
     @AuthCurrentUser() user: ICurrentUser,
@@ -99,7 +108,9 @@ export class CVController extends BaseController {
 
   @Patch(':id/default')
   @AuthRequired(EUserRole.JOB_SEEKER)
-  @ApiOperation({ summary: 'Set CV as default' })
+  @ApiOperation({
+    summary: 'Set a CV as default. Access: Job Seeker.',
+  })
   @ApiResponse({ status: 200, type: ResponseApiCVDto })
   async setDefaultCV(
     @AuthCurrentUser() user: ICurrentUser,
@@ -110,12 +121,14 @@ export class CVController extends BaseController {
 
   @Delete(':id')
   @AuthRequired(EUserRole.JOB_SEEKER)
-  @ApiOperation({ summary: 'Delete CV' })
-  @ApiResponse({ status: 200, type: ResponseApiBooleanDto })
+  @ApiOperation({
+    summary: 'Delete a CV. Access: Job Seeker.',
+  })
+  @ApiResponse({ status: 200, type: ResponseApiNullDto })
   async deleteCV(
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.deleteCVUseCase.execute(id, user.id);
   }
 }

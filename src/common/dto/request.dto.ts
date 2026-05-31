@@ -9,7 +9,6 @@ export class RequestPaginationDto implements IApiRequestPagination {
   @ApiPropertyOptional({
     description: 'The current page number',
     example: 1,
-    default: 1,
     type: Number,
   })
   @Transform(({ value }) => transfomerPagination(value))
@@ -20,7 +19,6 @@ export class RequestPaginationDto implements IApiRequestPagination {
   @ApiPropertyOptional({
     description: 'The number of items per page',
     example: 50,
-    default: 10,
     type: Number,
   })
   @Transform(({ value }) => transfomerPagination(value))

@@ -4,19 +4,18 @@ import type { IJobSkillEntity } from 'src/domain/entities/job-skill.entity';
 import type { IJobSkillRepository } from 'src/domain/repositories/job-skill.repository.interface';
 import { In, IsNull, Repository } from 'typeorm';
 import { JobSkillOrmEntity } from '../entities/job-skill.orm-entity';
+import { BaseTypeormRepository } from './base.typeorm-repository';
 
 @Injectable()
-export class JobSkillTypeormRepository implements IJobSkillRepository {
+export class JobSkillTypeormRepository
+  extends BaseTypeormRepository<JobSkillOrmEntity, IJobSkillEntity>
+  implements IJobSkillRepository
+{
   constructor(
     @InjectRepository(JobSkillOrmEntity)
-    private readonly ormRepository: Repository<JobSkillOrmEntity>,
-  ) {}
-
-  async findById(id: string): Promise<IJobSkillEntity | null> {
-    const orm = await this.ormRepository.findOne({
-      where: { id, deletedAt: IsNull() },
-    });
-    return orm ? this.toDomain(orm) : null;
+    ormRepository: Repository<JobSkillOrmEntity>,
+  ) {
+    super(ormRepository);
   }
 
   async findByJobId(jobId: string): Promise<IJobSkillEntity[]> {
@@ -53,15 +52,11 @@ export class JobSkillTypeormRepository implements IJobSkillRepository {
     return this.toDomain(saved);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.ormRepository.delete(id);
-  }
-
   async deleteByJobId(jobId: string): Promise<void> {
     await this.ormRepository.softDelete({ jobId });
   }
 
-  private toDomain(orm: JobSkillOrmEntity): IJobSkillEntity {
+  protected toDomain(orm: JobSkillOrmEntity): IJobSkillEntity {
     return {
       id: orm.id,
       jobId: orm.jobId,

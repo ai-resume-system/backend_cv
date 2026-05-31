@@ -26,13 +26,12 @@ export class OtpCodeOrmEntity implements IOtpCodeEntity {
   @Column({ name: 'expires_at', type: 'timestamptz' })
   expiresAt: Date;
 
-  @Column({ name: 'used_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'used_at', type: 'timestamptz', nullable: true })
   usedAt?: Date;
 
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   createdAt: Date;
 }

@@ -8,6 +8,7 @@ import type { IRefreshTokenRepository } from 'src/domain/repositories/refresh-to
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 
 @Injectable()
 export class ChangePasswordUseCase extends BaseUsecase {
@@ -24,9 +25,9 @@ export class ChangePasswordUseCase extends BaseUsecase {
   async execute(
     userId: string,
     dto: IChangePasswordDto,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  ): Promise<IResponseApiNullDto> {
     return this.runSafe(
-      'ChangePassword',
+      '[ChangePassword]:',
       async () => {
         const user = await this.userRepository.findByIdWithPassword(userId);
         if (!user) {
@@ -41,6 +42,10 @@ export class ChangePasswordUseCase extends BaseUsecase {
           throw new AppException(ERROR_CODES.AUTH_OLD_PASSWORD_INCORRECT);
         }
 
+        if (dto.newPassword === dto.currentPassword) {
+          throw new AppException(ERROR_CODES.AUTH_NEW_PASSWORD_SAME_AS_OLD);
+        }
+
         const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
         await this.userRepository.updatePassword(user.id, hashedPassword);
         await this.refreshTokenRepository.revokeAll(user.id);
@@ -50,13 +55,7 @@ export class ChangePasswordUseCase extends BaseUsecase {
           prefixes: ['user:list:'],
         });
 
-        return {
-          data: {
-            success: true,
-            message:
-              'Password changed successfully. All sessions have been logged out.',
-          },
-        };
+        return { data: null };
       },
       ERROR_CODES.AUTH_CHANGE_PASSWORD_FAILED,
     );

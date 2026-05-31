@@ -12,19 +12,13 @@ export interface ICreateUserDto {
 }
 
 export interface IUserRepository extends IBaseRepository<IUserEntity> {
-  findByEmail(email: string): Promise<IUserEntity | null>;
+  findByEmail(email: string): Promise<IUserEntity | null>; //tìm user theo email
   findByEmailWithPassword(
     email: string,
-  ): Promise<IUserWithPasswordEntity | null>;
-  findByIdWithPassword(id: string): Promise<IUserWithPasswordEntity | null>;
-  createWithPassword(data: ICreateUserDto): Promise<IUserEntity>;
-  updateStatus(id: string, status: EUserStatus): Promise<void>;
-  updatePassword(id: string, password: string): Promise<void>;
-  updateProfile(id: string, data: { phone?: string }): Promise<IUserEntity>;
-  // findWithPagination(params: {
-  //   skip: number;
-  //   take: number;
-  //   role?: EUserRole;
-  //   status?: EUserStatus;
-  // }): Promise<IPaginatedResult<IUserEntity>>;
+  ): Promise<IUserWithPasswordEntity | null>; //tìm user theo email với password
+  findByIdWithPassword(id: string): Promise<IUserWithPasswordEntity | null>; //tìm user theo id với password
+  createWithPassword(data: ICreateUserDto): Promise<IUserEntity>; //tạo user với password
+  updateStatus(id: string, status: EUserStatus): Promise<void>; //cập nhật trạng thái của user
+  updatePassword(id: string, password: string): Promise<void>; //cập nhật mật khẩu của user
+  updateProfile(id: string, data: { phone?: string }): Promise<IUserEntity>; //cập nhật thông tin của user
 }

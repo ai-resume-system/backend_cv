@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRequestGetCareerCategoriesDto } from 'src/application/dtos/career-category/req.career-category.dto';
-import { IResponseListApiCareerCategoryDto } from 'src/application/dtos/career-category/res.career-category.dto';
+import { IResponseListApiAdminCareerCategoryDto } from 'src/application/dtos/career-category/res.career-category-admin.dto';
+import { IResponseListApiPublicCareerCategoryDto } from 'src/application/dtos/career-category/res.career-category-public.dto';
 import {
   CACHE_KEYS,
   CACHE_TTL,
@@ -23,7 +24,7 @@ export class GetCareerCategoriesQuery extends BaseUsecase {
 
   async execute(
     dto: IRequestGetCareerCategoriesDto,
-  ): Promise<IResponseListApiCareerCategoryDto> {
+  ): Promise<IResponseListApiPublicCareerCategoryDto> {
     return this.runSafe('[Get Career Categories]:', async () => {
       const {
         page = 1,
@@ -45,16 +46,17 @@ export class GetCareerCategoriesQuery extends BaseUsecase {
         },
       )}`;
       const cached =
-        await this.redis.safeGetJson<IResponseListApiCareerCategoryDto>(
+        await this.redis.safeGetJson<IResponseListApiPublicCareerCategoryDto>(
           cacheKey,
         );
       if (cached) return cached;
 
-      const result = await this.careerCategoryRepository.find({
+      const result = await this.careerCategoryRepository.findActive({
         pagination: { page, limit },
         filter: { q },
         sort: { sortBy, sortOrder },
       });
+
       const response = {
         data: result.data,
         pagination: {
@@ -66,6 +68,36 @@ export class GetCareerCategoriesQuery extends BaseUsecase {
       };
       await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.LIST);
       return response;
+    });
+  }
+
+  async executeAdmin(
+    dto: IRequestGetCareerCategoriesDto,
+  ): Promise<IResponseListApiAdminCareerCategoryDto> {
+    return this.runSafe('[Get Career Categories Admin]:', async () => {
+      const {
+        page = 1,
+        limit = 10,
+        sortBy = 'createdAt',
+        sortOrder = 'DESC',
+        q,
+      } = dto;
+
+      const result = await this.careerCategoryRepository.findWithDeleted({
+        pagination: { page, limit },
+        filter: { q },
+        sort: { sortBy, sortOrder },
+      });
+
+      return {
+        data: result.data,
+        pagination: {
+          page,
+          limit,
+          totalItems: result.total,
+          totalPages: Math.ceil(result.total / limit),
+        },
+      };
     });
   }
 }

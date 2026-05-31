@@ -18,8 +18,9 @@ import { JobsModule } from './presentation/job/jobs.module';
 import { JobApplicationModule } from './presentation/job-application/job-application.module';
 import { UploadModule } from './presentation/upload/upload.module';
 import { ConfigModule } from './common/config/config.module';
-import { SkillModule } from './presentation/skill/modules/skill.module';
+import { SkillModule } from './presentation/skill/skill.module';
 import { FavouriteJobModule } from './presentation/favourite-job/favourite-job.module';
+import { CompanyModule } from './presentation/company/company.module';
 
 @Module({
   imports: [
@@ -34,11 +35,12 @@ import { FavouriteJobModule } from './presentation/favourite-job/favourite-job.m
     AuthModule,
     AccountModule,
     UploadModule,
+    CompanyModule,
     CareerCategoriesModule,
     UsersModule,
+    JobsModule,
     CVModule,
     CVAnalysisModule,
-    JobsModule,
     SkillModule,
     FavouriteJobModule,
     JobApplicationModule,

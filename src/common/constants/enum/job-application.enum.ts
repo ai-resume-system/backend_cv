@@ -1,9 +1,9 @@
 export enum EJobApplicationStatus {
-  APPLIED = 'APPLIED', // vừa apply
-  REVIEWING = 'REVIEWING', // HR đang xem
-  INTERVIEW = 'INTERVIEW', // đã lên lịch phỏng vấn
-  REJECTED = 'REJECTED', // bị từ chối
-  OFFERED = 'OFFERED', // HR gửi offer
-  ACCEPTED = 'ACCEPTED', // ứng viên nhận việc
-  WITHDRAWN = 'WITHDRAWN', // ứng viên rút CV
+  APPLIED = 'applied', // vừa apply
+  REVIEWING = 'reviewing', // HR đang xem
+  INTERVIEW = 'interview', // đã lên lịch phỏng vấn
+  REJECTED = 'rejected', // bị từ chối
+  OFFERED = 'offered', // HR gửi offer
+  ACCEPTED = 'accepted', // ứng viên nhận việc
+  WITHDRAWN = 'withdrawn', // ứng viên rút CV
 }

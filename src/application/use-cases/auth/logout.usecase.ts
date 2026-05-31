@@ -1,9 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { BaseUsecase } from 'src/common/base/base.usecase';
-import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import type { IRefreshTokenRepository } from 'src/domain/repositories/refresh-token.repository.interface';
 import { ILogoutDto } from 'src/application/dtos/auth/req.auth.dto';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
+import { BaseUsecase } from 'src/common/base/base.usecase';
 import { JwtTokenUsecase } from 'src/common/guards/jwt-token.usecase';
+import type { IRefreshTokenRepository } from 'src/domain/repositories/refresh-token.repository.interface';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class LogoutUseCase extends BaseUsecase {
@@ -16,7 +17,7 @@ export class LogoutUseCase extends BaseUsecase {
     super(new Logger(LogoutUseCase.name));
   }
 
-  async execute(dto: ILogoutDto): Promise<{ message: string }> {
+  async execute(dto: ILogoutDto): Promise<IResponseApiNullDto> {
     return this.runSafe('[Logout]:', async () => {
       await this.refreshTokenRepository.revokeAll(dto.userId);
       await this.redis.deleteAllRefreshTokenCacheByUserId(dto.userId);
@@ -34,7 +35,7 @@ export class LogoutUseCase extends BaseUsecase {
         }
       }
 
-      return { message: 'Đăng xuất thành công' };
+      return { data: null };
     });
   }
 }

@@ -43,7 +43,7 @@ export class AddFavouriteJobUseCase extends BaseUsecase {
 
         return {
           data: {
-            message: 'Da luu viec lam yeu thich',
+            message: 'Add favourite job successfully',
           },
         };
       },

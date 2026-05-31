@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ResponseJobCareerCategoryDto, ResponseJobCompanyDto } from 'src/presentation/job/dtos/res.job.dto';
+import {
+  ResponseJobCareerCategoryDto,
+  ResponseJobCompanyDto,
+} from 'src/presentation/job/dtos/res.job.dto';
 import { ApiResponseDto, PaginationDto } from 'src/common/dto/response.dto';
 
 export class ResponseFavouriteJobDto {
@@ -13,7 +16,7 @@ export class ResponseFavouriteJobDto {
   shortDescription?: string;
 
   @ApiProperty({ required: false })
-  location?: string;
+  address?: string;
 
   @ApiProperty({ required: false })
   salaryMin?: number;

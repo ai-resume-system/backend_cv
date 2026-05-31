@@ -21,5 +21,5 @@ export async function seedAdmin(dataSource: DataSource) {
     role: EUserRole.ADMIN,
   });
 
-  console.log(`Đã tạo tài khoản admin với email ${email}`);
+  console.log(`Created Admin Account: ${email}`);
 }

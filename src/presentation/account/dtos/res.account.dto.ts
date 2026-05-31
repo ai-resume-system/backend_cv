@@ -1,4 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+  OmitType,
+  PartialType,
+} from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { ApiResponseDto } from 'src/common/dto/response.dto';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
@@ -21,62 +26,57 @@ export class ResponseUpdateProfileDto extends ResponseBaseProfileDto {
 //Response UPDATE for Recruiter
 export class ResponseUpdateCompanyDto extends ResponseBaseProfileDto {
   @ApiPropertyOptional()
-  careerCategoriesId?: string;
+  careerCategoryId?: string;
 
   @ApiPropertyOptional()
-  companyName?: string;
+  name?: string;
 
   @ApiPropertyOptional()
-  taxCode?: string;
+  slug?: string;
 
   @ApiPropertyOptional()
-  location?: string;
+  address?: string;
+
+  @ApiPropertyOptional()
+  latitude?: number;
+
+  @ApiPropertyOptional()
+  longitude?: number;
 
   @ApiPropertyOptional()
   description?: string;
 
   @ApiPropertyOptional()
+  taxCode?: string;
+
+  @ApiPropertyOptional()
   websiteUrl?: string;
+
+  @ApiPropertyOptional()
+  employeeMin?: number;
+
+  @ApiPropertyOptional()
+  employeeMax?: number;
 }
 
 //Response GET for account
 //Response for Job Seeker
-export class ResponseProfileDto extends ResponseBaseProfileDto {
-  @ApiPropertyOptional()
-  fullName?: string;
-
+export class ResponseProfileDto extends PartialType(
+  OmitType(ResponseUpdateProfileDto, ['phone'] as const),
+) {
   @ApiPropertyOptional()
   avatarUrl?: string;
-
-  @ApiPropertyOptional()
-  bio?: string;
 }
 
 //Response for Recruiter
-export class ResponseCompanyDto extends ResponseBaseProfileDto {
-  @ApiPropertyOptional()
-  careerCategoriesId?: string;
-
-  @ApiPropertyOptional()
-  companyName?: string;
-
-  @ApiPropertyOptional()
-  taxCode?: string;
-
+export class ResponseCompanyDto extends PartialType(
+  OmitType(ResponseUpdateCompanyDto, ['phone'] as const),
+) {
   @ApiPropertyOptional()
   logoUrl?: string;
 
   @ApiPropertyOptional()
   bannerUrl?: string;
-
-  @ApiPropertyOptional()
-  location?: string;
-
-  @ApiPropertyOptional()
-  description?: string;
-
-  @ApiPropertyOptional()
-  websiteUrl?: string;
 }
 
 //Response for account

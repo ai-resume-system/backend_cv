@@ -25,10 +25,11 @@ export interface IFindOptions {
 }
 
 export interface IBaseRepository<T> {
-  find(options?: IFindOptions): Promise<IPaginatedResult<T>>;
-  findById(id: string): Promise<T | null>;
-  create(data: Partial<T>): Promise<T>;
-  update(id: string, data: Partial<T>): Promise<T>;
-  delete(id: string): Promise<void>;
-  softDelete(id: string): Promise<void>;
+  find(options?: IFindOptions): Promise<IPaginatedResult<T>>; //tìm tất cả
+  findById(id: string): Promise<T | null>; //tìm theo id không có bản ghi đã xóa
+  findByIdWithDeleted(id: string): Promise<T | null>; //tìm theo id có bản ghi đã xóa
+  create(data: Partial<T>): Promise<T>; //tạo
+  update(id: string, data: Partial<T>): Promise<T>; //cập nhật
+  delete(id: string): Promise<void>; //xóa cứng
+  softDelete(id: string): Promise<void>; //xóa mềm
 }

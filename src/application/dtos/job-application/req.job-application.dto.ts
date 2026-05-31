@@ -1,4 +1,5 @@
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import { IApiRequestPagination } from 'src/common/interface/api-request.interface';
 
 export interface IRequestCreateJobApplicationDto {
   cvId: string;
@@ -17,10 +18,8 @@ export interface IRequestUpdateJobApplicationStatusDto {
   scheduleLink?: string;
 }
 
-export interface IRequestGetJobApplicationsDto {
-  page?: number;
-  limit?: number;
-  status?: EJobApplicationStatus;
-  sortBy?: 'createdAt' | 'matchingScore';
+export interface IRequestGetJobApplicationsDto extends IApiRequestPagination {
+  sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
+  status?: EJobApplicationStatus;
 }

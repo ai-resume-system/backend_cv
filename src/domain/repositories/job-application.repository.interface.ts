@@ -3,7 +3,6 @@ import { IJobApplicationEntity } from '../entities/job-application.entity';
 import { IBaseRepository } from './base.repository.interface';
 
 export interface IJobApplicationRepository extends IBaseRepository<IJobApplicationEntity> {
-  findById(id: string): Promise<IJobApplicationEntity | null>;
   findByJobId(jobId: string): Promise<IJobApplicationEntity[]>;
   findByUserId(userId: string): Promise<IJobApplicationEntity[]>;
   findByCvId(cvId: string): Promise<IJobApplicationEntity[]>;

@@ -36,6 +36,17 @@ export class RegistrationSessionTypeormRepository implements IRegistrationSessio
     return this.toDomain(orm);
   }
 
+  async findLatestUnusedByEmail(
+    email: string,
+  ): Promise<IRegistrationSessionEntity | null> {
+    const orm = await this.ormRepository.findOne({
+      where: { email, usedAt: IsNull() },
+      order: { createdAt: 'DESC' },
+    });
+
+    return orm ? this.toDomain(orm) : null;
+  }
+
   async markUsed(id: string): Promise<void> {
     await this.ormRepository.update(id, { usedAt: new Date() });
   }
@@ -45,6 +56,10 @@ export class RegistrationSessionTypeormRepository implements IRegistrationSessio
       { email, usedAt: IsNull() },
       { usedAt: new Date() },
     );
+  }
+
+  async refreshExpiresAt(id: string, expiresAt: Date): Promise<void> {
+    await this.ormRepository.update(id, { expiresAt });
   }
 
   private toDomain(

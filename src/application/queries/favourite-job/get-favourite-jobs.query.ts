@@ -10,6 +10,7 @@ import type { ICareerCategoryRepository } from 'src/domain/repositories/career-c
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IFavouriteJobRepository } from 'src/domain/repositories/favourite-job.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import { toPublicJobCompanyDto } from '../job/job-response.mapper';
 
 @Injectable()
 export class GetFavouriteJobsQuery extends BaseUsecase {
@@ -72,17 +73,18 @@ export class GetFavouriteJobsQuery extends BaseUsecase {
       id: job.id,
       title: job.title,
       shortDescription: job.shortDescription,
-      location: job.location,
+      address: job.address,
       salaryMin: job.salaryMin,
       salaryMax: job.salaryMax,
+      vacancyCount: job.vacancyCount,
       experienceYears: job.experienceYears,
       expiredAt: job.expiredAt,
       company: {
-        id: company?.id || job.companyId,
-        companyName: company?.companyName,
-        logoUrl: company?.logoUrl,
-        location: company?.location,
-        websiteUrl: company?.websiteUrl,
+        ...(company ? toPublicJobCompanyDto(company) : {
+          id: job.companyId,
+          slug: '',
+          name: '',
+        }),
       },
       careerCategory: careerCategory
         ? {

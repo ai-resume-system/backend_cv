@@ -1,21 +1,22 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { createHash, randomInt } from 'crypto';
+import { randomInt } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import {
   IRegisterJobSeekerDto,
   IRegisterRecruiterDto,
 } from 'src/application/dtos/auth/req.auth.dto';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { hashOtp } from 'src/common/utils/hash.utils';
 import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.repository.interface';
 import type { IRegistrationSessionRepository } from 'src/domain/repositories/registration-session.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { MailService } from 'src/infrastructure/mail/mail.service';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import { hashOtp } from 'src/common/utils/hash.utils';
 
 export type IRegisterDto = IRegisterJobSeekerDto | IRegisterRecruiterDto;
 const OTP_EXPIRES_IN_SECONDS = 300;
@@ -35,7 +36,7 @@ export class RegisterUseCase extends BaseUsecase {
     super(new Logger(RegisterUseCase.name));
   }
 
-  async execute(dto: IRegisterDto) {
+  async execute(dto: IRegisterDto): Promise<IResponseApiNullDto> {
     return this.runSafe(
       'Register',
       async () => {
@@ -54,16 +55,16 @@ export class RegisterUseCase extends BaseUsecase {
               role: EUserRole.JOB_SEEKER,
               fullName: dto.fullName,
             };
-          } else if (isRecruiter(dto)) {
+          }
+          if (isRecruiter(dto)) {
             return {
               role: EUserRole.RECRUITER,
               phone: dto.phone,
-              company_name: dto.company_name,
-              location: dto.location,
+              name: dto.name,
+              address: dto.address,
             };
-          } else {
-            return null;
           }
+          return null;
         }
 
         const existing = await this.userRepository.findByEmail(email);
@@ -76,10 +77,7 @@ export class RegisterUseCase extends BaseUsecase {
             );
             const tempPayload = buildTempProfile(dto);
             await this.issueRegisterOtp(email, tempPayload);
-            return {
-              message:
-                'Yêu cầu đăng ký thành công, vui lòng kiểm tra email để lấy mã xác thực.',
-            };
+            return { data: null };
           }
           throw new AppException(ERROR_CODES.AUTH_EMAIL_ALREADY_EXISTS);
         }
@@ -94,13 +92,9 @@ export class RegisterUseCase extends BaseUsecase {
         });
 
         const tempPayload = buildTempProfile(dto);
-
         await this.issueRegisterOtp(email, tempPayload);
 
-        return {
-          message:
-            'Yêu cầu đăng ký thành công, vui lòng kiểm tra email để lấy mã xác thực.',
-        };
+        return { data: null };
       },
       ERROR_CODES.AUTH_REGISTER_FAILED,
     );

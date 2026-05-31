@@ -12,25 +12,27 @@ import type { ISkillRepository } from 'src/domain/repositories/skill.repository.
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
-export class GetSkillByIdQuery extends BaseUsecase {
+export class GetSkillBySlugQuery extends BaseUsecase {
   constructor(
     @Inject('ISkillRepository')
     private readonly skillRepository: ISkillRepository,
     private readonly redis: RedisAdapter,
   ) {
-    super(new Logger(GetSkillByIdQuery.name));
+    super(new Logger(GetSkillBySlugQuery.name));
   }
 
-  async execute(id: string): Promise<IResponseApiSkillDto> {
-    return this.runSafe('[Get Skill By Id]:', async () => {
+  async execute(slug: string): Promise<IResponseApiSkillDto> {
+    return this.runSafe('[Get Skill By Slug]:', async () => {
       const version = await this.redis.getVersion(CACHE_VERSION_KEYS.SKILL_DETAIL);
-      const cacheKey = `${CACHE_KEYS.SKILL_DETAIL}:v${version}:${id}`;
+      const cacheKey = `${CACHE_KEYS.SKILL_DETAIL}:v${version}:${slug}`;
       const cached = await this.redis.safeGetJson<IResponseApiSkillDto>(cacheKey);
       if (cached) {
         return cached;
       }
 
-      const skill = await this.skillRepository.findById(id);
+      const skill =
+        (await this.skillRepository.findBySlug(slug)) ||
+        (await this.skillRepository.findById(slug));
       if (!skill) {
         throw new AppException(ERROR_CODES.SKILL_NOT_FOUND);
       }
@@ -39,7 +41,8 @@ export class GetSkillByIdQuery extends BaseUsecase {
         data: {
           id: skill.id,
           name: skill.name,
-          careerCategoryId: skill.careerCategoriesId,
+          slug: skill.slug,
+          careerCategoryId: skill.careerCategoryId,
           parentId: skill.parentId,
           createdAt: skill.createdAt,
           updatedAt: skill.updatedAt,

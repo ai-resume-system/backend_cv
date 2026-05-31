@@ -1,9 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
 import { ApiResponseDto } from 'src/common/dto/response.dto';
-import { ICareerCategoryEntity } from 'src/domain/entities/career-category.entity';
 
-export class ResponseCareerCategoryDto implements ICareerCategoryEntity {
+export class ResponsePublicCareerCategoryDto {
   @ApiProperty()
   id: string;
 
@@ -13,7 +12,7 @@ export class ResponseCareerCategoryDto implements ICareerCategoryEntity {
   @ApiProperty()
   slug: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   description?: string;
 
   @ApiProperty({
@@ -29,17 +28,17 @@ export class ResponseCareerCategoryDto implements ICareerCategoryEntity {
   updatedAt: Date;
 
   @ApiPropertyOptional()
-  deletedAt?: Date;
+  jobCount?: number;
 }
 
-export class ResponseApiCareerCategoryDto extends ApiResponseDto<ResponseCareerCategoryDto> {
-  @ApiProperty({ type: ResponseCareerCategoryDto })
-  declare data: ResponseCareerCategoryDto;
+export class ResponseApiPublicCareerCategoryDto extends ApiResponseDto<ResponsePublicCareerCategoryDto> {
+  @ApiProperty({ type: ResponsePublicCareerCategoryDto })
+  declare data: ResponsePublicCareerCategoryDto;
 }
 
-export class ResponseListApiCareerCategoryDto extends ApiResponseDto<
-  ResponseCareerCategoryDto[]
+export class ResponseListApiPublicCareerCategoryDto extends ApiResponseDto<
+  ResponsePublicCareerCategoryDto[]
 > {
-  @ApiProperty({ type: [ResponseCareerCategoryDto] })
-  declare data: ResponseCareerCategoryDto[];
+  @ApiProperty({ type: [ResponsePublicCareerCategoryDto] })
+  declare data: ResponsePublicCareerCategoryDto[];
 }

@@ -5,6 +5,7 @@ import type {
   IResponseMyCompanyDto,
   IResponseMyProfileDto,
 } from 'src/application/dtos/account/res.account.dto';
+import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 import { GetMyProfileQuery } from 'src/application/queries/account/get-my-profile.query';
 import { ChangePasswordUseCase } from 'src/application/use-cases/account/change-password.usecase';
 import { DeleteAvatarUseCase } from 'src/application/use-cases/account/delete-avatar.usecase';
@@ -17,7 +18,7 @@ import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
-import { ResponseApiBooleanDto } from 'src/common/dto/response.dto';
+import { ResponseApiNullDto } from 'src/common/dto/response.dto';
 import {
   RequestChangePasswordDto,
   RequestUpdateMyCompanyDto,
@@ -45,7 +46,9 @@ export class AccountController extends BaseController {
   }
 
   @Get('me')
-  @ApiOperation({ summary: 'Get my profile' })
+  @ApiOperation({
+    summary: 'Get my account profile. Access: Authenticated User.',
+  })
   @AuthRequired()
   @ApiResponse({
     status: 200,
@@ -59,7 +62,9 @@ export class AccountController extends BaseController {
   }
 
   @Patch('me/profile')
-  @ApiOperation({ summary: 'Update my profile (job seeker only)' })
+  @ApiOperation({
+    summary: 'Update my personal profile. Access: Job Seeker.',
+  })
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiResponse({
     status: 200,
@@ -74,7 +79,9 @@ export class AccountController extends BaseController {
   }
 
   @Patch('me/company')
-  @ApiOperation({ summary: 'Update my company (recruiter only)' })
+  @ApiOperation({
+    summary: 'Update my company profile. Access: Recruiter.',
+  })
   @AuthRequired(EUserRole.RECRUITER)
   @ApiResponse({
     status: 200,
@@ -89,44 +96,67 @@ export class AccountController extends BaseController {
   }
 
   @Patch('me/change-password')
-  @ApiOperation({ summary: 'Change password' })
+  @ApiOperation({
+    summary: 'Change my current password. Access: Authenticated User.',
+  })
   @AuthRequired()
   @ApiResponse({
     status: 200,
     description: 'Password changed successfully',
-    type: ResponseApiBooleanDto,
+    type: ResponseApiNullDto,
   })
   async changePassword(
     @AuthCurrentUser() user: ICurrentUser,
     @Body() dto: RequestChangePasswordDto,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.changePasswordUseCase.execute(user.id, dto);
   }
 
   @Delete('me/avatar')
-  @ApiOperation({ summary: 'Delete avatar' })
+  @ApiOperation({
+    summary: 'Delete my avatar. Access: Job Seeker.',
+  })
   @AuthRequired(EUserRole.JOB_SEEKER)
+  @ApiResponse({
+    status: 200,
+    description: 'Avatar deleted successfully',
+    type: ResponseApiNullDto,
+  })
   async deleteAvatar(
     @AuthCurrentUser() user: ICurrentUser,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.deleteAvatarUseCase.execute(user.id);
   }
 
   @Delete('me/logo')
-  @ApiOperation({ summary: 'Delete company logo' })
+  @ApiOperation({
+    summary: 'Delete my company logo. Access: Recruiter.',
+  })
   @AuthRequired(EUserRole.RECRUITER)
+  @ApiResponse({
+    status: 200,
+    description: 'Company logo deleted successfully',
+    type: ResponseApiNullDto,
+  })
   async deleteCompanyLogo(
     @AuthCurrentUser() user: ICurrentUser,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.deleteCompanyLogoUseCase.execute(user.id);
   }
 
   @Delete('me/banner')
-  @ApiOperation({ summary: 'Delete company banner' })
+  @ApiOperation({
+    summary: 'Delete my company banner. Access: Recruiter.',
+  })
   @AuthRequired(EUserRole.RECRUITER)
+  @ApiResponse({
+    status: 200,
+    description: 'Company banner deleted successfully',
+    type: ResponseApiNullDto,
+  })
   async deleteCompanyBanner(
     @AuthCurrentUser() user: ICurrentUser,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.deleteCompanyBannerUseCase.execute(user.id);
   }
 }

@@ -1,5 +1,4 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { IResponseApiCareerCategoryDto } from 'src/application/dtos/career-category/res.career-category.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
@@ -7,6 +6,8 @@ import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { IRequestUpdateCareerCategoryDto } from '../../dtos/career-category/req.career-category.dto';
+import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
+import { IResponseApiAdminCareerCategoryDto } from 'src/application/dtos/career-category/res.career-category-admin.dto';
 
 @Injectable()
 export class UpdateCareerCategoryUseCase extends BaseUsecase {
@@ -21,7 +22,7 @@ export class UpdateCareerCategoryUseCase extends BaseUsecase {
   async execute(
     id: string,
     dto: IRequestUpdateCareerCategoryDto,
-  ): Promise<IResponseApiCareerCategoryDto> {
+  ): Promise<IResponseApiAdminCareerCategoryDto> {
     return this.runSafe('[Update Career Category]:', async () => {
       const existing = await this.careerCategoryRepository.findById(id);
       if (!existing) {
@@ -43,8 +44,22 @@ export class UpdateCareerCategoryUseCase extends BaseUsecase {
         }
       }
 
-      const updated = await this.careerCategoryRepository.update(id, dto);
-      await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_LIST);
+      const updateData = {
+        ...dto,
+        slug:
+          dto.name && dto.name.trim() !== existing.name
+            ? await generateUniqueSlug(dto.name, 'career-category', (candidate) =>
+                this.careerCategoryRepository.isSlugTaken(candidate, id),
+              )
+            : undefined,
+      };
+
+      const updated = await this.careerCategoryRepository.update(id, updateData);
+      await Promise.all([
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_LIST),
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_DETAIL),
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP),
+      ]);
       return { data: updated };
     });
   }

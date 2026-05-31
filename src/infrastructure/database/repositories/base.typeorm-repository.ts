@@ -87,7 +87,17 @@ export abstract class BaseTypeormRepository<
   }
 
   async findById(id: string): Promise<TDomainEntity | null> {
-    const orm = await this.ormRepository.findOne({ where: { id } as any });
+    const orm = await this.ormRepository.findOne({
+      where: { id, deletedAt: IsNull() } as any,
+    });
+    return orm ? this.toDomain(orm) : null;
+  }
+
+  async findByIdWithDeleted(id: string): Promise<TDomainEntity | null> {
+    const orm = await this.ormRepository.findOne({
+      where: { id } as any,
+      withDeleted: true,
+    });
     return orm ? this.toDomain(orm) : null;
   }
 

@@ -2,7 +2,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   IRequestGetJobApplicationsDto,
 } from 'src/application/dtos/job-application/req.job-application.dto';
-import { IJobApplicationResponseDto } from 'src/application/dtos/job-application/res.job-application.dto';
+import {
+  IJobSeekerJobApplicationDto,
+  IResponseApiJobSeekerJobApplicationDto,
+  IResponseListApiJobSeekerJobApplicationDto,
+} from 'src/application/dtos/job-application/res.job-application.dto';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
@@ -10,6 +14,7 @@ import type { ICompanyRepository } from 'src/domain/repositories/company.reposit
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import { toJobSeekerJobApplicationDto } from './job-application-response.mapper';
 
 @Injectable()
 export class GetMyJobApplicationsQuery {
@@ -27,7 +32,7 @@ export class GetMyJobApplicationsQuery {
   async execute(
     userId: string,
     query: IRequestGetJobApplicationsDto,
-  ): Promise<{ data: any[]; pagination: any }> {
+  ): Promise<IResponseListApiJobSeekerJobApplicationDto> {
     try {
       const page = query.page || 1;
       const limit = query.limit || 10;
@@ -64,7 +69,7 @@ export class GetMyJobApplicationsQuery {
   async executeById(
     jobApplicationId: string,
     userId: string,
-  ): Promise<{ data: any }> {
+  ): Promise<IResponseApiJobSeekerJobApplicationDto> {
     try {
       const application =
         await this.jobApplicationRepository.findById(jobApplicationId);
@@ -87,7 +92,7 @@ export class GetMyJobApplicationsQuery {
 
   private async toResponseDto(
     app: IJobApplicationEntity,
-  ): Promise<IJobApplicationResponseDto> {
+  ): Promise<IJobSeekerJobApplicationDto> {
     const [cv, job] = await Promise.all([
       this.cvRepository.findById(app.cvId),
       this.jobRepository.findById(app.jobId),
@@ -97,22 +102,7 @@ export class GetMyJobApplicationsQuery {
         ? await this.companyRepository.findById(job.companyId)
         : null;
 
-    return {
-      id: app.id,
-      cvId: app.cvId,
-      userId: app.userId,
-      jobId: app.jobId,
-      fullName: app.fullName,
-      contactEmail: app.contactEmail,
-      contactPhone: app.contactPhone,
-      coverLetter: app.coverLetter,
-      matchingScore: app.matchingScore,
-      status: app.status,
-      scheduleTime: app.scheduleTime,
-      scheduleLocation: app.scheduleLocation,
-      scheduleLink: app.scheduleLink,
-      createdAt: app.createdAt,
-      updatedAt: app.updatedAt,
+    return toJobSeekerJobApplicationDto(app, {
       cv: cv
         ? {
             id: cv.id,
@@ -123,16 +113,17 @@ export class GetMyJobApplicationsQuery {
         ? {
             id: job.id,
             title: job.title,
-            location: job.location,
+            address: job.address,
             company: company
               ? {
                   id: company.id,
-                  companyName: company.companyName,
+                  name: company.name,
+                  slug: company.slug,
                   logoUrl: company.logoUrl,
                 }
               : undefined,
           }
         : undefined,
-    };
+    });
   }
 }

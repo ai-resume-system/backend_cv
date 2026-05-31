@@ -48,7 +48,7 @@ export class GetSkillsQuery extends BaseUsecase {
 
       const result = await this.skillRepository.find({
         pagination: { page, limit },
-        filter: { q, careerCategoriesId: careerCategoryId },
+        filter: { q, careerCategoryId },
         sort: { sortBy, sortOrder },
       });
 
@@ -56,7 +56,8 @@ export class GetSkillsQuery extends BaseUsecase {
         data: result.data.map((skill) => ({
           id: skill.id,
           name: skill.name,
-          careerCategoryId: skill.careerCategoriesId,
+          slug: skill.slug,
+          careerCategoryId: skill.careerCategoryId,
           parentId: skill.parentId,
           createdAt: skill.createdAt,
           updatedAt: skill.updatedAt,

@@ -16,14 +16,26 @@ import { CVSkillOrmEntity } from './cv-skill.orm-entity';
 import { JobSkillOrmEntity } from './job-skill.orm-entity';
 
 @Entity({ name: 'skills' })
-@Index('idx_skills_name', ['name'], { unique: true })
-@Index('idx_skills_career_category', ['careerCategoriesId'], { unique: false })
+@Index('idx_skills_active_name', ['name'], {
+  unique: true,
+  where: `"deleted_at" IS NULL`,
+})
+@Index('idx_skills_active_slug', ['slug'], {
+  unique: true,
+  where: `"deleted_at" IS NULL`,
+})
+@Index('idx_skills_career_category', ['careerCategoryId'], {
+  where: `"deleted_at" IS NULL`,
+})
+@Index('idx_skills_parent', ['parentId'], {
+  where: `"deleted_at" IS NULL`,
+})
 export class SkillOrmEntity implements ISkillEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'career_categories_id', type: 'uuid', nullable: true })
-  careerCategoriesId?: string;
+  @Column({ name: 'career_category_id', type: 'uuid' })
+  careerCategoryId: string;
 
   @Column({ name: 'parent_id', type: 'uuid', nullable: true })
   parentId?: string;
@@ -31,38 +43,45 @@ export class SkillOrmEntity implements ISkillEntity {
   @Column({ name: 'name', type: 'varchar', length: 255 })
   name: string;
 
+  @Column({
+    name: 'slug',
+    type: 'varchar',
+    length: 255,
+  })
+  slug: string;
+
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   updatedAt: Date;
 
   @DeleteDateColumn({
     name: 'deleted_at',
-    type: 'timestamp',
+    type: 'timestamptz',
     nullable: true,
   })
   deletedAt?: Date;
 
   @ManyToOne(() => CareerCategoryOrmEntity, {
-    nullable: true,
-    onDelete: 'SET NULL',
+    nullable: false,
+    onDelete: 'RESTRICT',
   })
-  @JoinColumn({ name: 'career_categories_id' })
-  careerCategory?: CareerCategoryOrmEntity;
+  @JoinColumn({ name: 'career_category_id' })
+  careerCategory: CareerCategoryOrmEntity;
 
   @ManyToOne(() => SkillOrmEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'parent_id' })
   parent?: SkillOrmEntity;
+
+  @OneToMany(() => SkillOrmEntity, (skill) => skill.parent)
+  children: SkillOrmEntity[];
 
   @OneToMany(() => CVSkillOrmEntity, (cvSkill) => cvSkill.skill)
   cvSkills: CVSkillOrmEntity[];

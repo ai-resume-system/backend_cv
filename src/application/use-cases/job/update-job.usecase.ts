@@ -1,17 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IUpdateJobDto } from 'src/application/dtos/job/req.job.dto';
-import { IResponseApiJobDto } from 'src/application/dtos/job/res.job.dto';
+import { IResponseApiRecruiterJobDto } from 'src/application/dtos/job/res.job.dto';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import type { IJobSkillRepository } from 'src/domain/repositories/job-skill.repository.interface';
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { toRecruiterJobDetailDto } from 'src/application/queries/job/job-response.mapper';
 
 @Injectable()
 export class UpdateJobUseCase extends BaseUsecase {
@@ -34,7 +36,7 @@ export class UpdateJobUseCase extends BaseUsecase {
     id: string,
     userId: string,
     dto: IUpdateJobDto,
-  ): Promise<IResponseApiJobDto> {
+  ): Promise<IResponseApiRecruiterJobDto> {
     return this.runSafe(
       '[Update Job]: ',
       async () => {
@@ -54,7 +56,14 @@ export class UpdateJobUseCase extends BaseUsecase {
         }
 
         const { skills: _skills, ...jobData } = dto;
-        const updateData = { ...jobData };
+        const updateData = { ...jobData } as typeof jobData & { slug?: string };
+        if (dto.title && dto.title.trim() !== existing.title) {
+          updateData.slug = await generateUniqueSlug(
+            dto.title,
+            'job',
+            (candidate) => this.jobRepository.isSlugTaken(candidate, id),
+          );
+        }
         if (
           dto.salaryMin !== undefined &&
           dto.salaryMax !== undefined &&
@@ -88,9 +97,20 @@ export class UpdateJobUseCase extends BaseUsecase {
         if (skills.some((skill) => !skill)) {
           throw new AppException(ERROR_CODES.SKILL_NOT_FOUND);
         }
+        const effectiveCareerCategoryId =
+          dto.careerCategoryId ?? existing.careerCategoryId;
+        if (
+          effectiveCareerCategoryId &&
+          skills.some(
+            (skill) =>
+              skill && skill.careerCategoryId !== effectiveCareerCategoryId,
+          )
+        ) {
+          throw new AppException(ERROR_CODES.VALIDATION_ERROR);
+        }
 
         if (dto.expiredAt) {
-          const newExpiredAt = new Date(dto.expiredAt);
+          const newExpiredAt = dto.expiredAt;
           const now = new Date();
           if (newExpiredAt > now && existing.status === EJobStatus.EXPIRED) {
             updateData.status = EJobStatus.OPEN;
@@ -116,35 +136,10 @@ export class UpdateJobUseCase extends BaseUsecase {
         );
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
-        const data = {
-          id: job.id,
-          title: job.title,
-          shortDescription: job.shortDescription,
-          description: job.description,
-          location: job.location,
-          salaryMin: job.salaryMin,
-          salaryMax: job.salaryMax,
-          experienceYears: job.experienceYears,
-          expiredAt: job.expiredAt,
-          jobType: job.jobType,
-          rejectReason: job.rejectReason,
-          status: job.status,
-          createdAt: job.createdAt,
-          updatedAt: job.updatedAt,
-          company: {
-            id: company.id,
-            companyName: company.companyName,
-            logoUrl: company.logoUrl,
-            location: company.location,
-            websiteUrl: company.websiteUrl,
-          },
-          careerCategory: careerCategory
-            ? {
-                id: careerCategory.id,
-                name: careerCategory.name,
-                slug: careerCategory.slug,
-              }
-            : undefined,
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+        const data = toRecruiterJobDetailDto(job, {
+          company,
+          careerCategory,
           skills: persistedJobSkills
             .map((jobSkill) => {
               const skill = persistedSkills.find(
@@ -156,11 +151,12 @@ export class UpdateJobUseCase extends BaseUsecase {
               return {
                 id: skill.id,
                 name: skill.name,
+                slug: skill.slug,
                 weight: jobSkill.weight,
               };
             })
             .filter((skill) => skill !== null),
-        };
+        });
         return { data };
       },
       ERROR_CODES.JOB_UPDATE_FAILED,

@@ -1,16 +1,20 @@
 import { IApiResponse } from 'src/common/interface/api-response.interface';
-import { IJobCareerCategoryDto, IJobCompanyDto } from '../job/res.job.dto';
+import {
+  IJobCareerCategoryDto,
+  IPublicJobCompanyDto,
+} from '../job/res.job.dto';
 
 export interface IFavouriteJobItemDto {
   id: string;
   title: string;
   shortDescription?: string;
-  location?: string;
+  address?: string;
   salaryMin?: number;
   salaryMax?: number;
+  vacancyCount?: number;
   experienceYears?: number;
   expiredAt?: Date;
-  company: IJobCompanyDto;
+  company: IPublicJobCompanyDto;
   careerCategory?: IJobCareerCategoryDto;
   isFavourited: boolean;
 }

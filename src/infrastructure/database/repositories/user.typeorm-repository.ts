@@ -30,27 +30,6 @@ export class UserTypeormRepository
     return ['email', 'phone'];
   }
 
-  // async findWithPagination(params: {
-  //   skip: number;
-  //   take: number;
-  //   role?: EUserRole;
-  //   status?: EUserStatus;
-  // }): Promise<IPaginatedResult<IUserEntity>> {
-  //   const { skip, take, role, status } = params;
-  //   const whereConditions: any = { deletedAt: IsNull() };
-  //   if (role) whereConditions.role = role;
-  //   if (status) whereConditions.status = status;
-
-  //   const [data, total] = await this.ormRepository.findAndCount({
-  //     where: whereConditions,
-  //     skip,
-  //     take,
-  //     order: { createdAt: 'DESC' },
-  //   });
-
-  //   return { data: data.map((d) => this.toDomain(d)), total };
-  // }
-
   async findByEmail(email: string): Promise<IUserEntity | null> {
     const orm = await this.ormRepository.findOne({ where: { email } });
     return orm ? this.toDomain(orm) : null;

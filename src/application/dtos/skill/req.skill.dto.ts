@@ -9,12 +9,8 @@ export interface IRequestGetSkillsDto extends IApiRequestPagination {
 
 export interface IRequestCreateSkillDto {
   name: string;
-  careerCategoryId?: string;
+  careerCategoryId: string;
   parentId?: string;
 }
 
-export interface IRequestUpdateSkillDto {
-  name?: string;
-  careerCategoryId?: string;
-  parentId?: string;
-}
+export type IRequestUpdateSkillDto = Partial<IRequestCreateSkillDto>;

@@ -9,6 +9,9 @@ export class ResponseSkillDto {
   name: string;
 
   @ApiPropertyOptional()
+  slug?: string;
+
+  @ApiPropertyOptional()
   careerCategoryId?: string;
 
   @ApiPropertyOptional()

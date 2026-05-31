@@ -5,16 +5,18 @@ export interface IJobEntity {
   companyId: string;
   careerCategoryId?: string;
   title: string;
+  slug: string;
   shortDescription?: string;
   description?: string;
-  location?: string;
+  address?: string; // địa chỉ đầy đủ để hiển thị
   salaryMin?: number;
   salaryMax?: number;
   experienceYears?: number;
-  expiredAt?: Date;
+  vacancyCount?: number; // số lượng người/vị trí cần tuyển
   jobType: EJobType;
-  rejectReason?: string;
   status: EJobStatus;
+  expiredAt?: Date;
+  rejectReason?: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;

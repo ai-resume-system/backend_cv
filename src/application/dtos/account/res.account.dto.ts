@@ -12,14 +12,19 @@ export interface IMyProfileResponseDto {
     bio?: string;
   } | null;
   company?: {
-    careerCategoriesId?: string;
-    companyName?: string;
+    careerCategoryId?: string;
+    name?: string;
+    slug?: string;
     logoUrl?: string | null;
     bannerUrl?: string | null;
-    location?: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
     description?: string;
     taxCode?: string;
     websiteUrl?: string;
+    employeeMin?: number;
+    employeeMax?: number;
   } | null;
   createdAt: Date;
   updatedAt: Date;
@@ -36,10 +41,17 @@ export interface IResponseMyProfileDto {
 // For Recruiter
 export interface IResponseMyCompanyDto {
   phone?: string;
-  careerCategoriesId?: string;
-  companyName?: string;
+  slug?: string;
+  careerCategoryId?: string;
+  name?: string;
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   taxCode?: string;
-  location?: string;
   description?: string;
   websiteUrl?: string;
+  employeeMin?: number;
+  employeeMax?: number;
 }

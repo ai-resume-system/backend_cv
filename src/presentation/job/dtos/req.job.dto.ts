@@ -2,7 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
-  IsDateString,
+  IsDate,
+  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
@@ -15,9 +16,10 @@ import {
 } from 'class-validator';
 import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
+import { parseJobExpiredAtInput } from 'src/common/utils/date-time.util';
 
 export class RequestGetJobsDto extends RequestPaginationDto {
-  @ApiPropertyOptional({ description: 'Search by title, location' })
+  @ApiPropertyOptional({ description: 'Search by title, address' })
   @IsOptional()
   @IsString()
   q?: string;
@@ -27,15 +29,15 @@ export class RequestGetJobsDto extends RequestPaginationDto {
   @IsOptional()
   sortBy?: string;
 
-  @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'DESC' })
+  @ApiPropertyOptional({ enum: ['ASC', 'DESC'] })
+  @IsEnum(['ASC', 'DESC'])
   @IsOptional()
-  @IsString()
   sortOrder?: 'ASC' | 'DESC';
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Filter jobs by address' })
   @IsOptional()
   @IsString()
-  location?: string;
+  address?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -49,7 +51,7 @@ export class RequestGetJobsDto extends RequestPaginationDto {
   @IsInt()
   salaryMax?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Filter jobs by experience years' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -59,6 +61,13 @@ export class RequestGetJobsDto extends RequestPaginationDto {
   @IsOptional()
   @IsString()
   companyId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter jobs by company slug, e.g: cong-ty-abc',
+  })
+  @IsOptional()
+  @IsString()
+  companySlug?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -99,6 +108,24 @@ export class RequestGetJobsDto extends RequestPaginationDto {
   @IsArray()
   @IsUUID('4', { each: true })
   skillIds?: string[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Filter jobs by skill slugs',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      return value.split(',').map((item) => item.trim());
+    }
+    return value;
+  })
+  @IsArray()
+  @IsString({ each: true })
+  skillSlugs?: string[];
 }
 
 export class RequestJobSkillDto {
@@ -106,12 +133,12 @@ export class RequestJobSkillDto {
   @IsUUID('4')
   skillId: string;
 
-  @ApiPropertyOptional({ example: 1, minimum: 0, maximum: 1 })
+  @ApiPropertyOptional({ example: 1, minimum: 1, maximum: 5 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Min(0)
-  @Max(1)
+  @Min(1)
+  @Max(5)
   weight?: number;
 }
 
@@ -134,7 +161,7 @@ export class RequestCreateJobDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  location?: string;
+  address?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -161,8 +188,19 @@ export class RequestCreateJobDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsDateString()
-  expiredAt?: string;
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    try {
+      return parseJobExpiredAtInput(value);
+    } catch {
+      return value;
+    }
+  })
+  @IsDate()
+  expiredAt?: Date;
 
   @ApiPropertyOptional({ enum: EJobType, default: EJobType.FULL_TIME })
   @IsOptional()
@@ -197,7 +235,7 @@ export class RequestUpdateJobDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  location?: string;
+  address?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -224,8 +262,19 @@ export class RequestUpdateJobDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsDateString()
-  expiredAt?: string;
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    try {
+      return parseJobExpiredAtInput(value);
+    } catch {
+      return value;
+    }
+  })
+  @IsDate()
+  expiredAt?: Date;
 
   @ApiPropertyOptional({ enum: EJobType })
   @IsOptional()

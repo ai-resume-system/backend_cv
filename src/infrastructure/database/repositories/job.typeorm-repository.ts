@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
+import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import type { IJobEntity } from 'src/domain/entities/job.entity';
 import {
   IFindOptions,
@@ -24,12 +25,13 @@ export class JobTypeormRepository
   }
 
   protected getSearchableColumns(): string[] {
-    return ['title', 'location', 'description'];
+    return ['title', 'address', 'slug'];
   }
 
   async find(options?: IFindOptions): Promise<IPaginatedResult<IJobEntity>> {
     const {
       notExpired,
+      activeOwnerOnly,
       skillIds,
       q,
       expiredAtBefore,
@@ -37,8 +39,7 @@ export class JobTypeormRepository
       salaryMax,
       experienceYears,
       ...otherFilters
-    } =
-      options?.filter || {};
+    } = options?.filter || {};
 
     if (notExpired === true || skillIds || q || expiredAtBefore) {
       const now = new Date();
@@ -54,6 +55,19 @@ export class JobTypeormRepository
         queryBuilder.andWhere('entity.expiredAt < :expiredAtBefore', {
           expiredAtBefore,
         });
+      }
+      if (activeOwnerOnly === true) {
+        queryBuilder
+          .innerJoin('companies', 'company', 'company.id = entity.company_id')
+          .innerJoin('users', 'owner', 'owner.id = company.user_id')
+          .andWhere('company.deleted_at IS NULL')
+          .andWhere('owner.deleted_at IS NULL')
+          .andWhere('owner.role = :ownerRole', {
+            ownerRole: EUserRole.RECRUITER,
+          })
+          .andWhere('owner.status = :ownerStatus', {
+            ownerStatus: EUserStatus.ACTIVE,
+          });
       }
       if (skillIds && Array.isArray(skillIds) && skillIds.length > 0) {
         queryBuilder.innerJoin(
@@ -138,24 +152,74 @@ export class JobTypeormRepository
     return orms.map((orm) => this.toDomain(orm));
   }
 
-  async findById(id: string): Promise<IJobEntity | null> {
+  async findByCareerCategoryId(
+    careerCategoryId: string,
+  ): Promise<IJobEntity[]> {
+    const orms = await this.ormRepository.find({
+      where: { careerCategoryId, deletedAt: IsNull() },
+    });
+    return orms.map((orm) => this.toDomain(orm));
+  }
+
+  async countOpenJobsByCompanyIds(
+    companyIds: string[],
+  ): Promise<Record<string, number>> {
+    if (!companyIds.length) {
+      return {};
+    }
+
+    const rows = await this.ormRepository
+      .createQueryBuilder('job')
+      .select('job.companyId', 'companyId')
+      .addSelect('COUNT(job.id)', 'total')
+      .where('job.companyId IN (:...companyIds)', { companyIds })
+      .andWhere('job.status = :status', { status: EJobStatus.OPEN })
+      .andWhere('job.deletedAt IS NULL')
+      .andWhere('(job.expiredAt > :now OR job.expiredAt IS NULL)', {
+        now: new Date(),
+      })
+      .groupBy('job.companyId')
+      .getRawMany<{ companyId: string; total: string }>();
+
+    return rows.reduce<Record<string, number>>((result, row) => {
+      result[row.companyId] = Number(row.total);
+      return result;
+    }, {});
+  }
+
+  async findBySlug(slug: string): Promise<IJobEntity | null> {
     const orm = await this.ormRepository.findOne({
-      where: { id, deletedAt: IsNull() },
+      where: { slug, deletedAt: IsNull() },
     });
     return orm ? this.toDomain(orm) : null;
+  }
+
+  async isSlugTaken(slug: string, excludeId?: string): Promise<boolean> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('job')
+      .where('job.slug = :slug', { slug })
+      .andWhere('job.deletedAt IS NULL');
+
+    if (excludeId) {
+      queryBuilder.andWhere('job.id != :excludeId', { excludeId });
+    }
+
+    return (await queryBuilder.getCount()) > 0;
   }
 
   protected toDomain(orm: JobOrmEntity): IJobEntity {
     return {
       id: orm.id,
+      slug: orm.slug,
       companyId: orm.companyId,
       careerCategoryId: orm.careerCategoryId,
       title: orm.title,
       shortDescription: orm.shortDescription,
       description: orm.description,
-      location: orm.location,
+      address: orm.address,
       salaryMin: orm.salaryMin,
       salaryMax: orm.salaryMax,
+      vacancyCount: orm.vacancyCount,
       experienceYears: orm.experienceYears,
       expiredAt: orm.expiredAt,
       jobType: orm.jobType,

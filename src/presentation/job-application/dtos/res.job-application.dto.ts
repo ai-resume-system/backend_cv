@@ -2,7 +2,60 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { ApiResponseDto, PaginationDto } from 'src/common/dto/response.dto';
 
-export class ResponseJobApplicationDto {
+export class ResponseJobApplicationCVDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiPropertyOptional()
+  title?: string;
+
+  @ApiPropertyOptional()
+  fileUrl?: string;
+
+  @ApiPropertyOptional()
+  summary?: string;
+}
+
+export class ResponseJobApplicationJobCompanyDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiPropertyOptional()
+  name?: string;
+
+  @ApiPropertyOptional()
+  slug?: string;
+
+  @ApiPropertyOptional()
+  logoUrl?: string | null;
+}
+
+export class ResponseJobApplicationJobDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiPropertyOptional()
+  address?: string;
+
+  @ApiPropertyOptional({ type: ResponseJobApplicationJobCompanyDto })
+  company?: ResponseJobApplicationJobCompanyDto;
+}
+
+export class ResponseJobApplicationUserDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  email: string;
+
+  @ApiPropertyOptional()
+  phone?: string;
+}
+
+export class ResponseJobSeekerJobApplicationDto {
   @ApiProperty()
   id: string;
 
@@ -30,9 +83,6 @@ export class ResponseJobApplicationDto {
   @ApiPropertyOptional()
   matchingScore?: number;
 
-  @ApiPropertyOptional()
-  notes?: string;
-
   @ApiProperty({
     enum: Object.values(EJobApplicationStatus),
     example: Object.values(EJobApplicationStatus).join(' | '),
@@ -55,70 +105,51 @@ export class ResponseJobApplicationDto {
   updatedAt: Date;
 
   @ApiPropertyOptional({
-    type: Object,
-    example: {
-      id: 'uuid',
-      title: 'CV React Developer',
-      fileUrl: 'https://example.com/cv.pdf',
-      summary: 'Senior frontend developer',
-    },
+    type: ResponseJobApplicationCVDto,
   })
-  cv?: {
-    id: string;
-    title?: string;
-    fileUrl?: string;
-    summary?: string;
-  };
+  cv?: ResponseJobApplicationCVDto;
 
   @ApiPropertyOptional({
-    type: Object,
-    example: {
-      id: 'uuid',
-      title: 'Frontend Developer',
-      location: 'Ho Chi Minh City',
-      company: {
-        id: 'uuid',
-        companyName: 'OpenAI VN',
-        logoUrl: 'https://example.com/logo.png',
-      },
-    },
+    type: ResponseJobApplicationJobDto,
   })
-  job?: {
-    id: string;
-    title: string;
-    location?: string;
-    company?: {
-      id: string;
-      companyName?: string;
-      logoUrl?: string | null;
-    };
-  };
+  job?: ResponseJobApplicationJobDto;
+}
 
+export class ResponseRecruiterJobApplicationDto extends ResponseJobSeekerJobApplicationDto {
   @ApiPropertyOptional({
-    type: Object,
-    example: {
-      id: 'uuid',
-      email: 'candidate@example.com',
-      phone: '+84901234567',
-    },
+    description: 'Recruiter internal notes',
   })
-  user?: {
-    id: string;
-    email: string;
-    phone?: string;
-  };
+  notes?: string;
+
+  @ApiPropertyOptional({ type: ResponseJobApplicationUserDto })
+  user?: ResponseJobApplicationUserDto;
 }
 
-export class ResponseApiJobApplicationDto extends ApiResponseDto<ResponseJobApplicationDto> {
-  @ApiProperty({ type: ResponseJobApplicationDto })
-  declare data: ResponseJobApplicationDto;
+export class ResponseApiJobSeekerJobApplicationDto extends ApiResponseDto<ResponseJobSeekerJobApplicationDto> {
+  @ApiProperty({ type: ResponseJobSeekerJobApplicationDto })
+  declare data: ResponseJobSeekerJobApplicationDto;
 }
 
-export class ResponseListApiJobApplicationDto extends ApiResponseDto<
-  ResponseJobApplicationDto[]
+export class ResponseListApiJobSeekerJobApplicationDto extends ApiResponseDto<
+  ResponseJobSeekerJobApplicationDto[]
 > {
-  @ApiProperty({ type: [ResponseJobApplicationDto] })
-  declare data: ResponseJobApplicationDto[];
+  @ApiProperty({ type: [ResponseJobSeekerJobApplicationDto] })
+  declare data: ResponseJobSeekerJobApplicationDto[];
+
+  @ApiProperty({ type: PaginationDto })
+  declare pagination?: PaginationDto;
+}
+
+export class ResponseApiRecruiterJobApplicationDto extends ApiResponseDto<ResponseRecruiterJobApplicationDto> {
+  @ApiProperty({ type: ResponseRecruiterJobApplicationDto })
+  declare data: ResponseRecruiterJobApplicationDto;
+}
+
+export class ResponseListApiRecruiterJobApplicationDto extends ApiResponseDto<
+  ResponseRecruiterJobApplicationDto[]
+> {
+  @ApiProperty({ type: [ResponseRecruiterJobApplicationDto] })
+  declare data: ResponseRecruiterJobApplicationDto[];
 
   @ApiProperty({ type: PaginationDto })
   declare pagination?: PaginationDto;

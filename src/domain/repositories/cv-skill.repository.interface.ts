@@ -1,10 +1,9 @@
 import { ICVSkillEntity } from '../entities/cv-skill.entity';
+import { IBaseRepository } from './base.repository.interface';
 
-export interface ICVSkillRepository {
-  findById(id: string): Promise<ICVSkillEntity | null>;
+export interface ICVSkillRepository extends IBaseRepository<ICVSkillEntity> {
   findByCvId(cvId: string): Promise<ICVSkillEntity[]>;
   findBySkillId(skillId: string): Promise<ICVSkillEntity[]>;
   create(cvSkill: Partial<ICVSkillEntity>): Promise<ICVSkillEntity>;
-  delete(id: string): Promise<void>;
   deleteByCvId(cvId: string): Promise<void>;
 }

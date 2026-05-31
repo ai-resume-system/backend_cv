@@ -54,12 +54,12 @@ export class RequestRegisterRecruiterDto extends RequestRegisterDto {
   @ApiProperty({ example: 'Tech Company' })
   @IsNotEmpty()
   @IsString()
-  company_name: string;
+  name: string;
 
   @ApiProperty({ example: 'Hanoi' })
   @IsNotEmpty()
   @IsString()
-  location: string;
+  address: string;
 }
 
 export class RequestVerifyOtpDto {
@@ -124,7 +124,7 @@ export class RequestLoginDto {
 }
 
 export class RequestRefreshTokenDto {
-  @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
+  @ApiProperty() // Nếu không có mới cần truyền
   @IsOptional()
   @IsString()
   refreshToken?: string;

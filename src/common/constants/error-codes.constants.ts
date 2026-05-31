@@ -110,7 +110,11 @@ export const ERROR_CODES = {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   AUTH_OLD_PASSWORD_INCORRECT: {
-    message: 'Incorrect old password.',
+    message: 'Incorrect old password',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  AUTH_NEW_PASSWORD_SAME_AS_OLD: {
+    message: 'New password same old password',
     status: HttpStatus.BAD_REQUEST,
   },
 
@@ -126,6 +130,11 @@ export const ERROR_CODES = {
   COMPANY_NOT_FOUND: {
     message: 'Company not found.',
     status: HttpStatus.NOT_FOUND,
+  },
+
+  INVALID_EMPLOYEE_RANGE: {
+    message: 'Invalid employee range',
+    status: HttpStatus.BAD_REQUEST,
   },
 
   // JOB
@@ -237,6 +246,24 @@ export const ERROR_CODES = {
     message: 'Failed to delete career category.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
+  CAREER_CATEGORY_IN_USE: {
+    message: 'Career category is currently in use and cannot be deleted.',
+    status: HttpStatus.CONFLICT,
+  },
+  CAREER_CATEGORY_HAS_SKILLS: {
+    message:
+      'Cannot delete career category because it is referenced by skills.',
+    status: HttpStatus.CONFLICT,
+  },
+  CAREER_CATEGORY_HAS_COMPANIES: {
+    message:
+      'Cannot delete career category because it is referenced by companies.',
+    status: HttpStatus.CONFLICT,
+  },
+  CAREER_CATEGORY_HAS_JOBS: {
+    message: 'Cannot delete career category because it is referenced by jobs.',
+    status: HttpStatus.CONFLICT,
+  },
 
   // SKILL
   SKILL_NOT_FOUND: {
@@ -334,7 +361,7 @@ export const ERROR_CODES = {
   },
   JOB_APPLICATION_INTERVIEW_SCHEDULE_REQUIRED: {
     message:
-      'Interview schedule time and location are required when scheduling an interview.',
+      'Interview schedule time and address are required when scheduling an interview.',
     status: HttpStatus.BAD_REQUEST,
   },
 
@@ -356,33 +383,33 @@ export const ERROR_CODES = {
     status: HttpStatus.BAD_REQUEST,
   },
   MEDIA_UPLOAD_FAILED: {
-    message: 'Failed to upload media.',
+    message: 'Failed to upload media',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   ROLE_UNABLE_TO_DETERMINE: {
-    message: 'Unable to determine user permissions.',
+    message: 'Unable to determine user permissions',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   ROLE_INSUFFICIENT_PERMISSIONS: {
-    message: 'You do not have permission to perform this action.',
+    message: 'You do not have permission to perform this action',
     status: HttpStatus.FORBIDDEN,
   },
 
   // SYSTEM
   IP_NOT_FOUND: {
-    message: 'IP address not found.',
+    message: 'IP address not found',
     status: HttpStatus.NOT_FOUND,
   },
   INTERNAL_SERVER_ERROR: {
-    message: 'Internal server error. Please try again later.',
+    message: 'Internal server error. Please try again later',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   VALIDATION_ERROR: {
-    message: 'Invalid input data.',
+    message: 'Invalid input data',
     status: HttpStatus.BAD_REQUEST,
   },
   SYSTEM_BUSY: {
-    message: 'System is busy, please try again later.',
+    message: 'System is busy, please try again later',
     status: HttpStatus.SERVICE_UNAVAILABLE,
   },
 } as const;

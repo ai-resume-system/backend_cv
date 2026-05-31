@@ -5,6 +5,7 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 
 @Injectable()
 export class DeleteAvatarUseCase extends BaseUsecase {
@@ -16,9 +17,7 @@ export class DeleteAvatarUseCase extends BaseUsecase {
     super(new Logger(DeleteAvatarUseCase.name));
   }
 
-  async execute(
-    userId: string,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  async execute(userId: string): Promise<IResponseApiNullDto> {
     return this.runSafe('[Delete Avatar]:', async () => {
       const profile = await this.profileRepository.findByUserId(userId);
       if (!profile) {
@@ -45,12 +44,7 @@ export class DeleteAvatarUseCase extends BaseUsecase {
         });
       }
 
-      return {
-        data: {
-          success: true,
-          message: 'Avatar deleted successfully',
-        },
-      };
+      return { data: null };
     });
   }
 }

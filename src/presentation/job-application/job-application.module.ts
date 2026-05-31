@@ -13,7 +13,8 @@ import { JobApplicationOrmEntity } from 'src/infrastructure/database/entities/jo
 import { UserOrmEntity } from 'src/infrastructure/database/entities/user.orm-entity';
 import { CompanyTypeormRepository } from 'src/infrastructure/database/repositories/company.typeorm-repository';
 import { JobApplicationTypeormRepository } from 'src/infrastructure/database/repositories/job-application.typeorm-repository';
-import { JobApplicationController } from './controller/job-application.controller';
+import { JobSeekerJobApplicationController } from './controller/job-seeker-job-application.controller';
+import { RecruiterJobApplicationController } from './controller/recruiter-job-application.controller';
 import { CVTypeormRepository } from 'src/infrastructure/database/repositories/cv.typeorm-repository';
 import { JobTypeormRepository } from 'src/infrastructure/database/repositories/job.typeorm-repository';
 import { UserTypeormRepository } from 'src/infrastructure/database/repositories/user.typeorm-repository';
@@ -34,7 +35,10 @@ import { GetJobApplicationCVQuery } from 'src/application/queries/job-applicatio
     JwtAuthModule,
     QueueModule,
   ],
-  controllers: [JobApplicationController],
+  controllers: [
+    JobSeekerJobApplicationController,
+    RecruiterJobApplicationController,
+  ],
   providers: [
     CreateJobApplicationUseCase,
     WithdrawJobApplicationUseCase,

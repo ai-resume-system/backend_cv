@@ -19,14 +19,19 @@ export interface IUpdateProfileDto {
   bio?: string;
 }
 
-export interface IUpdateCompanyDto {
-  careerCategoriesId?: string;
-  companyName?: string;
+export interface IUpdateCompanyBaseDto {
+  careerCategoryId?: string;
+  name?: string;
   taxCode?: string;
-  logoUrl?: string;
-  location?: string;
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   description?: string;
   websiteUrl?: string;
-  companySizeMin?: number;
-  companySizeMax?: number;
+  employeeMin?: number;
+  employeeMax?: number;
 }
+
+export type IUpdateCompanyDto = Partial<Omit<IUpdateCompanyBaseDto, never>>;

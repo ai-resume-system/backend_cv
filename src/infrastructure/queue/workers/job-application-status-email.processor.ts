@@ -52,13 +52,15 @@ export class JobApplicationStatusEmailProcessor extends WorkerHost {
   }
 
   private buildHtml(data: IJobApplicationStatusEmailJob): string {
-    const greeting = data.fullName ? `<p>Hello ${data.fullName},</p>` : '<p>Hello,</p>';
+    const greeting = data.fullName
+      ? `<p>Hello ${data.fullName},</p>`
+      : '<p>Hello,</p>';
 
     if (data.status === EJobApplicationStatus.INTERVIEW) {
       return `
         ${greeting}
         <p>Your application for <strong>${data.jobTitle}</strong>${
-          data.companyName ? ` at <strong>${data.companyName}</strong>` : ''
+          data.name ? ` at <strong>${data.name}</strong>` : ''
         } has been moved to the interview stage.</p>
         <p>Time: <strong>${data.scheduleTime || 'TBD'}</strong></p>
         <p>Location: <strong>${data.scheduleLocation || 'TBD'}</strong></p>
@@ -75,7 +77,7 @@ export class JobApplicationStatusEmailProcessor extends WorkerHost {
       return `
         ${greeting}
         <p>You have received an offer for <strong>${data.jobTitle}</strong>${
-          data.companyName ? ` at <strong>${data.companyName}</strong>` : ''
+          data.name ? ` at <strong>${data.name}</strong>` : ''
         }.</p>
         <p>Please check your recruiter communication channels for the next steps.</p>
       `;
@@ -84,7 +86,7 @@ export class JobApplicationStatusEmailProcessor extends WorkerHost {
     return `
       ${greeting}
       <p>Thank you for applying to <strong>${data.jobTitle}</strong>${
-        data.companyName ? ` at <strong>${data.companyName}</strong>` : ''
+        data.name ? ` at <strong>${data.name}</strong>` : ''
       }.</p>
       <p>After review, the recruiter has decided not to proceed with this application.</p>
     `;

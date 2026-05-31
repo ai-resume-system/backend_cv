@@ -40,26 +40,23 @@ export class CareerCategoryOrmEntity implements ICareerCategoryEntity {
 
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   updatedAt: Date;
 
   @DeleteDateColumn({
     name: 'deleted_at',
-    type: 'timestamp',
+    type: 'timestamptz',
     nullable: true,
   })
   deletedAt?: Date;
 
-  @OneToMany(() => CompanyOrmEntity, (company) => company.careerCategories)
-  company: CompanyOrmEntity[];
+  @OneToMany(() => CompanyOrmEntity, (company) => company.careerCategory)
+  companies: CompanyOrmEntity[];
 }

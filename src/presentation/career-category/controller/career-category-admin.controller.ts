@@ -11,9 +11,10 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type {
-  IResponseApiCareerCategoryDto,
-  IResponseListApiCareerCategoryDto,
-} from 'src/application/dtos/career-category/res.career-category.dto';
+  IResponseApiAdminCareerCategoryDto,
+  IResponseListApiAdminCareerCategoryDto,
+} from 'src/application/dtos/career-category/res.career-category-admin.dto';
+import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 import { GetCareerCategoriesQuery } from 'src/application/queries/career-categories/get-career-categories.query';
 import { CreateCareerCategoryUseCase } from 'src/application/use-cases/career-category/create-career-category.usecase';
 import { DeleteCareerCategoryUseCase } from 'src/application/use-cases/career-category/delete-career-category.usecase';
@@ -28,82 +29,90 @@ import {
   RequestUpdateCareerCategoryDto,
 } from '../dtos/req.career-category.dto';
 import {
-  ResponseApiCareerCategoryDto,
-  ResponseListApiCareerCategoryDto,
-} from '../dtos/res.career-category.dto';
-import { GetCareerCategoryByIdQuery } from 'src/application/queries/career-categories/get-career-categorie-by-id.query';
+  ResponseApiAdminCareerCategoryDto,
+  ResponseListApiAdminCareerCategoryDto,
+} from '../dtos/res.career-category-admin.dto';
+import { GetCareerCategoryBySlugQuery } from 'src/application/queries/career-categories/get-career-category-by-slug.query';
 
-@Controller({ path: 'career-categories', version: '1' })
-@ApiTags('Career Categories')
-export class CareerCategoryController extends BaseController {
+@Controller({ path: 'admin/career-categories', version: '1' })
+@ApiTags('Career Categories - Admin')
+@AuthRequired(EUserRole.ADMIN)
+export class CareerCategoryAdminController extends BaseController {
   constructor(
     private readonly getCareerCategoriesQuery: GetCareerCategoriesQuery,
-    private readonly getCareerCategoryByIdQuery: GetCareerCategoryByIdQuery,
+    private readonly getCareerCategoryBySlugQuery: GetCareerCategoryBySlugQuery,
     private readonly createCareerCategoryUseCase: CreateCareerCategoryUseCase,
     private readonly updateCareerCategoryUseCase: UpdateCareerCategoryUseCase,
     private readonly deleteCareerCategoryUseCase: DeleteCareerCategoryUseCase,
   ) {
-    super(new Logger(CareerCategoryController.name));
+    super(new Logger(CareerCategoryAdminController.name));
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all career categories' })
+  @ApiOperation({
+    summary: 'Get all career categories including inactive and soft-deleted. Access: Admin.',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Get all career categories successfully',
-    type: ResponseListApiCareerCategoryDto,
+    description: 'Get all career categories for admin successfully',
+    type: ResponseListApiAdminCareerCategoryDto,
   })
   async getAllCareerCategories(
     @Query() query: RequestGetCareerCategoriesDto,
-  ): Promise<IResponseListApiCareerCategoryDto> {
-    return await this.getCareerCategoriesQuery.execute(query);
+  ): Promise<IResponseListApiAdminCareerCategoryDto> {
+    return await this.getCareerCategoriesQuery.executeAdmin(query);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a career category by id' })
+  @Get(':slug')
+  @ApiOperation({
+    summary: 'Get career category detail including soft-deleted by slug or id. Access: Admin.',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Get a career category by id successfully',
-    type: ResponseApiCareerCategoryDto,
+    description: 'Get a career category for admin successfully',
+    type: ResponseApiAdminCareerCategoryDto,
   })
-  async getCareerCategoryById(
-    @Param('id') id: string,
-  ): Promise<IResponseApiCareerCategoryDto> {
-    return await this.getCareerCategoryByIdQuery.execute(id);
+  async getCareerCategoryBySlug(
+    @Param('slug') slug: string,
+  ): Promise<IResponseApiAdminCareerCategoryDto> {
+    return await this.getCareerCategoryBySlugQuery.executeAdmin(slug);
   }
 
   @Post()
-  @AuthRequired(EUserRole.ADMIN)
-  @ApiOperation({ summary: 'Create a new career category' })
+  @ApiOperation({
+    summary: 'Create a new career category. Access: Admin.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Career category created successfully',
-    type: ResponseApiCareerCategoryDto,
+    type: ResponseApiAdminCareerCategoryDto,
   })
   async createCareerCategory(
     @Body() dto: RequestCreateCareerCategoryDto,
-  ): Promise<IResponseApiCareerCategoryDto> {
+  ): Promise<IResponseApiAdminCareerCategoryDto> {
     return await this.createCareerCategoryUseCase.execute(dto);
   }
 
   @Patch(':id')
-  @AuthRequired(EUserRole.ADMIN)
-  @ApiOperation({ summary: 'Update a career category' })
+  @ApiOperation({
+    summary: 'Update a career category. Access: Admin.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Career category updated successfully',
-    type: ResponseApiCareerCategoryDto,
+    type: ResponseApiAdminCareerCategoryDto,
   })
   async updateCareerCategory(
     @Param('id') id: string,
     @Body() dto: RequestUpdateCareerCategoryDto,
-  ): Promise<IResponseApiCareerCategoryDto> {
+  ): Promise<IResponseApiAdminCareerCategoryDto> {
     return await this.updateCareerCategoryUseCase.execute(id, dto);
   }
 
   @Delete(':id')
-  @AuthRequired(EUserRole.ADMIN)
-  @ApiOperation({ summary: 'Delete a career category' })
+  @ApiOperation({
+    summary: 'Delete a career category. Access: Admin.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Career category deleted successfully',
@@ -111,7 +120,7 @@ export class CareerCategoryController extends BaseController {
   })
   async deleteCareerCategory(
     @Param('id') id: string,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.deleteCareerCategoryUseCase.execute(id);
   }
 }

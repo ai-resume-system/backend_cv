@@ -1,5 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IJobApplicationResponseDto } from 'src/application/dtos/job-application/res.job-application.dto';
+import {
+  IResponseApiJobSeekerJobApplicationDto,
+  IResponseApiRecruiterJobApplicationDto,
+} from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
@@ -10,6 +13,10 @@ import type { ICVRepository } from 'src/domain/repositories/cv.repository.interf
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import {
+  toJobSeekerJobApplicationDto,
+  toRecruiterJobApplicationDto,
+} from './job-application-response.mapper';
 
 @Injectable()
 export class GetJobApplicationByIdQuery extends BaseUsecase {
@@ -28,7 +35,10 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
   async execute(
     jobApplicationId: string,
     currentUser: ICurrentUser,
-  ): Promise<{ data: IJobApplicationResponseDto }> {
+  ): Promise<
+    | IResponseApiJobSeekerJobApplicationDto
+    | IResponseApiRecruiterJobApplicationDto
+  > {
     return this.runSafe('[Get Job Application By Id]', async () => {
       const application =
         await this.jobApplicationRepository.findById(jobApplicationId);
@@ -60,55 +70,49 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
         this.companyRepository.findById(job.companyId),
       ]);
 
-      return {
-        data: {
-          id: application.id,
-          cvId: application.cvId,
-          userId: application.userId,
-          jobId: application.jobId,
-          fullName: application.fullName,
-          contactEmail: application.contactEmail,
-          contactPhone: application.contactPhone,
-          coverLetter: application.coverLetter,
-          matchingScore: application.matchingScore,
-          notes:
-            currentUser.role === EUserRole.RECRUITER
-              ? application.notes
-              : undefined,
-          status: application.status,
-          scheduleTime: application.scheduleTime,
-          scheduleLocation: application.scheduleLocation,
-          scheduleLink: application.scheduleLink,
-          createdAt: application.createdAt,
-          updatedAt: application.updatedAt,
-          cv: cv
-            ? {
-                id: cv.id,
-                title: cv.title,
-                fileUrl: cv.fileUrl,
-                summary: cv.summary,
-              }
-            : undefined,
-          job: {
-            id: job.id,
-            title: job.title,
-            location: job.location,
-            company: company
+      const jobSummary = {
+        id: job.id,
+        title: job.title,
+        address: job.address,
+        company: company
+          ? {
+              id: company.id,
+              name: company.name,
+              slug: company.slug,
+              logoUrl: company.logoUrl,
+            }
+          : undefined,
+      };
+      const cvSummary = cv
+        ? {
+            id: cv.id,
+            title: cv.title,
+            fileUrl: cv.fileUrl,
+            summary: cv.summary,
+          }
+        : undefined;
+
+      if (currentUser.role === EUserRole.RECRUITER) {
+        return {
+          data: toRecruiterJobApplicationDto(application, {
+            cv: cvSummary,
+            job: jobSummary,
+            user: user
               ? {
-                  id: company.id,
-                  companyName: company.companyName,
-                  logoUrl: company.logoUrl,
+                  id: user.id,
+                  email: user.email,
+                  phone: user.phone,
                 }
               : undefined,
-          },
-          user: user
-            ? {
-                id: user.id,
-                email: user.email,
-                phone: user.phone,
-              }
-            : undefined,
-        },
+          }),
+        };
+      }
+
+      return {
+        data: toJobSeekerJobApplicationDto(application, {
+          cv: cvSummary,
+          job: jobSummary,
+        }),
       };
     });
   }

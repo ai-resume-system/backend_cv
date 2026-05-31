@@ -5,6 +5,7 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 
 @Injectable()
 export class DeleteCompanyBannerUseCase extends BaseUsecase {
@@ -16,9 +17,7 @@ export class DeleteCompanyBannerUseCase extends BaseUsecase {
     super(new Logger(DeleteCompanyBannerUseCase.name));
   }
 
-  async execute(
-    userId: string,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  async execute(userId: string): Promise<IResponseApiNullDto> {
     return this.runSafe('[Delete Company Banner]:', async () => {
       const company = await this.companyRepository.findByUserId(userId);
       if (!company) {
@@ -45,12 +44,7 @@ export class DeleteCompanyBannerUseCase extends BaseUsecase {
         });
       }
 
-      return {
-        data: {
-          success: true,
-          message: 'Deleted company banner successfully',
-        },
-      };
+      return { data: null };
     });
   }
 }

@@ -6,6 +6,7 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 
 @Injectable()
 export class DeleteJobUseCase extends BaseUsecase {
@@ -18,10 +19,7 @@ export class DeleteJobUseCase extends BaseUsecase {
     super(new Logger(DeleteJobUseCase.name));
   }
 
-  async execute(
-    id: string,
-    userId: string,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  async execute(id: string, userId: string): Promise<IResponseApiNullDto> {
     return this.runSafe(
       '[Delete Job]: ',
       async () => {
@@ -36,7 +34,8 @@ export class DeleteJobUseCase extends BaseUsecase {
         await this.jobRepository.delete(id);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
-        return { data: { success: true, message: 'Job deleted successfully' } };
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+        return { data: null };
       },
       ERROR_CODES.JOB_DELETE_FAILED,
     );

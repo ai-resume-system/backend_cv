@@ -6,12 +6,32 @@ export interface IApplicationCVResponse {
   title?: string;
   fileUrl?: string;
   summary?: string;
-  status: string;
+  status?: string;
   processingStatus?: string;
-  createdAt: Date;
+  createdAt?: Date;
 }
 
-export interface IJobApplicationResponseDto {
+export interface IApplicationJobCompanyResponse {
+  id: string;
+  name?: string;
+  slug?: string;
+  logoUrl?: string | null;
+}
+
+export interface IApplicationJobResponse {
+  id: string;
+  title: string;
+  address?: string;
+  company?: IApplicationJobCompanyResponse;
+}
+
+export interface IApplicationUserResponse {
+  id: string;
+  email: string;
+  phone?: string;
+}
+
+export interface IJobApplicationBaseDto {
   id: string;
   cvId: string;
   userId: string;
@@ -21,7 +41,6 @@ export interface IJobApplicationResponseDto {
   contactPhone?: string;
   coverLetter?: string;
   matchingScore?: number;
-  notes?: string;
   status: EJobApplicationStatus;
   scheduleTime?: Date;
   scheduleLocation?: string;
@@ -29,31 +48,27 @@ export interface IJobApplicationResponseDto {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
-  cv?: {
-    id: string;
-    title?: string;
-    fileUrl?: string;
-    summary?: string;
-  };
-  job?: {
-    id: string;
-    title: string;
-    location?: string;
-    company?: {
-      id: string;
-      companyName?: string;
-      logoUrl?: string | null;
-    };
-  };
-  user?: {
-    id: string;
-    email: string;
-    phone?: string;
-  };
+  cv?: IApplicationCVResponse;
+  job?: IApplicationJobResponse;
 }
 
-export interface IResponseApiJobApplicationDto extends IApiResponse<IJobApplicationResponseDto> {}
+export interface IJobSeekerJobApplicationDto
+  extends IJobApplicationBaseDto {}
 
-export interface IResponseListApiJobApplicationDto extends IApiResponse<
-  IJobApplicationResponseDto[]
-> {}
+export interface IRecruiterJobApplicationDto
+  extends IJobApplicationBaseDto {
+  notes?: string;
+  user?: IApplicationUserResponse;
+}
+
+export interface IResponseApiJobSeekerJobApplicationDto
+  extends IApiResponse<IJobSeekerJobApplicationDto> {}
+
+export interface IResponseListApiJobSeekerJobApplicationDto
+  extends IApiResponse<IJobSeekerJobApplicationDto[]> {}
+
+export interface IResponseApiRecruiterJobApplicationDto
+  extends IApiResponse<IRecruiterJobApplicationDto> {}
+
+export interface IResponseListApiRecruiterJobApplicationDto
+  extends IApiResponse<IRecruiterJobApplicationDto[]> {}

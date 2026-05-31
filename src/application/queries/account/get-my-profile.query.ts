@@ -77,8 +77,9 @@ export class GetMyProfileQuery extends BaseUsecase {
           result = {
             company: company
               ? {
-                  careerCategoriesId: company.careerCategoriesId,
-                  companyName: company.companyName,
+                  slug: company.slug,
+                  careerCategoryId: company.careerCategoryId,
+                  name: company.name,
                   logoUrl: await this.toPreviewUrl(
                     company.logoUrl,
                     EBucketType.COMPANY_LOGO,
@@ -87,10 +88,14 @@ export class GetMyProfileQuery extends BaseUsecase {
                     company.bannerUrl,
                     EBucketType.BANNER,
                   ),
-                  location: company.location,
+                  address: company.address,
+                  latitude: company.latitude,
+                  longitude: company.longitude,
                   description: company.description,
                   taxCode: company.taxCode,
                   websiteUrl: company.websiteUrl,
+                  employeeMin: company.employeeMin,
+                  employeeMax: company.employeeMax,
                 }
               : undefined,
           };

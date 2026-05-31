@@ -1,14 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRequestUpdateJobApplicationStatusDto } from 'src/application/dtos/job-application/req.job-application.dto';
-import { IJobApplicationResponseDto } from 'src/application/dtos/job-application/res.job-application.dto';
+import { IResponseApiRecruiterJobApplicationDto } from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { formatDateTimeVN } from 'src/common/utils/date-time.util';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { toRecruiterJobApplicationDto } from 'src/application/queries/job-application/job-application-response.mapper';
 
 const JOB_APPLICATION_STATUS_TRANSITIONS: Record<
   EJobApplicationStatus,
@@ -52,7 +54,7 @@ export class UpdateJobApplicationStatusUseCase extends BaseUsecase {
     recruiterId: string,
     jobApplicationId: string,
     dto: IRequestUpdateJobApplicationStatusDto,
-  ): Promise<{ data: IJobApplicationResponseDto }> {
+  ): Promise<IResponseApiRecruiterJobApplicationDto> {
     return this.runSafe(
       '[Update Job Application Status]',
       async () => {
@@ -118,14 +120,14 @@ export class UpdateJobApplicationStatusUseCase extends BaseUsecase {
               | EJobApplicationStatus.REJECTED
               | EJobApplicationStatus.OFFERED,
             jobTitle: job.title,
-            companyName: company.companyName,
-            scheduleTime: updated.scheduleTime?.toISOString(),
+            name: company.name,
+            scheduleTime: formatDateTimeVN(updated.scheduleTime) ?? undefined,
             scheduleLocation: updated.scheduleLocation,
             scheduleLink: updated.scheduleLink,
           });
         }
 
-        return { data: updated };
+        return { data: toRecruiterJobApplicationDto(updated) };
       },
       ERROR_CODES.JOB_APPLICATION_UPDATE_FAILED,
     );

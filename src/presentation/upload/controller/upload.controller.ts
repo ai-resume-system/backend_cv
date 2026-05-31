@@ -34,7 +34,10 @@ export class UploadController extends BaseController {
 
   @Post()
   @AuthRequired()
-  @ApiOperation({ summary: 'Upload CV/avatar/logo/banner to private storage' })
+  @ApiOperation({
+    summary:
+      'Upload CV, avatar, logo, or banner to private storage. Access: Authenticated User.',
+  })
   @UseInterceptors(
     FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_FILE_SIZE } }),
   )

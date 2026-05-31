@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRequestCreateJobApplicationDto } from 'src/application/dtos/job-application/req.job-application.dto';
-import { IJobApplicationResponseDto } from 'src/application/dtos/job-application/res.job-application.dto';
+import { IResponseApiJobSeekerJobApplicationDto } from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
@@ -9,6 +9,7 @@ import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import { toJobSeekerJobApplicationDto } from 'src/application/queries/job-application/job-application-response.mapper';
 
 @Injectable()
 export class CreateJobApplicationUseCase extends BaseUsecase {
@@ -24,7 +25,7 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
   async execute(
     userId: string,
     dto: IRequestCreateJobApplicationDto,
-  ): Promise<{ data: IJobApplicationResponseDto }> {
+  ): Promise<IResponseApiJobSeekerJobApplicationDto> {
     return this.runSafe(
       '[Create Job Application]',
       async () => {
@@ -74,7 +75,7 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
           coverLetter: dto.coverLetter,
         });
 
-        return { data: application };
+        return { data: toJobSeekerJobApplicationDto(application) };
       },
       ERROR_CODES.JOB_APPLICATION_CREATE_FAILED,
     );

@@ -3,7 +3,8 @@ import { IApiResponse } from 'src/common/interface/api-response.interface';
 export interface ISkillResponseDto {
   id: string;
   name: string;
-  careerCategoryId?: string;
+  slug: string;
+  careerCategoryId: string;
   parentId?: string;
   createdAt: Date;
   updatedAt: Date;

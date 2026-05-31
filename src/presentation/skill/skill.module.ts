@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GetSkillByIdQuery } from 'src/application/queries/skill/get-skill-by-id.query';
+import { GetSkillBySlugQuery } from 'src/application/queries/skill/get-skill-by-slug.query';
 import { GetSkillsQuery } from 'src/application/queries/skill/get-skills.query';
 import { CreateSkillUseCase } from 'src/application/use-cases/skill/create-skill.usecase';
 import { DeleteSkillUseCase } from 'src/application/use-cases/skill/delete-skill.usecase';
@@ -15,7 +15,8 @@ import { CVSkillTypeormRepository } from 'src/infrastructure/database/repositori
 import { JobSkillTypeormRepository } from 'src/infrastructure/database/repositories/job-skill.typeorm-repository';
 import { SkillTypeormRepository } from 'src/infrastructure/database/repositories/skill.typeorm-repository';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
-import { SkillController } from '../controller/skill.controller';
+import { SkillController } from './controller/skill.controller';
+import { SkillAdminController } from './controller/skill-admin.controller';
 
 @Module({
   imports: [
@@ -28,10 +29,10 @@ import { SkillController } from '../controller/skill.controller';
     JwtAuthModule,
     RedisModule,
   ],
-  controllers: [SkillController],
+  controllers: [SkillController, SkillAdminController],
   providers: [
     GetSkillsQuery,
-    GetSkillByIdQuery,
+    GetSkillBySlugQuery,
     CreateSkillUseCase,
     UpdateSkillUseCase,
     DeleteSkillUseCase,

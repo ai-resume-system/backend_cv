@@ -4,19 +4,18 @@ import type { ICVParsedDataEntity } from 'src/domain/entities/cv-parsed-data.ent
 import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import { IsNull, Repository } from 'typeorm';
 import { CVParsedDataOrmEntity } from '../entities/cv-parsed-data.orm-entity';
+import { BaseTypeormRepository } from './base.typeorm-repository';
 
 @Injectable()
-export class CVParsedDataTypeormRepository implements ICVParsedDataRepository {
+export class CVParsedDataTypeormRepository
+  extends BaseTypeormRepository<CVParsedDataOrmEntity, ICVParsedDataEntity>
+  implements ICVParsedDataRepository
+{
   constructor(
     @InjectRepository(CVParsedDataOrmEntity)
-    private readonly ormRepository: Repository<CVParsedDataOrmEntity>,
-  ) {}
-
-  async findById(id: string): Promise<ICVParsedDataEntity | null> {
-    const orm = await this.ormRepository.findOne({
-      where: { id, deletedAt: IsNull() },
-    });
-    return orm ? this.toDomain(orm) : null;
+    ormRepository: Repository<CVParsedDataOrmEntity>,
+  ) {
+    super(ormRepository);
   }
 
   async findByCvId(cvId: string): Promise<ICVParsedDataEntity | null> {
@@ -47,11 +46,7 @@ export class CVParsedDataTypeormRepository implements ICVParsedDataRepository {
     return this.toDomain(saved);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.ormRepository.delete(id);
-  }
-
-  private toDomain(orm: CVParsedDataOrmEntity): ICVParsedDataEntity {
+  protected toDomain(orm: CVParsedDataOrmEntity): ICVParsedDataEntity {
     return {
       id: orm.id,
       cvId: orm.cvId,

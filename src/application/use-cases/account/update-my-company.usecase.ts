@@ -1,9 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IRequestUpdateMyCompanyDto } from 'src/application/dtos/account/req.account.dto';
+import { IRequestUpdateMyCompanyProfileDto } from 'src/application/dtos/account/req.account.dto';
 import type { IResponseMyCompanyDto } from 'src/application/dtos/account/res.account.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
+import type { ICompanyEntity } from 'src/domain/entities/company.entity';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
@@ -22,7 +24,7 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
 
   async execute(
     userId: string,
-    dto: IRequestUpdateMyCompanyDto,
+    dto: IRequestUpdateMyCompanyProfileDto,
   ): Promise<IResponseMyCompanyDto> {
     return this.runSafe('[Update My Company]:', async () => {
       const user = await this.userRepository.findById(userId);
@@ -31,10 +33,25 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
       }
       const company = await this.companyRepository.findByUserId(userId);
       if (!company) {
-        throw new AppException(ERROR_CODES.USER_NOT_FOUND);
+        throw new AppException(ERROR_CODES.COMPANY_NOT_FOUND);
       }
 
       const { phone, ...companyPayload } = dto;
+      const normalizedCompanyPayload: Partial<ICompanyEntity> = {
+        ...companyPayload,
+      };
+      if (
+        dto.name !== undefined &&
+        dto.name.trim() &&
+        dto.name.trim() !== company.name
+      ) {
+        normalizedCompanyPayload.slug = await generateUniqueSlug(
+          dto.name,
+          'company',
+          (candidate) =>
+            this.companyRepository.isSlugTaken(candidate, company.id),
+        );
+      }
 
       const updatedUser =
         phone !== undefined
@@ -45,8 +62,18 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
         (value) => value !== undefined,
       );
 
+      const finalMin = dto.employeeMin ?? company.employeeMin ?? null;
+      const finalMax = dto.employeeMax ?? company.employeeMax ?? null;
+
+      if (finalMin !== null && finalMax !== null && finalMin > finalMax) {
+        throw new AppException(ERROR_CODES.INVALID_EMPLOYEE_RANGE);
+      }
+
       const updatedCompany = hasCompanyFields
-        ? await this.companyRepository.updateWithUserId(userId, companyPayload)
+        ? await this.companyRepository.updateWithUserId(
+            userId,
+            normalizedCompanyPayload,
+          )
         : company;
 
       await this.queueDispatch.dispatchCacheInvalidation({
@@ -56,12 +83,18 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
 
       return {
         phone: updatedUser.phone,
-        careerCategoriesId: updatedCompany.careerCategoriesId,
-        companyName: updatedCompany.companyName,
+        careerCategoryId: updatedCompany.careerCategoryId,
+        name: updatedCompany.name,
+        logoUrl: updatedCompany.logoUrl,
+        bannerUrl: updatedCompany.bannerUrl,
+        address: updatedCompany.address,
+        latitude: updatedCompany.latitude,
+        longitude: updatedCompany.longitude,
         taxCode: updatedCompany.taxCode,
-        location: updatedCompany.location,
         description: updatedCompany.description,
         websiteUrl: updatedCompany.websiteUrl,
+        employeeMin: updatedCompany.employeeMin,
+        employeeMax: updatedCompany.employeeMax,
       };
     });
   }

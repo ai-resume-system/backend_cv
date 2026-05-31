@@ -2,7 +2,10 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   IRequestGetJobApplicationsDto,
 } from 'src/application/dtos/job-application/req.job-application.dto';
-import { IJobApplicationResponseDto } from 'src/application/dtos/job-application/res.job-application.dto';
+import {
+  IRecruiterJobApplicationDto,
+  IResponseListApiRecruiterJobApplicationDto,
+} from 'src/application/dtos/job-application/res.job-application.dto';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
@@ -10,6 +13,7 @@ import type { ICompanyRepository } from 'src/domain/repositories/company.reposit
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import { toRecruiterJobApplicationDto } from './job-application-response.mapper';
 
 @Injectable()
 export class GetJobApplicationsByJobQuery {
@@ -28,7 +32,7 @@ export class GetJobApplicationsByJobQuery {
     jobId: string,
     recruiterId: string,
     query: IRequestGetJobApplicationsDto,
-  ): Promise<{ data: any[]; pagination: any }> {
+  ): Promise<IResponseListApiRecruiterJobApplicationDto> {
     try {
       const job = await this.jobRepository.findById(jobId);
 
@@ -79,32 +83,16 @@ export class GetJobApplicationsByJobQuery {
 
   private async toResponseDto(
     app: IJobApplicationEntity,
-  ): Promise<IJobApplicationResponseDto> {
+  ): Promise<IRecruiterJobApplicationDto> {
     const cv = await this.cvRepository.findById(app.cvId);
 
-    return {
-      id: app.id,
-      cvId: app.cvId,
-      userId: app.userId,
-      jobId: app.jobId,
-      fullName: app.fullName,
-      contactEmail: app.contactEmail,
-      contactPhone: app.contactPhone,
-      coverLetter: app.coverLetter,
-      matchingScore: app.matchingScore,
-      notes: app.notes,
-      status: app.status,
-      scheduleTime: app.scheduleTime,
-      scheduleLocation: app.scheduleLocation,
-      scheduleLink: app.scheduleLink,
-      createdAt: app.createdAt,
-      updatedAt: app.updatedAt,
+    return toRecruiterJobApplicationDto(app, {
       cv: cv
         ? {
             id: cv.id,
             title: cv.title,
           }
         : undefined,
-    };
+    });
   }
 }

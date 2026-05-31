@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -16,6 +17,7 @@ import { JobOrmEntity } from './job.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
 
 @Entity({ name: 'companies' })
+@Index('idx_companies_name', ['name'])
 export class CompanyOrmEntity implements ICompanyEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -23,16 +25,24 @@ export class CompanyOrmEntity implements ICompanyEntity {
   @Column({ name: 'user_id', type: 'uuid', unique: true })
   userId: string;
 
-  @Column({ name: 'career_categories_id', type: 'uuid', nullable: true })
-  careerCategoriesId?: string;
-
   @Column({
-    name: 'company_name',
+    name: 'name',
     type: 'varchar',
     length: 255,
-    nullable: true,
   })
-  companyName?: string;
+  name: string;
+
+  @Column({
+    name: 'slug',
+    type: 'varchar',
+    length: 255,
+    unique: true,
+  })
+  @Index('idx_companies_slug', { unique: true })
+  slug: string;
+
+  @Column({ name: 'career_category_id', type: 'uuid', nullable: true })
+  careerCategoryId?: string;
 
   @Column({ name: 'logo_url', type: 'text', nullable: true })
   logoUrl?: string | null;
@@ -40,8 +50,14 @@ export class CompanyOrmEntity implements ICompanyEntity {
   @Column({ name: 'banner_url', type: 'text', nullable: true })
   bannerUrl?: string | null;
 
-  @Column({ name: 'location', type: 'text', nullable: true })
-  location?: string;
+  @Column({ name: 'address', type: 'text', nullable: true })
+  address?: string;
+
+  @Column({ name: 'latitude', type: 'float', nullable: true })
+  latitude?: number;
+
+  @Column({ name: 'longitude', type: 'float', nullable: true })
+  longitude?: number;
 
   @Column({ name: 'description', type: 'text', nullable: true })
   description?: string;
@@ -52,31 +68,37 @@ export class CompanyOrmEntity implements ICompanyEntity {
   @Column({ name: 'website_url', type: 'varchar', length: 255, nullable: true })
   websiteUrl?: string;
 
+  @Column({ name: 'employee_min', type: 'int', nullable: true })
+  employeeMin?: number;
+
+  @Column({ name: 'employee_max', type: 'int', nullable: true })
+  employeeMax?: number;
+
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   updatedAt: Date;
 
   @DeleteDateColumn({
     name: 'deleted_at',
-    type: 'timestamp',
+    type: 'timestamptz',
     nullable: true,
   })
   deletedAt?: Date;
 
-  @ManyToOne(() => CareerCategoryOrmEntity, (career) => career.company)
-  @JoinColumn({ name: 'career_categories_id' })
-  careerCategories: CareerCategoryOrmEntity;
+  @ManyToOne(() => CareerCategoryOrmEntity, (career) => career.companies, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'career_category_id' })
+  careerCategory?: CareerCategoryOrmEntity;
 
   @OneToOne(() => UserOrmEntity, (user) => user.userCompany)
   @JoinColumn({ name: 'user_id' })

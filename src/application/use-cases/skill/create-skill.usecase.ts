@@ -5,6 +5,7 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
@@ -44,9 +45,14 @@ export class CreateSkillUseCase extends BaseUsecase {
         }
       }
 
+      const slug = await generateUniqueSlug(dto.name, 'skill', (candidate) =>
+        this.skillRepository.isSlugTaken(candidate),
+      );
+
       const skill = await this.skillRepository.create({
         name: dto.name.trim(),
-        careerCategoriesId: dto.careerCategoryId,
+        slug,
+        careerCategoryId: dto.careerCategoryId,
         parentId: dto.parentId,
       });
 
@@ -57,7 +63,8 @@ export class CreateSkillUseCase extends BaseUsecase {
         data: {
           id: skill.id,
           name: skill.name,
-          careerCategoryId: skill.careerCategoriesId,
+          slug: skill.slug,
+          careerCategoryId: skill.careerCategoryId,
           parentId: skill.parentId,
           createdAt: skill.createdAt,
           updatedAt: skill.updatedAt,

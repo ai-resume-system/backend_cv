@@ -13,8 +13,8 @@ export interface IRegisterJobSeekerDto extends IBaseRegisterDto {
 
 export interface IRegisterRecruiterDto extends IBaseRegisterDto {
   phone?: string;
-  company_name: string;
-  location: string;
+  name: string;
+  address: string;
 }
 
 export interface IVerifyOtpDto {
