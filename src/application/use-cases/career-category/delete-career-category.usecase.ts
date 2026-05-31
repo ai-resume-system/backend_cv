@@ -34,18 +34,11 @@ export class DeleteCareerCategoryUseCase extends BaseUsecase {
       }
 
       const skills = await this.skillRepository.findByCareerCategoryId(id);
-      if (skills.length > 0) {
-        throw new AppException(ERROR_CODES.CAREER_CATEGORY_HAS_SKILLS);
-      }
-
       const companies = await this.companyRepository.findByCareerCategoryId(id);
-      if (companies.length > 0) {
-        throw new AppException(ERROR_CODES.CAREER_CATEGORY_HAS_COMPANIES);
-      }
-
       const jobs = await this.jobRepository.findByCareerCategoryId(id);
-      if (jobs.length > 0) {
-        throw new AppException(ERROR_CODES.CAREER_CATEGORY_HAS_JOBS);
+
+      if (skills.length > 0 || companies.length > 0 || jobs.length > 0) {
+        throw new AppException(ERROR_CODES.CAREER_CATEGORY_IN_USE);
       }
 
       await this.careerCategoryRepository.softDelete(id);

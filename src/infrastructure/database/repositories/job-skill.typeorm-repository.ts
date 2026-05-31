@@ -46,12 +46,6 @@ export class JobSkillTypeormRepository
     return orms.map((orm) => this.toDomain(orm));
   }
 
-  async create(jobSkill: Partial<IJobSkillEntity>): Promise<IJobSkillEntity> {
-    const created = this.ormRepository.create(jobSkill);
-    const saved = await this.ormRepository.save(created);
-    return this.toDomain(saved);
-  }
-
   async deleteByJobId(jobId: string): Promise<void> {
     await this.ormRepository.softDelete({ jobId });
   }

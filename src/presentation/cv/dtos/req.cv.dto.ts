@@ -1,13 +1,5 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ECVStatus } from 'src/common/constants/enum/cv.enum';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 
@@ -55,4 +47,12 @@ export class RequestUpdateCVDto {
   @IsOptional()
   @IsString()
   title?: string;
+}
+
+export class RequestUpdateDefaultCVDto {
+  @ApiProperty({
+    example: true,
+  })
+  @IsBoolean()
+  isDefault: boolean;
 }

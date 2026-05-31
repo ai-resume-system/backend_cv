@@ -6,9 +6,11 @@ import {
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
+import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ICurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
+import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
@@ -24,6 +26,8 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
     @Inject('IJobApplicationRepository')
     private readonly jobApplicationRepository: IJobApplicationRepository,
     @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
+    @Inject('ICVParsedDataRepository')
+    private readonly cvParsedDataRepository: ICVParsedDataRepository,
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
@@ -69,6 +73,9 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
         this.userRepository.findById(application.userId),
         this.companyRepository.findById(job.companyId),
       ]);
+      const parsedData = cv
+        ? await this.cvParsedDataRepository.findLatestByCvId(cv.id)
+        : null;
 
       const jobSummary = {
         id: job.id,
@@ -88,7 +95,9 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
             id: cv.id,
             title: cv.title,
             fileUrl: cv.fileUrl,
-            summary: cv.summary,
+            summary: parsedData?.summary,
+            processingStatus:
+              parsedData?.processingStatus || EProcessingStatus.PENDING,
           }
         : undefined;
 

@@ -32,12 +32,6 @@ export class CVSkillTypeormRepository
     return orms.map((orm) => this.toDomain(orm));
   }
 
-  async create(cvSkill: Partial<ICVSkillEntity>): Promise<ICVSkillEntity> {
-    const created = this.ormRepository.create(cvSkill);
-    const saved = await this.ormRepository.save(created);
-    return this.toDomain(saved);
-  }
-
   async deleteByCvId(cvId: string): Promise<void> {
     await this.ormRepository.delete({ cvId });
   }

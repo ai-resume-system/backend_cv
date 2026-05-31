@@ -5,6 +5,7 @@ import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
@@ -13,6 +14,8 @@ import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 export class AnalyzeCVUseCase extends BaseUsecase {
   constructor(
     @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
+    @Inject('ICVParsedDataRepository')
+    private readonly cvParsedDataRepository: ICVParsedDataRepository,
     private readonly queueDispatch: QueueDispatchService,
     private readonly redis: RedisAdapter,
   ) {
@@ -35,18 +38,25 @@ export class AnalyzeCVUseCase extends BaseUsecase {
           throw new AppException(ERROR_CODES.CV_ANALYSIS_FILE_MISSING_ERROR);
         }
 
-        if (cv.processingStatus === EProcessingStatus.PROCESSING) {
+        const latestParsedData =
+          await this.cvParsedDataRepository.findLatestByCvId(id);
+        if (
+          latestParsedData &&
+          latestParsedData.processingStatus === EProcessingStatus.PROCESSING
+        ) {
           throw new AppException(
             ERROR_CODES.CV_ANALYSIS_ALREADY_PROCESSING_ERROR,
           );
         }
 
-        const updated = await this.cvRepository.update(id, {
+        const parsedData = await this.cvParsedDataRepository.create({
+          cvId: id,
           processingStatus: EProcessingStatus.PROCESSING,
         });
 
         await this.queueDispatch.dispatchCvParse({
-          cvId: updated.id,
+          cvId: id,
+          parsedDataId: parsedData.id,
           fileKey: cv.fileUrl,
           extension: cv.fileExtension as 'pdf' | 'docx' | 'doc',
         });
@@ -56,7 +66,7 @@ export class AnalyzeCVUseCase extends BaseUsecase {
 
         return {
           data: {
-            cvId: updated.id,
+            cvId: id,
             processingStatus: EProcessingStatus.PROCESSING,
             message: 'CV analysis job has been queued successfully',
           },

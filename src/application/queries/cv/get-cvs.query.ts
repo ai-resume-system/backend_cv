@@ -8,6 +8,9 @@ import {
 } from 'src/common/constants/cache-keys.constants';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { stableHash } from 'src/common/utils/hash.utils';
+import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
+import type { ICVResponseDto } from 'src/application/dtos/cv/res.cv.dto';
+import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
@@ -15,6 +18,8 @@ import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 export class GetCVsQuery extends BaseUsecase {
   constructor(
     @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
+    @Inject('ICVParsedDataRepository')
+    private readonly cvParsedDataRepository: ICVParsedDataRepository,
     private readonly redis: RedisAdapter,
   ) {
     super(new Logger(GetCVsQuery.name));
@@ -44,8 +49,24 @@ export class GetCVsQuery extends BaseUsecase {
         },
         sort: { sortBy, sortOrder },
       });
+      const parsedDataByCvId = new Map(
+        (
+          await this.cvParsedDataRepository.findLatestByCvIds(
+            dbResult.data.map((cv) => cv.id),
+          )
+        ).map((item) => [item.cvId, item]),
+      );
+      const data: ICVResponseDto[] = dbResult.data.map((cv) => {
+        const parsedData = parsedDataByCvId.get(cv.id);
+        return {
+          ...cv,
+          processingStatus:
+            parsedData?.processingStatus || EProcessingStatus.PENDING,
+          summary: parsedData?.summary,
+        };
+      });
       const response = {
-        data: dbResult.data,
+        data,
         pagination: {
           page,
           limit,

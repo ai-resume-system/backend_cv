@@ -28,7 +28,11 @@ import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
-import { RequestGetCVsDto, RequestUpdateCVDto } from '../dtos/req.cv.dto';
+import {
+  RequestGetCVsDto,
+  RequestUpdateCVDto,
+  RequestUpdateDefaultCVDto,
+} from '../dtos/req.cv.dto';
 import {
   ResponseApiCVDownloadDto,
   ResponseApiCVPreviewDto,
@@ -109,14 +113,15 @@ export class CVController extends BaseController {
   @Patch(':id/default')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Set a CV as default. Access: Job Seeker.',
+    summary: 'Update default status of a CV. Access: Job Seeker.',
   })
   @ApiResponse({ status: 200, type: ResponseApiCVDto })
   async setDefaultCV(
     @AuthCurrentUser() user: ICurrentUser,
     @Param('id') id: string,
+    @Body() dto: RequestUpdateDefaultCVDto,
   ): Promise<IResponseApiCVDto> {
-    return await this.setDefaultCVUseCase.execute(id, user.id);
+    return await this.setDefaultCVUseCase.execute(id, user.id, dto);
   }
 
   @Delete(':id')

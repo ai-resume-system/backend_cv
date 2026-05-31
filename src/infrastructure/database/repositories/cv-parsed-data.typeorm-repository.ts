@@ -19,10 +19,33 @@ export class CVParsedDataTypeormRepository
   }
 
   async findByCvId(cvId: string): Promise<ICVParsedDataEntity | null> {
+    return this.findLatestByCvId(cvId);
+  }
+
+  async findLatestByCvId(cvId: string): Promise<ICVParsedDataEntity | null> {
     const orm = await this.ormRepository.findOne({
       where: { cvId, deletedAt: IsNull() },
+      order: { createdAt: 'DESC', updatedAt: 'DESC' },
     });
     return orm ? this.toDomain(orm) : null;
+  }
+
+  async findLatestByCvIds(cvIds: string[]): Promise<ICVParsedDataEntity[]> {
+    if (!cvIds.length) {
+      return [];
+    }
+
+    const orms = await this.ormRepository
+      .createQueryBuilder('entity')
+      .where('entity.cvId IN (:...cvIds)', { cvIds })
+      .andWhere('entity.deletedAt IS NULL')
+      .distinctOn(['entity.cvId'])
+      .orderBy('entity.cvId', 'ASC')
+      .addOrderBy('entity.createdAt', 'DESC')
+      .addOrderBy('entity.updatedAt', 'DESC')
+      .getMany();
+
+    return orms.map((orm) => this.toDomain(orm));
   }
 
   async create(
@@ -50,9 +73,14 @@ export class CVParsedDataTypeormRepository
     return {
       id: orm.id,
       cvId: orm.cvId,
+      processingStatus: orm.processingStatus,
+      summary: orm.summary,
       rawText: orm.rawText,
       parsedJson: orm.parsedJson,
       score: Number(orm.score || 0),
+      provider: orm.provider,
+      model: orm.model,
+      confidenceFlags: orm.confidenceFlags,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
       deletedAt: orm.deletedAt,

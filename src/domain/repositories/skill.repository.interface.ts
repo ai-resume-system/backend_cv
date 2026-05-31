@@ -4,7 +4,7 @@ import { ISlugRepository } from './slug.repository.interface';
 
 export interface ISkillRepository
   extends IBaseRepository<ISkillEntity>, ISlugRepository<ISkillEntity> {
-  findByCareerCategoryId(careerCategoryId: string): Promise<ISkillEntity[]>;
-  findByName(name: string): Promise<ISkillEntity | null>;
-  findBySlugs(slugs: string[]): Promise<ISkillEntity[]>;
+  findByCareerCategoryId(careerCategoryId: string): Promise<ISkillEntity[]>; // Tìm theo category id
+  findByName(name: string): Promise<ISkillEntity | null>; // Tìm theo tên
+  findBySlugs(slugs: string[]): Promise<ISkillEntity[]>; // Tìm theo slug
 }

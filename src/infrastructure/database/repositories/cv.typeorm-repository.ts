@@ -43,11 +43,12 @@ export class CVTypeormRepository
     return orm ? this.toDomain(orm) : null;
   }
 
-  async unsetDefaultByUserId(userId: string): Promise<void> {
+  async unsetDefault(id: string, userId: string): Promise<ICVEntity> {
     await this.ormRepository.update(
-      { userId, isDefault: true, deletedAt: IsNull() },
+      { id, userId, deletedAt: IsNull() },
       { isDefault: false },
     );
+    return (await this.findById(id)) as ICVEntity;
   }
 
   async setDefault(id: string, userId: string): Promise<ICVEntity> {
@@ -73,9 +74,7 @@ export class CVTypeormRepository
       title: orm.title,
       fileUrl: orm.fileUrl,
       fileExtension: orm.fileExtension,
-      processingStatus: orm.processingStatus,
       isDefault: orm.isDefault,
-      summary: orm.summary,
       status: orm.status,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

@@ -18,3 +18,7 @@ export interface IRequestCreateCVDto {
 export interface IRequestUpdateCVDto {
   title?: string;
 }
+
+export interface IRequestUpdateDefaultCVDto {
+  isDefault: boolean;
+}

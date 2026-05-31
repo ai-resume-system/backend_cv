@@ -5,9 +5,8 @@ export interface IFavouriteJobRepository extends IBaseRepository<IFavouriteJobEn
   findByUserIdAndJobId(
     userId: string,
     jobId: string,
-  ): Promise<IFavouriteJobEntity | null>;
-  existsByUserIdAndJobId(userId: string, jobId: string): Promise<boolean>;
-  softDeleteByUserIdAndJobId(userId: string, jobId: string): Promise<void>;
-  deleteByUserIdAndJobId(userId: string, jobId: string): Promise<void>;
-  findJobIdsByUserId(userId: string): Promise<string[]>;
+  ): Promise<IFavouriteJobEntity | null>; // Tìm job yêu thích của user
+  existsByUserIdAndJobId(userId: string, jobId: string): Promise<boolean>; // Kiểm tra xem danh sách tồn tại chưa
+  deleteByUserIdAndJobId(userId: string, jobId: string): Promise<void>; // Xóa danh sách yêu thích
+  findJobIdsByUserId(userId: string): Promise<string[]>; // Tìm job yêu thích của user theo userId
 }

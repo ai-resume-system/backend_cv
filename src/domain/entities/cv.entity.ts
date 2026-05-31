@@ -1,7 +1,4 @@
-import {
-  ECVStatus,
-  EProcessingStatus,
-} from 'src/common/constants/enum/cv.enum';
+import { ECVStatus } from 'src/common/constants/enum/cv.enum';
 
 export interface ICVEntity {
   id: string;
@@ -9,9 +6,7 @@ export interface ICVEntity {
   title?: string;
   fileUrl?: string;
   fileExtension?: string;
-  processingStatus?: EProcessingStatus;
   isDefault?: boolean;
-  summary?: string;
   status: ECVStatus;
   createdAt: Date;
   updatedAt: Date;

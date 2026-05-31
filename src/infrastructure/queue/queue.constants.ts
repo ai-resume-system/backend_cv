@@ -14,8 +14,10 @@ export const JOB_APPLICATION_STATUS_EMAIL_DLQ =
 
 export interface ICvParseJob {
   cvId: string;
+  parsedDataId: string;
   fileKey: string;
   extension: 'pdf' | 'docx' | 'doc';
+  requestedProvider?: 'gemini' | 'openai' | 'groq';
 }
 
 export interface ICacheInvalidateJob {

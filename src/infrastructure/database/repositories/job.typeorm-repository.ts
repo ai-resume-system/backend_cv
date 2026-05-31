@@ -37,7 +37,9 @@ export class JobTypeormRepository
       expiredAtBefore,
       salaryMin,
       salaryMax,
-      experienceYears,
+      experienceYearsMin,
+      experienceYearsMax,
+      address,
       ...otherFilters
     } = options?.filter || {};
 
@@ -81,14 +83,24 @@ export class JobTypeormRepository
         queryBuilder.distinct(true);
       }
       if (salaryMin !== undefined) {
-        queryBuilder.andWhere('entity.salaryMin >= :salaryMin', { salaryMin });
+        queryBuilder.andWhere('entity.salaryMax >= :salaryMin', { salaryMin });
       }
       if (salaryMax !== undefined) {
-        queryBuilder.andWhere('entity.salaryMax <= :salaryMax', { salaryMax });
+        queryBuilder.andWhere('entity.salaryMin <= :salaryMax', { salaryMax });
       }
-      if (experienceYears !== undefined) {
-        queryBuilder.andWhere('entity.experienceYears <= :experienceYears', {
-          experienceYears,
+      if (experienceYearsMin !== undefined) {
+        queryBuilder.andWhere('entity.experienceYears >= :experienceYearsMin', {
+          experienceYearsMin,
+        });
+      }
+      if (address) {
+        queryBuilder.andWhere('entity.address ILIKE :address', {
+          address: `%${address}%`,
+        });
+      }
+      if (experienceYearsMax !== undefined) {
+        queryBuilder.andWhere('entity.experienceYears <= :experienceYearsMax', {
+          experienceYearsMax,
         });
       }
 

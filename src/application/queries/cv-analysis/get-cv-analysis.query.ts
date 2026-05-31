@@ -6,6 +6,7 @@ import {
   CACHE_TTL,
   CACHE_VERSION_KEYS,
 } from 'src/common/constants/cache-keys.constants';
+import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
@@ -52,15 +53,16 @@ export class GetCVAnalysisQuery extends BaseUsecase {
         throw new AppException(ERROR_CODES.CV_NOT_FOUND);
       }
 
+      const parsedData = await this.cvParsedDataRepository.findLatestByCvId(cv.id);
+      const snapshotUpdatedAt = parsedData?.updatedAt || cv.updatedAt;
       const version = await this.redis.getVersion(CACHE_VERSION_KEYS.CV_DETAIL);
-      const cacheKey = `${CACHE_KEYS.CV_DETAIL}:analysis:v${version}:${cv.id}:${cv.updatedAt.getTime()}`;
+      const cacheKey = `${CACHE_KEYS.CV_DETAIL}:analysis:v${version}:${cv.id}:${snapshotUpdatedAt.getTime()}`;
       const cached =
         await this.redis.safeGetJson<IResponseApiCVAnalysisDto>(cacheKey);
       if (cached) {
         return cached;
       }
 
-      const parsedData = await this.cvParsedDataRepository.findByCvId(cv.id);
       const cvSkills = await this.cvSkillRepository.findByCvId(cv.id);
       const parsedJson = (parsedData?.parsedJson ||
         {}) as IParsedAnalysisPayload;
@@ -92,8 +94,9 @@ export class GetCVAnalysisQuery extends BaseUsecase {
       const response: IResponseApiCVAnalysisDto = {
         data: {
           cvId: cv.id,
-          processingStatus: cv.processingStatus!,
-          summary: cv.summary,
+          processingStatus:
+            parsedData?.processingStatus || EProcessingStatus.PENDING,
+          summary: parsedData?.summary,
           score:
             parsedData?.score ??
             (typeof parsedJson.score === 'number'
@@ -111,7 +114,10 @@ export class GetCVAnalysisQuery extends BaseUsecase {
             : [],
           rawText: parsedData?.rawText,
           parsedDataId: parsedData?.id,
-          updatedAt: cv.updatedAt,
+          provider: parsedData?.provider,
+          model: parsedData?.model,
+          confidenceFlags: parsedData?.confidenceFlags || [],
+          updatedAt: snapshotUpdatedAt,
         },
       };
 

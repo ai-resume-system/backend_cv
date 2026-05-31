@@ -1,8 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
+import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
@@ -28,6 +30,8 @@ export class GetJobApplicationCVQuery extends BaseUsecase {
     private readonly companyRepository: ICompanyRepository,
     @Inject('ICVRepository')
     private readonly cvRepository: ICVRepository,
+    @Inject('ICVParsedDataRepository')
+    private readonly cvParsedDataRepository: ICVParsedDataRepository,
   ) {
     super(new Logger(GetJobApplicationCVQuery.name));
   }
@@ -56,14 +60,16 @@ export class GetJobApplicationCVQuery extends BaseUsecase {
     if (!cv) {
       throw new AppException(ERROR_CODES.CV_NOT_FOUND);
     }
+    const parsedData = await this.cvParsedDataRepository.findLatestByCvId(cv.id);
 
     return {
       id: cv.id,
       title: cv.title,
       fileUrl: cv.fileUrl,
-      summary: cv.summary,
+      summary: parsedData?.summary,
       status: cv.status,
-      processingStatus: cv.processingStatus,
+      processingStatus:
+        parsedData?.processingStatus || EProcessingStatus.PENDING,
       createdAt: cv.createdAt,
     };
   }

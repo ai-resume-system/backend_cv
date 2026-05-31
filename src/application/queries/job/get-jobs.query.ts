@@ -52,9 +52,7 @@ export class GetJobsQuery extends BaseUsecase {
     return this.executeByScope(dto, 'public', userId);
   }
 
-  async executeAdmin(
-    dto: IGetJobsDto,
-  ): Promise<IResponseListApiAdminJobDto> {
+  async executeAdmin(dto: IGetJobsDto): Promise<IResponseListApiAdminJobDto> {
     return this.executeByScope(dto, 'admin');
   }
 
@@ -162,7 +160,8 @@ export class GetJobsQuery extends BaseUsecase {
         skillIds: resolvedSkillIds,
         salaryMin: dto.salaryMin,
         salaryMax: dto.salaryMax,
-        experienceYears: dto.experienceYears,
+        experienceYearsMin: dto.experienceYearsMin,
+        experienceYearsMax: dto.experienceYearsMax,
         jobType: dto.jobType,
         ...(scope === 'public'
           ? { notExpired: true, activeOwnerOnly: true }
@@ -199,31 +198,31 @@ export class GetJobsQuery extends BaseUsecase {
 
     const data = dbResult.data
       .map((job) => {
-      const company = companiesMap.get(job.companyId);
-      if (!company && scope !== 'public') {
-        throw new AppException(ERROR_CODES.ROLE_UNABLE_TO_DETERMINE);
-      }
-      if (!company) {
-        return null;
-      }
+        const company = companiesMap.get(job.companyId);
+        if (!company && scope !== 'public') {
+          throw new AppException(ERROR_CODES.ROLE_UNABLE_TO_DETERMINE);
+        }
+        if (!company) {
+          return null;
+        }
 
-      const careerCategory = job.careerCategoryId
-        ? careerCategoryMap.get(job.careerCategoryId)
-        : undefined;
+        const careerCategory = job.careerCategoryId
+          ? careerCategoryMap.get(job.careerCategoryId)
+          : undefined;
 
-      if (scope === 'admin') {
-        return toAdminJobDto(job, { company, careerCategory });
-      }
+        if (scope === 'admin') {
+          return toAdminJobDto(job, { company, careerCategory });
+        }
 
-      if (scope === 'company') {
-        return toRecruiterJobDto(job, { company, careerCategory });
-      }
+        if (scope === 'company') {
+          return toRecruiterJobDto(job, { company, careerCategory });
+        }
 
-      return toPublicJobDto(job, {
-        company,
-        careerCategory,
-        isFavourited: false,
-      });
+        return toPublicJobDto(job, {
+          company,
+          careerCategory,
+          isFavourited: false,
+        });
       })
       .filter((job): job is NonNullable<typeof job> => job !== null);
 

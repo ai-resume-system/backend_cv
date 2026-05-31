@@ -38,13 +38,6 @@ export class FavouriteJobTypeormRepository
     return count > 0;
   }
 
-  async softDeleteByUserIdAndJobId(
-    userId: string,
-    jobId: string,
-  ): Promise<void> {
-    await this.ormRepository.softDelete({ userId, jobId });
-  }
-
   async deleteByUserIdAndJobId(userId: string, jobId: string): Promise<void> {
     await this.ormRepository.delete({ userId, jobId });
   }

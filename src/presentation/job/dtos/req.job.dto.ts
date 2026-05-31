@@ -51,11 +51,19 @@ export class RequestGetJobsDto extends RequestPaginationDto {
   @IsInt()
   salaryMax?: number;
 
-  @ApiPropertyOptional({ description: 'Filter jobs by experience years' })
+  @ApiPropertyOptional({ description: 'Minimum experience years (e.g. 1)' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  experienceYears?: number;
+  @Min(0)
+  experienceYearsMin?: number;
+
+  @ApiPropertyOptional({ description: 'Maximum experience years (e.g. 5)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  experienceYearsMax?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

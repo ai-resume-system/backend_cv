@@ -5,6 +5,7 @@ import { IRequestUploadFileDto } from 'src/application/dtos/upload/req.upload.dt
 import { IResponseApiUploadDto } from 'src/application/dtos/upload/res.upload.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
+import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import {
   EBucketType,
   EUploadType,
@@ -80,7 +81,13 @@ export class UploadFileUseCase extends BaseUsecase {
     });
 
     await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_LIST);
-    return { data: cv };
+    return {
+      data: {
+        ...cv,
+        processingStatus: EProcessingStatus.PENDING,
+        summary: undefined,
+      },
+    };
   }
 
   private async uploadImage(

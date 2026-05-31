@@ -9,6 +9,6 @@ export interface ICreateOutboxEventData {
 }
 
 export interface IOutboxEventRepository {
-  create(data: ICreateOutboxEventData): Promise<IOutboxEventEntity>;
-  markProcessed(id: string): Promise<void>;
+  create(data: ICreateOutboxEventData): Promise<IOutboxEventEntity>; // Tạo outbox event
+  markProcessed(id: string): Promise<void>; // Đánh dấu outbox event đã xử lý
 }

@@ -36,6 +36,9 @@ export interface ICVAnalysisResultDto {
   suggestions: string[];
   rawText?: string;
   parsedDataId?: string;
+  provider?: string;
+  model?: string;
+  confidenceFlags: string[];
   updatedAt: Date;
 }
 

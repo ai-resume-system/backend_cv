@@ -12,7 +12,8 @@ export interface IGetJobsDto extends IApiRequestPagination {
   skillSlugs?: string[];
   salaryMin?: number;
   salaryMax?: number;
-  experienceYears?: number;
+  experienceYearsMin?: number;
+  experienceYearsMax?: number;
   jobType?: EJobType;
   // public
   careerCategorySlug?: string;

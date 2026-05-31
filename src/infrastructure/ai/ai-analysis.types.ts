@@ -37,5 +37,5 @@ export interface IAiAnalysisRequest {
   cvId: string;
   rawText: string;
   fileExtension: 'pdf' | 'docx' | 'doc';
-  requestedProvider?: 'gemini' | 'openai';
+  requestedProvider?: 'gemini' | 'openai' | 'groq';
 }

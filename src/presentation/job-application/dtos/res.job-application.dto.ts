@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { ApiResponseDto, PaginationDto } from 'src/common/dto/response.dto';
 
@@ -14,6 +15,12 @@ export class ResponseJobApplicationCVDto {
 
   @ApiPropertyOptional()
   summary?: string;
+
+  @ApiPropertyOptional({
+    enum: Object.values(EProcessingStatus),
+    example: Object.values(EProcessingStatus).join(' | '),
+  })
+  processingStatus?: string;
 }
 
 export class ResponseJobApplicationJobCompanyDto {

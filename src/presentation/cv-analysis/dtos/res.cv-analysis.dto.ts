@@ -84,6 +84,15 @@ export class ResponseCVAnalysisDto {
   @ApiPropertyOptional()
   parsedDataId?: string;
 
+  @ApiPropertyOptional()
+  provider?: string;
+
+  @ApiPropertyOptional()
+  model?: string;
+
+  @ApiProperty({ type: [String] })
+  confidenceFlags: string[];
+
   @ApiProperty()
   updatedAt: Date;
 }
