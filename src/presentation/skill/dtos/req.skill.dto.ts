@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 
 export class RequestGetSkillsDto extends RequestPaginationDto {
@@ -20,7 +20,7 @@ export class RequestGetSkillsDto extends RequestPaginationDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUUID()
   careerCategoryId?: string;
 }
 
@@ -31,12 +31,12 @@ export class RequestCreateSkillDto {
   name: string;
 
   @ApiProperty()
-  @IsString()
+  @IsUUID()
   careerCategoryId: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUUID()
   parentId?: string;
 }
 

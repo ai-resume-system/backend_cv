@@ -6,6 +6,7 @@ import {
   Logger,
   Param,
   Patch,
+  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -78,7 +79,7 @@ export class CVController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseApiCVDownloadDto })
   async getDownloadUrl(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiCVDownloadDto> {
     return await this.getCVDownloadUrlQuery.execute(id, user.id);
   }
@@ -91,7 +92,7 @@ export class CVController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseApiCVPreviewDto })
   async getPreviewUrl(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiCVPreviewDto> {
     return await this.getCVPreviewUrlQuery.execute(id, user.id);
   }
@@ -104,7 +105,7 @@ export class CVController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseApiCVDto })
   async updateCV(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestUpdateCVDto,
   ): Promise<IResponseApiCVDto> {
     return await this.updateCVUseCase.execute(id, user.id, dto);
@@ -118,7 +119,7 @@ export class CVController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseApiCVDto })
   async setDefaultCV(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestUpdateDefaultCVDto,
   ): Promise<IResponseApiCVDto> {
     return await this.setDefaultCVUseCase.execute(id, user.id, dto);
@@ -132,7 +133,7 @@ export class CVController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseApiNullDto })
   async deleteCV(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiNullDto> {
     return await this.deleteCVUseCase.execute(id, user.id);
   }

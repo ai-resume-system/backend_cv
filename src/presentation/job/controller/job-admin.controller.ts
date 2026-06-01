@@ -5,6 +5,7 @@ import {
   Logger,
   Param,
   Patch,
+  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -51,7 +52,9 @@ export class JobAdminController extends BaseController {
     summary: 'Approve a pending job. Access: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiAdminJobDto })
-  async approveJob(@Param('id') id: string): Promise<IResponseApiAdminJobDto> {
+  async approveJob(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<IResponseApiAdminJobDto> {
     return await this.reviewJobUseCase.approve(id);
   }
 
@@ -62,7 +65,7 @@ export class JobAdminController extends BaseController {
   })
   @ApiResponse({ status: 200, type: ResponseApiAdminJobDto })
   async rejectJob(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestRejectJobDto,
   ): Promise<IResponseApiAdminJobDto> {
     return await this.reviewJobUseCase.reject(id, dto);
@@ -74,7 +77,9 @@ export class JobAdminController extends BaseController {
     summary: 'Close a job. Access: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiAdminJobDto })
-  async closeJob(@Param('id') id: string): Promise<IResponseApiAdminJobDto> {
+  async closeJob(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<IResponseApiAdminJobDto> {
     return await this.reviewJobUseCase.close(id);
   }
 }

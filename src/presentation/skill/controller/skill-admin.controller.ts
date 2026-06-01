@@ -5,6 +5,7 @@ import {
   Logger,
   Param,
   Patch,
+  ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -52,7 +53,7 @@ export class SkillAdminController extends BaseController {
   })
   @ApiResponse({ status: 200, type: ResponseApiSkillDto })
   async updateSkill(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestUpdateSkillDto,
   ): Promise<IResponseApiSkillDto> {
     return await this.updateSkillUseCase.execute(id, dto);
@@ -64,7 +65,9 @@ export class SkillAdminController extends BaseController {
     summary: 'Delete a skill. Access: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiNullDto })
-  async deleteSkill(@Param('id') id: string): Promise<IResponseApiNullDto> {
+  async deleteSkill(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<IResponseApiNullDto> {
     return await this.deleteSkillUseCase.execute(id);
   }
 }

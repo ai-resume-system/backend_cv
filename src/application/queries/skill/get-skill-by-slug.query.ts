@@ -30,9 +30,7 @@ export class GetSkillBySlugQuery extends BaseUsecase {
         return cached;
       }
 
-      const skill =
-        (await this.skillRepository.findBySlug(slug)) ||
-        (await this.skillRepository.findById(slug));
+      const skill = await this.skillRepository.findBySlug(slug);
       if (!skill) {
         throw new AppException(ERROR_CODES.SKILL_NOT_FOUND);
       }

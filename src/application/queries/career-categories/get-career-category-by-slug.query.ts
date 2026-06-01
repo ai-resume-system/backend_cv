@@ -34,12 +34,7 @@ export class GetCareerCategoryBySlugQuery extends BaseUsecase {
         );
       if (cached) return cached;
 
-      const result =
-        (await this.careerCategoryRepository.findActiveBySlug(slug)) ||
-        (await this.careerCategoryRepository.findById(slug));
-      if (result && result.status !== 'active') {
-        throw new AppException(ERROR_CODES.CAREER_CATEGORY_NOT_FOUND);
-      }
+      const result = await this.careerCategoryRepository.findActiveBySlug(slug);
       if (!result)
         throw new AppException(ERROR_CODES.CAREER_CATEGORY_NOT_FOUND);
       const response = { data: result };
@@ -48,11 +43,12 @@ export class GetCareerCategoryBySlugQuery extends BaseUsecase {
     });
   }
 
-  async executeAdmin(slug: string): Promise<IResponseApiAdminCareerCategoryDto> {
+  async executeAdmin(
+    slug: string,
+  ): Promise<IResponseApiAdminCareerCategoryDto> {
     return this.runSafe('[Get Career Category By Slug Admin]:', async () => {
       const result =
-        (await this.careerCategoryRepository.findBySlugWithDeleted(slug)) ||
-        (await this.careerCategoryRepository.findByIdWithDeleted(slug));
+        await this.careerCategoryRepository.findBySlugWithDeleted(slug);
       if (!result) {
         throw new AppException(ERROR_CODES.CAREER_CATEGORY_NOT_FOUND);
       }

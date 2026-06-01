@@ -6,6 +6,7 @@ import {
   Logger,
   Param,
   Patch,
+  ParseUUIDPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -83,7 +84,7 @@ export class JobRecruiterController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseApiRecruiterJobDto })
   async updateJob(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestUpdateJobDto,
   ): Promise<IResponseApiRecruiterJobDto> {
     return await this.updateJobUseCase.execute(id, user.id, dto);
@@ -97,7 +98,7 @@ export class JobRecruiterController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseApiNullDto })
   async deleteJob(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiNullDto> {
     return await this.deleteJobUseCase.execute(id, user.id);
   }
@@ -109,7 +110,7 @@ export class JobRecruiterController extends BaseController {
   })
   @ApiResponse({ status: 200, type: ResponseApiRecruiterJobDto })
   async closeJob(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiRecruiterJobDto> {
     return await this.reviewJobUseCase.close(id);
   }

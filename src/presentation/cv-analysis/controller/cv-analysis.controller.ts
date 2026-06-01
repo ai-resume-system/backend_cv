@@ -1,4 +1,11 @@
-import { Controller, Get, Logger, Param, Post } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Logger,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type {
   IResponseApiCVAnalysisDto,
@@ -34,7 +41,7 @@ export class CVAnalysisController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseApiCVAnalysisDto })
   async getCVAnalysis(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiCVAnalysisDto> {
     return await this.getCVAnalysisQuery.execute(id, user.id);
   }
@@ -47,7 +54,7 @@ export class CVAnalysisController extends BaseController {
   @ApiResponse({ status: 201, type: ResponseApiCVAnalyzeActionDto })
   async analyzeCV(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiCVAnalyzeActionDto> {
     return await this.analyzeCVUseCase.execute(id, user.id);
   }

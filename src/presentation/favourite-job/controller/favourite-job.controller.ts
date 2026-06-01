@@ -5,6 +5,7 @@ import {
   Get,
   Logger,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -62,7 +63,7 @@ export class FavouriteJobController extends BaseController {
   @ApiResponse({ status: 200, type: ResponseApiFavouriteJobDto })
   async removeFavouriteJob(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('jobId') jobId: string,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
   ): Promise<IResponseApiFavouriteJobDto> {
     return await this.removeFavouriteJobUseCase.execute(user.id, jobId);
   }

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -95,7 +96,7 @@ export class JobSeekerJobApplicationController extends BaseController {
   })
   async getJobApplication(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiJobSeekerJobApplicationDto> {
     return (await this.getJobApplicationByIdQuery.execute(
       id,
@@ -115,7 +116,7 @@ export class JobSeekerJobApplicationController extends BaseController {
   })
   async withdrawJobApplication(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiJobSeekerJobApplicationDto> {
     return await this.withdrawJobApplicationUseCase.execute(user.id, id);
   }

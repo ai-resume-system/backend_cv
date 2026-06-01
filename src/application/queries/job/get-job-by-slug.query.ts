@@ -47,9 +47,7 @@ export class GetJobBySlugQuery extends BaseUsecase {
     userId?: string,
   ): Promise<IResponseApiPublicJobDto> {
     return this.runSafe('[Get Job By Slug]:', async () => {
-      const resolvedJob =
-        (await this.jobRepository.findBySlug(slug)) ||
-        (await this.jobRepository.findById(slug));
+      const resolvedJob = await this.jobRepository.findBySlug(slug);
       if (!resolvedJob) throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
       if (
         resolvedJob.status !== EJobStatus.OPEN ||

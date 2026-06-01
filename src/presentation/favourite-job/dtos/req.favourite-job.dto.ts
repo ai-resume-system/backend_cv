@@ -4,7 +4,7 @@ import { RequestPaginationDto } from 'src/common/dto/request.dto';
 
 export class RequestCreateFavouriteJobDto {
   @ApiProperty()
-  @IsUUID('4')
+  @IsUUID()
   jobId: string;
 }
 

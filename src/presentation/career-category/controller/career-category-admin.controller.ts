@@ -6,6 +6,7 @@ import {
   Logger,
   Param,
   Patch,
+  ParseUUIDPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -65,7 +66,7 @@ export class CareerCategoryAdminController extends BaseController {
 
   @Get(':slug')
   @ApiOperation({
-    summary: 'Get career category detail including soft-deleted by slug or id. Access: Admin.',
+    summary: 'Get career category detail including soft-deleted by slug. Access: Admin.',
   })
   @ApiResponse({
     status: 200,
@@ -103,7 +104,7 @@ export class CareerCategoryAdminController extends BaseController {
     type: ResponseApiAdminCareerCategoryDto,
   })
   async updateCareerCategory(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestUpdateCareerCategoryDto,
   ): Promise<IResponseApiAdminCareerCategoryDto> {
     return await this.updateCareerCategoryUseCase.execute(id, dto);
@@ -119,7 +120,7 @@ export class CareerCategoryAdminController extends BaseController {
     type: ResponseApiNullDto,
   })
   async deleteCareerCategory(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiNullDto> {
     return await this.deleteCareerCategoryUseCase.execute(id);
   }

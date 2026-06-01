@@ -7,6 +7,7 @@ import { AppException } from 'src/common/exceptions/app.exception';
 import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
 import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
 import type { ICompanyEntity } from 'src/domain/entities/company.entity';
+import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
@@ -19,6 +20,8 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
     private readonly userRepository: IUserRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
+    @Inject('ICareerCategoryRepository')
+    private readonly careerCategoryRepository: ICareerCategoryRepository,
     private readonly queueDispatch: QueueDispatchService,
     private readonly storage: S3StorageService,
   ) {
@@ -37,6 +40,15 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
       const company = await this.companyRepository.findByUserId(userId);
       if (!company) {
         throw new AppException(ERROR_CODES.COMPANY_NOT_FOUND);
+      }
+
+      if (dto.careerCategoryId !== undefined && dto.careerCategoryId !== null) {
+        const careerCategory = await this.careerCategoryRepository.findById(
+          dto.careerCategoryId,
+        );
+        if (!careerCategory) {
+          throw new AppException(ERROR_CODES.CAREER_CATEGORY_NOT_FOUND);
+        }
       }
 
       const { phone, ...companyPayload } = dto;

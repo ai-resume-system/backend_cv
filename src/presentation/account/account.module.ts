@@ -12,9 +12,18 @@ import { JwtAuthModule } from 'src/common/guards/jwt-auth.module';
 import { AuthModule } from '../auth/auth.module';
 import { QueueModule } from 'src/infrastructure/queue/queue.module';
 import { StorageModule } from 'src/infrastructure/storage/storage.module';
+import { CareerCategoryTypeormRepository } from 'src/infrastructure/database/repositories/career-category.typeorm-repository';
+import { CareerCategoriesModule } from '../career-category/career-categories.module';
 
 @Module({
-  imports: [UsersModule, JwtAuthModule, AuthModule, StorageModule, QueueModule],
+  imports: [
+    UsersModule,
+    CareerCategoriesModule,
+    JwtAuthModule,
+    AuthModule,
+    StorageModule,
+    QueueModule,
+  ],
   controllers: [AccountController],
   providers: [
     GetMyProfileQuery,

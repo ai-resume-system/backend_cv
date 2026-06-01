@@ -67,7 +67,7 @@ export class RequestGetJobsDto extends RequestPaginationDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUUID()
   companyId?: string;
 
   @ApiPropertyOptional({
@@ -79,7 +79,7 @@ export class RequestGetJobsDto extends RequestPaginationDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUUID()
   careerCategoryId?: string;
 
   @ApiPropertyOptional({
@@ -138,7 +138,7 @@ export class RequestGetJobsDto extends RequestPaginationDto {
 
 export class RequestJobSkillDto {
   @ApiProperty()
-  @IsUUID('4')
+  @IsUUID()
   skillId: string;
 
   @ApiPropertyOptional({ example: 1, minimum: 1, maximum: 5 })
@@ -153,7 +153,6 @@ export class RequestJobSkillDto {
 export class RequestCreateJobDto {
   @ApiProperty({ example: 'Backend Developer' })
   @IsString()
-  @MaxLength(255)
   title: string;
 
   @ApiPropertyOptional()
@@ -191,7 +190,7 @@ export class RequestCreateJobDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUUID()
   careerCategoryId?: string;
 
   @ApiPropertyOptional()
@@ -265,7 +264,7 @@ export class RequestUpdateJobDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUUID()
   careerCategoryId?: string;
 
   @ApiPropertyOptional()

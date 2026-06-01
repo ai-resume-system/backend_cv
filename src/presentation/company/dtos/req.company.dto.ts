@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 
 export class RequestGetCompaniesDto extends RequestPaginationDto {
@@ -29,7 +29,7 @@ export class RequestGetCompaniesDto extends RequestPaginationDto {
     description: 'Career category ID filter',
   })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   careerCategoryId?: string;
 
   @ApiPropertyOptional({

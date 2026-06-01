@@ -42,7 +42,7 @@ export class RequestUpdateMyProfileDto extends RequestUpdateProfileBaseDto {
 export class RequestUpdateMyCompanyDto extends RequestUpdateProfileBaseDto {
   @ApiPropertyOptional({ example: 'uuid-of-career-category' })
   @IsOptional()
-  @IsUUID(4, ERROR_CODES.INVALID_UUID)
+  @IsUUID()
   careerCategoryId?: string;
 
   @ApiPropertyOptional({ example: 'Tech Company' })

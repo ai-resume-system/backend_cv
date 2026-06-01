@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import {
   ApiExtraModels,
@@ -53,7 +61,7 @@ export class RecruiterJobApplicationController extends BaseController {
   })
   async getJobApplications(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('jobId') jobId: string,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
     @Query() query: RequestGetJobApplicationsDto,
   ): Promise<IResponseListApiRecruiterJobApplicationDto> {
     return await this.getJobApplicationsByJobQuery.execute(
@@ -75,7 +83,7 @@ export class RecruiterJobApplicationController extends BaseController {
   })
   async getJobApplication(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiRecruiterJobApplicationDto> {
     return (await this.getJobApplicationByIdQuery.execute(
       id,
@@ -91,7 +99,7 @@ export class RecruiterJobApplicationController extends BaseController {
   @ApiResponse({ status: 200, description: 'CV details' })
   async getApplicationCV(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('applicationId') applicationId: string,
+    @Param('applicationId', ParseUUIDPipe) applicationId: string,
   ): Promise<any> {
     return await this.getJobApplicationCVQuery.execute(applicationId, user.id);
   }
@@ -108,7 +116,7 @@ export class RecruiterJobApplicationController extends BaseController {
   })
   async updateStatus(
     @AuthCurrentUser() user: ICurrentUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestUpdateJobApplicationStatusDto,
   ): Promise<IResponseApiRecruiterJobApplicationDto> {
     return await this.updateJobApplicationStatusUseCase.execute(

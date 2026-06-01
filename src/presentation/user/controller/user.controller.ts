@@ -5,6 +5,7 @@ import {
   Logger,
   Param,
   Patch,
+  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -63,7 +64,9 @@ export class UserController extends BaseController {
     description: 'Get user successfully',
     type: ResponseApiUserDto,
   })
-  async getUserById(@Param('id') id: string): Promise<IGetUserByIdResponseDto> {
+  async getUserById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<IGetUserByIdResponseDto> {
     return await this.getUserByIdQuery.execute(id);
   }
 
@@ -78,7 +81,7 @@ export class UserController extends BaseController {
     type: ResponseApiNullDto,
   })
   async updateUserStatus(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestUpdateUserStatusDto,
   ): Promise<IResponseApiNullDto> {
     return await this.updateUserStatusUseCase.execute(id, dto);
