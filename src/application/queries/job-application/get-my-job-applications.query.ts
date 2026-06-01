@@ -1,7 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  IRequestGetJobApplicationsDto,
-} from 'src/application/dtos/job-application/req.job-application.dto';
+import { IRequestGetJobApplicationsDto } from 'src/application/dtos/job-application/req.job-application.dto';
 import {
   IJobSeekerJobApplicationDto,
   IResponseApiJobSeekerJobApplicationDto,
@@ -14,6 +12,8 @@ import type { ICompanyRepository } from 'src/domain/repositories/company.reposit
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 import { toJobSeekerJobApplicationDto } from './job-application-response.mapper';
 
 @Injectable()
@@ -27,6 +27,7 @@ export class GetMyJobApplicationsQuery {
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
+    private readonly storage: S3StorageService,
   ) {}
 
   async execute(
@@ -102,6 +103,15 @@ export class GetMyJobApplicationsQuery {
         ? await this.companyRepository.findById(job.companyId)
         : null;
 
+    const companySummary = company
+      ? await resolveCompanyMedia(this.storage, {
+          id: company.id,
+          name: company.name,
+          slug: company.slug,
+          logoUrl: company.logoUrl,
+        })
+      : undefined;
+
     return toJobSeekerJobApplicationDto(app, {
       cv: cv
         ? {
@@ -114,14 +124,7 @@ export class GetMyJobApplicationsQuery {
             id: job.id,
             title: job.title,
             address: job.address,
-            company: company
-              ? {
-                  id: company.id,
-                  name: company.name,
-                  slug: company.slug,
-                  logoUrl: company.logoUrl,
-                }
-              : undefined,
+            company: companySummary,
           }
         : undefined,
     });

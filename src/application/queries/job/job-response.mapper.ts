@@ -11,28 +11,7 @@ import type {
   IRecruiterJobItemDto,
 } from 'src/application/dtos/job/res.job.dto';
 import type { ICareerCategoryEntity } from 'src/domain/entities/career-category.entity';
-import type { ICompanyEntity } from 'src/domain/entities/company.entity';
 import type { IJobEntity } from 'src/domain/entities/job.entity';
-
-export function toPublicJobCompanyDto(
-  company: ICompanyEntity,
-): IPublicJobCompanyDto {
-  return {
-    id: company.id,
-    slug: company.slug,
-    name: company.name,
-    logoUrl: company.logoUrl,
-    bannerUrl: company.bannerUrl,
-    address: company.address,
-    latitude: company.latitude,
-    longitude: company.longitude,
-    description: company.description,
-    websiteUrl: company.websiteUrl,
-    taxCode: company.taxCode,
-    employeeMin: company.employeeMin,
-    employeeMax: company.employeeMax,
-  };
-}
 
 export function toJobCareerCategoryDto(
   careerCategory?: ICareerCategoryEntity | null,
@@ -49,7 +28,7 @@ export function toJobCareerCategoryDto(
 }
 
 type PublicJobOptions = {
-  company: ICompanyEntity;
+  company: IPublicJobCompanyDto;
   careerCategory?: ICareerCategoryEntity | null;
   skills?: IJobSkillDto[];
   isFavourited?: boolean;
@@ -72,7 +51,7 @@ export function toPublicJobDto(
     experienceYears: job.experienceYears,
     expiredAt: job.expiredAt,
     jobType: job.jobType,
-    company: toPublicJobCompanyDto(options.company),
+    company: options.company,
     careerCategory: toJobCareerCategoryDto(options.careerCategory),
     skills: options.skills,
     status: job.status,

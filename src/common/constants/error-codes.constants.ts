@@ -368,6 +368,10 @@ export const ERROR_CODES = {
   },
 
   // SYSTEM
+  INVALID_UUID: {
+    message: 'Invalid UUID',
+    status: HttpStatus.BAD_REQUEST,
+  },
   IP_NOT_FOUND: {
     message: 'IP address not found',
     status: HttpStatus.NOT_FOUND,

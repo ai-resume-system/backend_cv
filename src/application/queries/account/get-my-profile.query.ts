@@ -4,15 +4,17 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AppException } from 'src/common/exceptions/app.exception';
+import {
+  resolveCompanyMedia,
+  resolveProfileAvatar,
+} from 'src/common/helpers/media-url.helper';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
-import { EBucketType } from 'src/common/constants/enum/upload.enum';
 
 const ACCOUNT_PROFILE_CACHE_TTL_SECONDS = 600;
-const ACCOUNT_IMAGE_PREVIEW_TTL_SECONDS = 900;
 
 @Injectable()
 export class GetMyProfileQuery extends BaseUsecase {
@@ -61,14 +63,11 @@ export class GetMyProfileQuery extends BaseUsecase {
           const profile = await this.profileRepository.findByUserId(userId);
           result = {
             profile: profile
-              ? {
+              ? await resolveProfileAvatar(this.storage, {
                   fullName: profile.fullName,
-                  avatarUrl: await this.toPreviewUrl(
-                    profile.avatarUrl,
-                    EBucketType.AVATAR,
-                  ),
+                  avatarUrl: profile.avatarUrl,
                   bio: profile.bio,
-                }
+                })
               : undefined,
           };
           break;
@@ -76,18 +75,12 @@ export class GetMyProfileQuery extends BaseUsecase {
           const company = await this.companyRepository.findByUserId(userId);
           result = {
             company: company
-              ? {
+              ? await resolveCompanyMedia(this.storage, {
                   slug: company.slug,
                   careerCategoryId: company.careerCategoryId,
                   name: company.name,
-                  logoUrl: await this.toPreviewUrl(
-                    company.logoUrl,
-                    EBucketType.COMPANY_LOGO,
-                  ),
-                  bannerUrl: await this.toPreviewUrl(
-                    company.bannerUrl,
-                    EBucketType.BANNER,
-                  ),
+                  logoUrl: company.logoUrl,
+                  bannerUrl: company.bannerUrl,
                   address: company.address,
                   latitude: company.latitude,
                   longitude: company.longitude,
@@ -96,7 +89,7 @@ export class GetMyProfileQuery extends BaseUsecase {
                   websiteUrl: company.websiteUrl,
                   employeeMin: company.employeeMin,
                   employeeMax: company.employeeMax,
-                }
+                })
               : undefined,
           };
           break;
@@ -116,19 +109,5 @@ export class GetMyProfileQuery extends BaseUsecase {
       );
       return response;
     });
-  }
-
-  private async toPreviewUrl(
-    value: string | null | undefined,
-    bucketType: EBucketType,
-  ): Promise<string | null | undefined> {
-    if (!value || this.storage.isExternalUrl(value)) {
-      return value;
-    }
-    return this.storage.createPrivatePreviewUrl(
-      value,
-      bucketType,
-      ACCOUNT_IMAGE_PREVIEW_TTL_SECONDS,
-    );
   }
 }

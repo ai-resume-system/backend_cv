@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IGetJobsDto } from 'src/application/dtos/job/req.job.dto';
 import {
+  IPublicJobCompanyDto,
   IResponseListApiAdminJobDto,
   IResponseListApiPublicJobDto,
   IResponseListApiRecruiterJobDto,
@@ -14,6 +15,7 @@ import {
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
 import { stableHash } from 'src/common/utils/hash.utils';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
@@ -26,6 +28,7 @@ import {
   toPublicJobDto,
   toRecruiterJobDto,
 } from './job-response.mapper';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 
 @Injectable()
 export class GetJobsQuery extends BaseUsecase {
@@ -41,6 +44,7 @@ export class GetJobsQuery extends BaseUsecase {
     @Inject('ISkillRepository')
     private readonly skillRepository: ISkillRepository,
     private readonly redis: RedisAdapter,
+    private readonly storage: S3StorageService,
   ) {
     super(new Logger(GetJobsQuery.name));
   }
@@ -196,35 +200,55 @@ export class GetJobsQuery extends BaseUsecase {
       ]),
     );
 
-    const data = dbResult.data
-      .map((job) => {
-        const company = companiesMap.get(job.companyId);
-        if (!company && scope !== 'public') {
-          throw new AppException(ERROR_CODES.ROLE_UNABLE_TO_DETERMINE);
-        }
-        if (!company) {
-          return null;
-        }
+    const data = (
+      await Promise.all(
+        dbResult.data.map(async (job) => {
+          const company = companiesMap.get(job.companyId);
+          if (!company && scope !== 'public') {
+            throw new AppException(ERROR_CODES.ROLE_UNABLE_TO_DETERMINE);
+          }
+          if (!company) {
+            return null;
+          }
 
-        const careerCategory = job.careerCategoryId
-          ? careerCategoryMap.get(job.careerCategoryId)
-          : undefined;
+          const careerCategory = job.careerCategoryId
+            ? careerCategoryMap.get(job.careerCategoryId)
+            : undefined;
+          const companyDto = (await resolveCompanyMedia(this.storage, {
+            id: company.id,
+            slug: company.slug,
+            name: company.name,
+            logoUrl: company.logoUrl,
+            bannerUrl: company.bannerUrl,
+            address: company.address,
+            latitude: company.latitude,
+            longitude: company.longitude,
+            description: company.description,
+            websiteUrl: company.websiteUrl,
+            taxCode: company.taxCode,
+            employeeMin: company.employeeMin,
+            employeeMax: company.employeeMax,
+          })) as IPublicJobCompanyDto;
 
-        if (scope === 'admin') {
-          return toAdminJobDto(job, { company, careerCategory });
-        }
+          if (scope === 'admin') {
+            return toAdminJobDto(job, { company: companyDto, careerCategory });
+          }
 
-        if (scope === 'company') {
-          return toRecruiterJobDto(job, { company, careerCategory });
-        }
+          if (scope === 'company') {
+            return toRecruiterJobDto(job, {
+              company: companyDto,
+              careerCategory,
+            });
+          }
 
-        return toPublicJobDto(job, {
-          company,
-          careerCategory,
-          isFavourited: false,
-        });
-      })
-      .filter((job): job is NonNullable<typeof job> => job !== null);
+          return toPublicJobDto(job, {
+            company: companyDto,
+            careerCategory,
+            isFavourited: false,
+          });
+        }),
+      )
+    ).filter((job): job is NonNullable<typeof job> => job !== null);
 
     const response = {
       data,

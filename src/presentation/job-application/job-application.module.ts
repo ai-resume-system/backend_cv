@@ -24,6 +24,7 @@ import { CVOrmEntity } from 'src/infrastructure/database/entities/cv.orm-entity'
 import { JobOrmEntity } from 'src/infrastructure/database/entities/job.orm-entity';
 import { QueueModule } from 'src/infrastructure/queue/queue.module';
 import { GetJobApplicationCVQuery } from 'src/application/queries/job-application/get-job-application-cv.querry';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { GetJobApplicationCVQuery } from 'src/application/queries/job-applicatio
     ]),
     JwtAuthModule,
     QueueModule,
+    StorageModule,
   ],
   controllers: [
     JobSeekerJobApplicationController,

@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   MinLength,
 } from 'class-validator';
@@ -41,7 +42,7 @@ export class RequestUpdateMyProfileDto extends RequestUpdateProfileBaseDto {
 export class RequestUpdateMyCompanyDto extends RequestUpdateProfileBaseDto {
   @ApiPropertyOptional({ example: 'uuid-of-career-category' })
   @IsOptional()
-  @IsString()
+  @IsUUID(4, ERROR_CODES.INVALID_UUID)
   careerCategoryId?: string;
 
   @ApiPropertyOptional({ example: 'Tech Company' })

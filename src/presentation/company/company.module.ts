@@ -16,6 +16,7 @@ import { FavouriteJobTypeormRepository } from 'src/infrastructure/database/repos
 import { JobTypeormRepository } from 'src/infrastructure/database/repositories/job.typeorm-repository';
 import { SkillTypeormRepository } from 'src/infrastructure/database/repositories/skill.typeorm-repository';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 import { CompanyController } from './controller/company.controller';
 
 @Module({
@@ -29,6 +30,7 @@ import { CompanyController } from './controller/company.controller';
     ]),
     JwtAuthModule,
     RedisModule,
+    StorageModule,
   ],
   controllers: [CompanyController],
   providers: [

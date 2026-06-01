@@ -12,6 +12,7 @@ import { CareerCategoryTypeormRepository } from 'src/infrastructure/database/rep
 import { CompanyTypeormRepository } from 'src/infrastructure/database/repositories/company.typeorm-repository';
 import { FavouriteJobTypeormRepository } from 'src/infrastructure/database/repositories/favourite-job.typeorm-repository';
 import { JobTypeormRepository } from 'src/infrastructure/database/repositories/job.typeorm-repository';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 import { FavouriteJobController } from './controller/favourite-job.controller';
 
 @Module({
@@ -23,6 +24,7 @@ import { FavouriteJobController } from './controller/favourite-job.controller';
       CareerCategoryOrmEntity,
     ]),
     JwtAuthModule,
+    StorageModule,
   ],
   controllers: [FavouriteJobController],
   providers: [

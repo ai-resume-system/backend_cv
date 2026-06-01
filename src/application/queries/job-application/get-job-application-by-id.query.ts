@@ -9,12 +9,14 @@ import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ICurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 import {
   toJobSeekerJobApplicationDto,
   toRecruiterJobApplicationDto,
@@ -32,6 +34,7 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     @Inject('IUserRepository') private readonly userRepository: IUserRepository,
+    private readonly storage: S3StorageService,
   ) {
     super(new Logger(GetJobApplicationByIdQuery.name));
   }
@@ -60,7 +63,9 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
           throw new AppException(ERROR_CODES.JOB_APPLICATION_ACCESS_DENIED);
         }
       } else if (currentUser.role === EUserRole.RECRUITER) {
-        const company = await this.companyRepository.findByUserId(currentUser.id);
+        const company = await this.companyRepository.findByUserId(
+          currentUser.id,
+        );
         if (!company || company.id !== job.companyId) {
           throw new AppException(ERROR_CODES.JOB_APPLICATION_ACCESS_DENIED);
         }
@@ -77,18 +82,20 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
         ? await this.cvParsedDataRepository.findLatestByCvId(cv.id)
         : null;
 
+      const companySummary = company
+        ? await resolveCompanyMedia(this.storage, {
+            id: company.id,
+            name: company.name,
+            slug: company.slug,
+            logoUrl: company.logoUrl,
+          })
+        : undefined;
+
       const jobSummary = {
         id: job.id,
         title: job.title,
         address: job.address,
-        company: company
-          ? {
-              id: company.id,
-              name: company.name,
-              slug: company.slug,
-              logoUrl: company.logoUrl,
-            }
-          : undefined,
+        company: companySummary,
       };
       const cvSummary = cv
         ? {

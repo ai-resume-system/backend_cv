@@ -11,6 +11,7 @@ import { GetUserByIdQuery } from 'src/application/queries/user/get-user-by-id.qu
 import { GetUsersQuery } from 'src/application/queries/user/get-users.query';
 import { UpdateUserStatusUseCase } from 'src/application/use-cases/user/update-user-status.usecase';
 import { UserController } from 'src/presentation/user/controller/user.controller';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UserController } from 'src/presentation/user/controller/user.controller
       CompanyOrmEntity,
     ]),
     JwtAuthModule,
+    StorageModule,
   ],
   controllers: [UserController],
   providers: [

@@ -19,6 +19,7 @@ import { JobRecruiterController } from 'src/presentation/job/controller/job-recr
 import { FavouriteJobOrmEntity } from 'src/infrastructure/database/entities/favourite-job.orm-entity';
 import { FavouriteJobTypeormRepository } from 'src/infrastructure/database/repositories/favourite-job.typeorm-repository';
 import { SkillModule } from 'src/presentation/skill/skill.module';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { SkillModule } from 'src/presentation/skill/skill.module';
     RedisModule,
     CareerCategoriesModule,
     SkillModule,
+    StorageModule,
   ],
   controllers: [
     JobPublicController,

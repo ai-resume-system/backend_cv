@@ -4,10 +4,15 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AppException } from 'src/common/exceptions/app.exception';
+import {
+  resolveCompanyMedia,
+  resolveProfileAvatar,
+} from 'src/common/helpers/media-url.helper';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 
 const USER_DETAIL_CACHE_TTL_SECONDS = 900;
 
@@ -20,6 +25,7 @@ export class GetUserByIdQuery extends BaseUsecase {
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     private readonly redis: RedisAdapter,
+    private readonly storage: S3StorageService,
   ) {
     super(new Logger(GetUserByIdQuery.name));
   }
@@ -48,7 +54,12 @@ export class GetUserByIdQuery extends BaseUsecase {
 
       if (user.role === EUserRole.JOB_SEEKER) {
         const profile = await this.profileRepository.findByUserId(userId);
-        const response = { ...baseData, profile: profile || undefined };
+        const response = {
+          ...baseData,
+          profile: profile
+            ? await resolveProfileAvatar(this.storage, profile)
+            : undefined,
+        };
         await this.redis.safeSetJson(
           cacheKey,
           response,
@@ -62,8 +73,12 @@ export class GetUserByIdQuery extends BaseUsecase {
         const company = await this.companyRepository.findByUserId(userId);
         const response = {
           ...baseData,
-          profile: profile || undefined,
-          company: company || undefined,
+          profile: profile
+            ? await resolveProfileAvatar(this.storage, profile)
+            : undefined,
+          company: company
+            ? await resolveCompanyMedia(this.storage, company)
+            : undefined,
         };
         await this.redis.safeSetJson(
           cacheKey,

@@ -8,10 +8,12 @@ import {
 } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 
 @Injectable()
 export class GetCompanyBySlugQuery extends BaseUsecase {
@@ -23,6 +25,7 @@ export class GetCompanyBySlugQuery extends BaseUsecase {
     @Inject('IJobRepository')
     private readonly jobRepository: IJobRepository,
     private readonly redis: RedisAdapter,
+    private readonly storage: S3StorageService,
   ) {
     super(new Logger(GetCompanyBySlugQuery.name));
   }
@@ -52,7 +55,7 @@ export class GetCompanyBySlugQuery extends BaseUsecase {
       ]);
 
       const response = {
-        data: {
+        data: await resolveCompanyMedia(this.storage, {
           id: company.id,
           slug: company.slug,
           name: company.name,
@@ -76,7 +79,7 @@ export class GetCompanyBySlugQuery extends BaseUsecase {
           openJobCount: openJobCountMap[company.id] || 0,
           createdAt: company.createdAt,
           updatedAt: company.updatedAt,
-        },
+        }),
       };
 
       await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.DETAIL);

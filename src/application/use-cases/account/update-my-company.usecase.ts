@@ -4,11 +4,13 @@ import type { IResponseMyCompanyDto } from 'src/application/dtos/account/res.acc
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
 import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
 import type { ICompanyEntity } from 'src/domain/entities/company.entity';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 
 @Injectable()
 export class UpdateMyCompanyUseCase extends BaseUsecase {
@@ -18,6 +20,7 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     private readonly queueDispatch: QueueDispatchService,
+    private readonly storage: S3StorageService,
   ) {
     super(new Logger(UpdateMyCompanyUseCase.name));
   }
@@ -81,12 +84,17 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
         prefixes: ['user:list:'],
       });
 
+      const resolvedCompany = await resolveCompanyMedia(this.storage, {
+        logoUrl: updatedCompany.logoUrl,
+        bannerUrl: updatedCompany.bannerUrl,
+      });
+
       return {
         phone: updatedUser.phone,
         careerCategoryId: updatedCompany.careerCategoryId,
         name: updatedCompany.name,
-        logoUrl: updatedCompany.logoUrl,
-        bannerUrl: updatedCompany.bannerUrl,
+        logoUrl: resolvedCompany?.logoUrl,
+        bannerUrl: resolvedCompany?.bannerUrl,
         address: updatedCompany.address,
         latitude: updatedCompany.latitude,
         longitude: updatedCompany.longitude,

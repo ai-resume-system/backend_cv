@@ -6,11 +6,12 @@ import {
 import { IRequestGetFavouriteJobsDto } from 'src/application/dtos/favourite-job/req.favourite-job.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
+import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IFavouriteJobRepository } from 'src/domain/repositories/favourite-job.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
-import { toPublicJobCompanyDto } from '../job/job-response.mapper';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 
 @Injectable()
 export class GetFavouriteJobsQuery extends BaseUsecase {
@@ -22,6 +23,7 @@ export class GetFavouriteJobsQuery extends BaseUsecase {
     private readonly companyRepository: ICompanyRepository,
     @Inject('ICareerCategoryRepository')
     private readonly careerCategoryRepository: ICareerCategoryRepository,
+    private readonly storage: S3StorageService,
   ) {
     super(new Logger(GetFavouriteJobsQuery.name));
   }
@@ -30,30 +32,36 @@ export class GetFavouriteJobsQuery extends BaseUsecase {
     userId: string,
     dto: IRequestGetFavouriteJobsDto,
   ): Promise<IResponseListApiFavouriteJobDto> {
-    return this.runSafe('[Get Favourite Jobs]', async () => {
-      const page = dto.page || 1;
-      const limit = dto.limit || 10;
+    return this.runSafe(
+      '[Get Favourite Jobs]',
+      async () => {
+        const page = dto.page || 1;
+        const limit = dto.limit || 10;
 
-      const result = await this.favouriteJobRepository.find({
-        filter: { userId },
-        pagination: { page, limit },
-        sort: { sortBy: 'createdAt', sortOrder: 'DESC' },
-      });
+        const result = await this.favouriteJobRepository.find({
+          filter: { userId },
+          pagination: { page, limit },
+          sort: { sortBy: 'createdAt', sortOrder: 'DESC' },
+        });
 
-      const data = await Promise.all(
-        result.data.map((item) => this.toItemDto(item.jobId)),
-      );
+        const data = await Promise.all(
+          result.data.map((item) => this.toItemDto(item.jobId)),
+        );
 
-      return {
-        data: data.filter((item): item is IFavouriteJobItemDto => item !== null),
-        pagination: {
-          page,
-          limit,
-          totalItems: result.total,
-          totalPages: Math.ceil(result.total / limit),
-        },
-      };
-    }, ERROR_CODES.INTERNAL_SERVER_ERROR);
+        return {
+          data: data.filter(
+            (item): item is IFavouriteJobItemDto => item !== null,
+          ),
+          pagination: {
+            page,
+            limit,
+            totalItems: result.total,
+            totalPages: Math.ceil(result.total / limit),
+          },
+        };
+      },
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+    );
   }
 
   private async toItemDto(jobId: string): Promise<IFavouriteJobItemDto | null> {
@@ -69,6 +77,28 @@ export class GetFavouriteJobsQuery extends BaseUsecase {
         : Promise.resolve(null),
     ]);
 
+    const companySummary = company
+      ? await resolveCompanyMedia(this.storage, {
+          id: company.id,
+          slug: company.slug,
+          name: company.name,
+          logoUrl: company.logoUrl,
+          bannerUrl: company.bannerUrl,
+          address: company.address,
+          latitude: company.latitude,
+          longitude: company.longitude,
+          description: company.description,
+          websiteUrl: company.websiteUrl,
+          taxCode: company.taxCode,
+          employeeMin: company.employeeMin,
+          employeeMax: company.employeeMax,
+        })
+      : {
+          id: job.companyId,
+          slug: '',
+          name: '',
+        };
+
     return {
       id: job.id,
       title: job.title,
@@ -79,13 +109,7 @@ export class GetFavouriteJobsQuery extends BaseUsecase {
       vacancyCount: job.vacancyCount,
       experienceYears: job.experienceYears,
       expiredAt: job.expiredAt,
-      company: {
-        ...(company ? toPublicJobCompanyDto(company) : {
-          id: job.companyId,
-          slug: '',
-          name: '',
-        }),
-      },
+      company: companySummary,
       careerCategory: careerCategory
         ? {
             id: careerCategory.id,
