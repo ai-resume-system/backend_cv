@@ -13,6 +13,7 @@ import type {
   IResponseApiAdminJobDto,
   IResponseListApiAdminJobDto,
 } from 'src/application/dtos/job/res.job.dto';
+import { GetJobBySlugQuery } from 'src/application/queries/job/get-job-by-slug.query';
 import { GetJobsQuery } from 'src/application/queries/job/get-jobs.query';
 import { ReviewJobUseCase } from 'src/application/use-cases/job/review-job.usecase';
 import { BaseController } from 'src/common/base/base.controller';
@@ -29,6 +30,7 @@ import {
 export class JobAdminController extends BaseController {
   constructor(
     private readonly getJobsQuery: GetJobsQuery,
+    private readonly getJobBySlugQuery: GetJobBySlugQuery,
     private readonly reviewJobUseCase: ReviewJobUseCase,
   ) {
     super(new Logger(JobAdminController.name));
@@ -44,6 +46,18 @@ export class JobAdminController extends BaseController {
     @Query() query: RequestGetJobsDto,
   ): Promise<IResponseListApiAdminJobDto> {
     return await this.getJobsQuery.executeAdmin(query);
+  }
+
+  @Get(':slug')
+  @AuthRequired(EUserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Get job detail by slug for moderation and editing. Access: Admin.',
+  })
+  @ApiResponse({ status: 200, type: ResponseApiAdminJobDto })
+  async getAdminJobBySlug(
+    @Param('slug') slug: string,
+  ): Promise<IResponseApiAdminJobDto> {
+    return await this.getJobBySlugQuery.executeAdmin(slug);
   }
 
   @Patch(':id/approve')

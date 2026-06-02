@@ -16,6 +16,7 @@ import type {
   IResponseListApiRecruiterJobDto,
 } from 'src/application/dtos/job/res.job.dto';
 import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
+import { GetJobBySlugQuery } from 'src/application/queries/job/get-job-by-slug.query';
 import { GetJobsQuery } from 'src/application/queries/job/get-jobs.query';
 import { CreateJobUseCase } from 'src/application/use-cases/job/create-job.usecase';
 import { DeleteJobUseCase } from 'src/application/use-cases/job/delete-job.usecase';
@@ -42,6 +43,7 @@ import {
 export class JobRecruiterController extends BaseController {
   constructor(
     private readonly getJobsQuery: GetJobsQuery,
+    private readonly getJobBySlugQuery: GetJobBySlugQuery,
     private readonly createJobUseCase: CreateJobUseCase,
     private readonly updateJobUseCase: UpdateJobUseCase,
     private readonly deleteJobUseCase: DeleteJobUseCase,
@@ -61,6 +63,19 @@ export class JobRecruiterController extends BaseController {
     @Query() query: RequestGetJobsDto,
   ): Promise<IResponseListApiRecruiterJobDto> {
     return await this.getJobsQuery.executeForRecruiter(user.id, query);
+  }
+
+  @Get(':slug')
+  @AuthRequired(EUserRole.RECRUITER)
+  @ApiOperation({
+    summary: 'Get a job of my company by slug. Access: Recruiter.',
+  })
+  @ApiResponse({ status: 200, type: ResponseApiRecruiterJobDto })
+  async getMyJobBySlug(
+    @AuthCurrentUser() user: ICurrentUser,
+    @Param('slug') slug: string,
+  ): Promise<IResponseApiRecruiterJobDto> {
+    return await this.getJobBySlugQuery.executeForRecruiter(slug, user.id);
   }
 
   @Post()

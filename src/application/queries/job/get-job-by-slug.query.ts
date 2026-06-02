@@ -1,5 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IResponseApiPublicJobDto } from 'src/application/dtos/job/res.job.dto';
+import {
+  IResponseApiAdminJobDto,
+  IResponseApiPublicJobDto,
+  IResponseApiRecruiterJobDto,
+  IPublicJobCompanyDto,
+} from 'src/application/dtos/job/res.job.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import {
   CACHE_KEYS,
@@ -18,8 +23,11 @@ import type { ISkillRepository } from 'src/domain/repositories/skill.repository.
 import type { IFavouriteJobRepository } from 'src/domain/repositories/favourite-job.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
-import { toPublicJobDetailDto } from './job-response.mapper';
-import type { IPublicJobCompanyDto } from 'src/application/dtos/job/res.job.dto';
+import {
+  toAdminJobDetailDto,
+  toPublicJobDetailDto,
+  toRecruiterJobDetailDto,
+} from './job-response.mapper';
 
 @Injectable()
 export class GetJobBySlugQuery extends BaseUsecase {
@@ -59,7 +67,7 @@ export class GetJobBySlugQuery extends BaseUsecase {
       const version = await this.redis.getVersion(
         CACHE_VERSION_KEYS.JOB_DETAIL,
       );
-      const cacheKey = `${CACHE_KEYS.JOB_DETAIL}:v${version}:${resolvedJob.slug || resolvedJob.id}`;
+      const cacheKey = `${CACHE_KEYS.JOB_DETAIL}:v${version}:public:${resolvedJob.slug || resolvedJob.id}`;
       const cached =
         await this.redis.safeGetJson<IResponseApiPublicJobDto>(cacheKey);
       if (cached) {
@@ -142,5 +150,125 @@ export class GetJobBySlugQuery extends BaseUsecase {
       }
       return response;
     });
+  }
+
+  async executeForRecruiter(
+    slug: string,
+    recruiterId: string,
+  ): Promise<IResponseApiRecruiterJobDto> {
+    return this.runSafe('[Get Recruiter Job By Slug]:', async () => {
+      const job = await this.jobRepository.findBySlug(slug);
+      if (!job) {
+        throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
+      }
+
+      const recruiterCompany =
+        await this.companyRepository.findByUserId(recruiterId);
+      if (!recruiterCompany || recruiterCompany.id !== job.companyId) {
+        throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
+      }
+
+      const version = await this.redis.getVersion(
+        CACHE_VERSION_KEYS.JOB_DETAIL,
+      );
+      const cacheKey = `${CACHE_KEYS.JOB_DETAIL}:v${version}:recruiter:${job.slug || job.id}`;
+      const cached =
+        await this.redis.safeGetJson<IResponseApiRecruiterJobDto>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const response = {
+        data: toRecruiterJobDetailDto(
+          job,
+          await this.buildManagedJobOptions(job),
+        ),
+      };
+      await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.DETAIL);
+      return response;
+    });
+  }
+
+  async executeAdmin(slug: string): Promise<IResponseApiAdminJobDto> {
+    return this.runSafe('[Get Admin Job By Slug]:', async () => {
+      const job = await this.jobRepository.findBySlug(slug);
+      if (!job) {
+        throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
+      }
+
+      const version = await this.redis.getVersion(
+        CACHE_VERSION_KEYS.JOB_DETAIL,
+      );
+      const cacheKey = `${CACHE_KEYS.JOB_DETAIL}:v${version}:admin:${job.slug || job.id}`;
+      const cached =
+        await this.redis.safeGetJson<IResponseApiAdminJobDto>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const response = {
+        data: toAdminJobDetailDto(job, await this.buildManagedJobOptions(job)),
+      };
+      await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.DETAIL);
+      return response;
+    });
+  }
+
+  private async buildManagedJobOptions(job: { id: string; companyId: string; careerCategoryId?: string | null }) {
+    const [companies, careerCategory, jobSkills] = await Promise.all([
+      this.companyRepository.findByIds([job.companyId]),
+      job.careerCategoryId
+        ? this.careerCategoryRepository.findById(job.careerCategoryId)
+        : Promise.resolve(null),
+      this.jobSkillRepository.findByJobId(job.id),
+    ]);
+
+    const company = companies[0];
+    if (!company) {
+      throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
+    }
+
+    const skills = await Promise.all(
+      jobSkills.map((jobSkill) =>
+        this.skillRepository.findById(jobSkill.skillId),
+      ),
+    );
+
+    const companyDto = (await resolveCompanyMedia(this.storage, {
+      id: company.id,
+      slug: company.slug,
+      name: company.name,
+      logoUrl: company.logoUrl,
+      bannerUrl: company.bannerUrl,
+      address: company.address,
+      latitude: company.latitude,
+      longitude: company.longitude,
+      description: company.description,
+      websiteUrl: company.websiteUrl,
+      taxCode: company.taxCode,
+      employeeMin: company.employeeMin,
+      employeeMax: company.employeeMax,
+    })) as IPublicJobCompanyDto;
+
+    return {
+      company: companyDto,
+      careerCategory,
+      skills: jobSkills
+        .map((jobSkill) => {
+          const skill = skills.find(
+            (existingSkill) => existingSkill?.id === jobSkill.skillId,
+          );
+          if (!skill) {
+            return null;
+          }
+          return {
+            id: skill.id,
+            name: skill.name,
+            slug: skill.slug,
+            weight: jobSkill.weight,
+          };
+        })
+        .filter((skill) => skill !== null),
+    };
   }
 }
