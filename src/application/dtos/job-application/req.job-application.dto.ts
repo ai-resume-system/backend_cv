@@ -23,3 +23,25 @@ export interface IRequestGetJobApplicationsDto extends IApiRequestPagination {
   sortOrder?: 'ASC' | 'DESC';
   status?: EJobApplicationStatus;
 }
+
+export interface IRequestGetRecruiterJobApplicationsDto
+  extends IApiRequestPagination {
+  q?: string;
+  jobId?: string;
+  status?: EJobApplicationStatus;
+  sortBy?: 'createdAt' | 'matchingScore';
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export interface IRequestGetRecruiterNewApplicantsDto {
+  limit?: number;
+  jobId?: string;
+}
+
+export interface IRequestGetRecruiterInterviewsDto
+  extends IApiRequestPagination {
+  from?: Date;
+  to?: Date;
+  jobId?: string;
+  sortOrder?: 'ASC' | 'DESC';
+}

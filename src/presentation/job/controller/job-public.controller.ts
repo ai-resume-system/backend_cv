@@ -6,11 +6,15 @@ import type {
 } from 'src/application/dtos/job/res.job.dto';
 import { GetJobBySlugQuery } from 'src/application/queries/job/get-job-by-slug.query';
 import { GetJobsQuery } from 'src/application/queries/job/get-jobs.query';
+import { GetRelatedJobsQuery } from 'src/application/queries/job/get-related-jobs.query';
 import { BaseController } from 'src/common/base/base.controller';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
-import { RequestGetJobsDto } from '../dtos/req.job.dto';
+import {
+  RequestGetJobsDto,
+  RequestGetRelatedJobsDto,
+} from '../dtos/req.job.dto';
 import {
   ResponseApiPublicJobDto,
   ResponseListApiPublicJobDto,
@@ -22,6 +26,7 @@ export class JobPublicController extends BaseController {
   constructor(
     private readonly getJobsQuery: GetJobsQuery,
     private readonly getJobBySlugQuery: GetJobBySlugQuery,
+    private readonly getRelatedJobsQuery: GetRelatedJobsQuery,
   ) {
     super(new Logger(JobPublicController.name));
   }
@@ -40,6 +45,20 @@ export class JobPublicController extends BaseController {
       { ...query, status: query.status || EJobStatus.OPEN },
       user?.id,
     );
+  }
+
+  @Get(':slug/related')
+  @ApiOperation({
+    summary:
+      'Get related public jobs by base job slug. Access: Public, Job Seeker',
+  })
+  @ApiResponse({ status: 200, type: ResponseListApiPublicJobDto })
+  async getRelatedJobs(
+    @Param('slug') slug: string,
+    @Query() query: RequestGetRelatedJobsDto,
+    @AuthCurrentUser() user?: ICurrentUser,
+  ): Promise<IResponseListApiPublicJobDto> {
+    return await this.getRelatedJobsQuery.execute(slug, query, user?.id);
   }
 
   @Get(':slug')

@@ -1,8 +1,13 @@
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { IJobApplicationEntity } from '../entities/job-application.entity';
-import { IBaseRepository } from './base.repository.interface';
+import {
+  IBaseRepository,
+  IFindOptions,
+  IPaginatedResult,
+} from './base.repository.interface';
 
-export interface IJobApplicationRepository extends IBaseRepository<IJobApplicationEntity> {
+export interface IJobApplicationRepository
+  extends IBaseRepository<IJobApplicationEntity> {
   findByJobId(jobId: string): Promise<IJobApplicationEntity[]>;
   findByUserId(userId: string): Promise<IJobApplicationEntity[]>;
   findByCvId(cvId: string): Promise<IJobApplicationEntity[]>;
@@ -17,4 +22,8 @@ export interface IJobApplicationRepository extends IBaseRepository<IJobApplicati
     status: EJobApplicationStatus,
     data?: Partial<IJobApplicationEntity>,
   ): Promise<IJobApplicationEntity>;
+  findByCompanyId(
+    companyId: string,
+    options?: IFindOptions,
+  ): Promise<IPaginatedResult<IJobApplicationEntity>>;
 }

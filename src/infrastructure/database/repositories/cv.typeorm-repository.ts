@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, ILike, IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
-import { IFindOptions } from 'src/domain/repositories/base.repository.interface';
 import type { ICVEntity } from 'src/domain/entities/cv.entity';
 import { CVOrmEntity } from '../entities/cv.orm-entity';
 import { BaseTypeormRepository } from './base.typeorm-repository';
@@ -23,16 +22,27 @@ export class CVTypeormRepository
     return ['title'];
   }
 
+  async findByIds(ids: string[]): Promise<ICVEntity[]> {
+    if (!ids.length) {
+      return [];
+    }
+
+    const orms = await this.ormRepository.find({
+      where: { id: In(ids), deletedAt: IsNull() },
+    });
+    return orms.map((orm) => this.toDomain(orm));
+  }
+
   async findByUserId(userId: string): Promise<ICVEntity[]> {
     const orms = await this.ormRepository.find({
-      where: { userId: userId, deletedAt: IsNull() },
+      where: { userId, deletedAt: IsNull() },
     });
     return orms.map((orm) => this.toDomain(orm));
   }
 
   async countByUserId(userId: string): Promise<number> {
     return this.ormRepository.count({
-      where: { userId: userId, deletedAt: IsNull() },
+      where: { userId, deletedAt: IsNull() },
     });
   }
 

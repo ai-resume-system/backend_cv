@@ -4,6 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GetJobApplicationByIdQuery } from 'src/application/queries/job-application/get-job-application-by-id.query';
 import { GetJobApplicationsByJobQuery } from 'src/application/queries/job-application/get-job-applications-by-job.query';
 import { GetMyJobApplicationsQuery } from 'src/application/queries/job-application/get-my-job-applications.query';
+import { GetRecruiterInterviewsQuery } from 'src/application/queries/job-application/get-recruiter-interviews.query';
+import { GetRecruiterJobApplicationsQuery } from 'src/application/queries/job-application/get-recruiter-job-applications.query';
+import { GetRecruiterNewApplicantsQuery } from 'src/application/queries/job-application/get-recruiter-new-applicants.query';
+import { RecruiterJobApplicationQuerySupport } from 'src/application/queries/job-application/recruiter-job-application-query.support';
 import { CreateJobApplicationUseCase } from 'src/application/use-cases/job-application/create-job-application.usecase';
 import { UpdateJobApplicationStatusUseCase } from 'src/application/use-cases/job-application/update-job-application-status.usecase';
 import { WithdrawJobApplicationUseCase } from 'src/application/use-cases/job-application/withdraw-job-application.usecase';
@@ -51,6 +55,10 @@ import { StorageModule } from 'src/infrastructure/storage/storage.module';
     GetJobApplicationByIdQuery,
     GetMyJobApplicationsQuery,
     GetJobApplicationsByJobQuery,
+    GetRecruiterJobApplicationsQuery,
+    GetRecruiterNewApplicantsQuery,
+    GetRecruiterInterviewsQuery,
+    RecruiterJobApplicationQuerySupport,
     GetJobApplicationCVQuery,
     {
       provide: 'IJobApplicationRepository',

@@ -2,12 +2,12 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   ParseUUIDPipe,
   Patch,
   Query,
 } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
 import {
   ApiExtraModels,
   ApiOperation,
@@ -18,17 +18,23 @@ import type {
   IResponseApiRecruiterJobApplicationDto,
   IResponseListApiRecruiterJobApplicationDto,
 } from 'src/application/dtos/job-application/res.job-application.dto';
-import { UpdateJobApplicationStatusUseCase } from 'src/application/use-cases/job-application/update-job-application-status.usecase';
 import { GetJobApplicationByIdQuery } from 'src/application/queries/job-application/get-job-application-by-id.query';
-import { GetJobApplicationsByJobQuery } from 'src/application/queries/job-application/get-job-applications-by-job.query';
 import { GetJobApplicationCVQuery } from 'src/application/queries/job-application/get-job-application-cv.querry';
+import { GetJobApplicationsByJobQuery } from 'src/application/queries/job-application/get-job-applications-by-job.query';
+import { GetRecruiterInterviewsQuery } from 'src/application/queries/job-application/get-recruiter-interviews.query';
+import { GetRecruiterJobApplicationsQuery } from 'src/application/queries/job-application/get-recruiter-job-applications.query';
+import { GetRecruiterNewApplicantsQuery } from 'src/application/queries/job-application/get-recruiter-new-applicants.query';
+import { UpdateJobApplicationStatusUseCase } from 'src/application/use-cases/job-application/update-job-application-status.usecase';
 import { BaseController } from 'src/common/base/base.controller';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
+import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import {
   RequestGetJobApplicationsDto,
+  RequestGetRecruiterInterviewsDto,
+  RequestGetRecruiterJobApplicationsDto,
+  RequestGetRecruiterNewApplicantsDto,
   RequestUpdateJobApplicationStatusDto,
 } from '../dtos/req.job-application.dto';
 import {
@@ -44,9 +50,63 @@ export class RecruiterJobApplicationController extends BaseController {
     private readonly updateJobApplicationStatusUseCase: UpdateJobApplicationStatusUseCase,
     private readonly getJobApplicationByIdQuery: GetJobApplicationByIdQuery,
     private readonly getJobApplicationsByJobQuery: GetJobApplicationsByJobQuery,
+    private readonly getRecruiterJobApplicationsQuery: GetRecruiterJobApplicationsQuery,
+    private readonly getRecruiterNewApplicantsQuery: GetRecruiterNewApplicantsQuery,
+    private readonly getRecruiterInterviewsQuery: GetRecruiterInterviewsQuery,
     private readonly getJobApplicationCVQuery: GetJobApplicationCVQuery,
   ) {
     super(new Logger(RecruiterJobApplicationController.name));
+  }
+
+  @Get()
+  @AuthRequired(EUserRole.RECRUITER)
+  @ApiOperation({
+    summary: 'Get company-wide job applications. Access: Recruiter.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Company-wide job applications list',
+    type: ResponseListApiRecruiterJobApplicationDto,
+  })
+  async getCompanyJobApplications(
+    @AuthCurrentUser() user: ICurrentUser,
+    @Query() query: RequestGetRecruiterJobApplicationsDto,
+  ): Promise<IResponseListApiRecruiterJobApplicationDto> {
+    return await this.getRecruiterJobApplicationsQuery.execute(user.id, query);
+  }
+
+  @Get('new')
+  @AuthRequired(EUserRole.RECRUITER)
+  @ApiOperation({
+    summary: 'Get newest applied applicants across company jobs. Access: Recruiter.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Newest applied applicants',
+    type: ResponseListApiRecruiterJobApplicationDto,
+  })
+  async getNewApplicants(
+    @AuthCurrentUser() user: ICurrentUser,
+    @Query() query: RequestGetRecruiterNewApplicantsDto,
+  ): Promise<IResponseListApiRecruiterJobApplicationDto> {
+    return await this.getRecruiterNewApplicantsQuery.execute(user.id, query);
+  }
+
+  @Get('interviews')
+  @AuthRequired(EUserRole.RECRUITER)
+  @ApiOperation({
+    summary: 'Get interview schedules across company jobs. Access: Recruiter.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Interview schedules list',
+    type: ResponseListApiRecruiterJobApplicationDto,
+  })
+  async getInterviews(
+    @AuthCurrentUser() user: ICurrentUser,
+    @Query() query: RequestGetRecruiterInterviewsDto,
+  ): Promise<IResponseListApiRecruiterJobApplicationDto> {
+    return await this.getRecruiterInterviewsQuery.execute(user.id, query);
   }
 
   @Get('jobs/:jobId')

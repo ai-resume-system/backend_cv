@@ -22,6 +22,20 @@ export class SkillTypeormRepository
     return ['name', 'slug'];
   }
 
+  async findByIds(ids: string[]): Promise<ISkillEntity[]> {
+    if (!ids.length) {
+      return [];
+    }
+
+    const orms = await this.ormRepository.find({
+      where: {
+        id: In(ids),
+        deletedAt: IsNull(),
+      },
+    });
+    return orms.map((orm) => this.toDomain(orm));
+  }
+
   async findByCareerCategoryId(
     careerCategoryId: string,
   ): Promise<ISkillEntity[]> {

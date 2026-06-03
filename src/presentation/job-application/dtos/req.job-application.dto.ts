@@ -5,15 +5,18 @@ import {
   IsEmail,
   IsEnum,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
   MaxLength,
+  Min,
 } from 'class-validator';
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
+import { transfomerPagination } from 'src/common/utils/request-pagination.utils';
 import { parseVietnamDateTimeInput } from 'src/common/utils/date-time.util';
 
 export class RequestCreateJobApplicationDto {
@@ -111,6 +114,100 @@ export class RequestGetJobApplicationsDto extends RequestPaginationDto {
   sortBy?: 'createdAt' | 'matchingScore';
 
   @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'DESC' })
+  @IsOptional()
+  @IsIn(['ASC', 'DESC'])
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export class RequestGetRecruiterJobApplicationsDto extends RequestPaginationDto {
+  @ApiPropertyOptional({ description: 'Search by applicant name, email, phone' })
+  @IsOptional()
+  @IsString()
+  q?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by job id' })
+  @IsOptional()
+  @IsUUID()
+  jobId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by status' })
+  @IsOptional()
+  @IsEnum(EJobApplicationStatus)
+  status?: EJobApplicationStatus;
+
+  @ApiPropertyOptional({
+    enum: ['createdAt', 'matchingScore'],
+    default: 'createdAt',
+  })
+  @IsOptional()
+  @IsIn(['createdAt', 'matchingScore'])
+  sortBy?: 'createdAt' | 'matchingScore';
+
+  @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'DESC' })
+  @IsOptional()
+  @IsIn(['ASC', 'DESC'])
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export class RequestGetRecruiterNewApplicantsDto {
+  @ApiPropertyOptional({ default: 10, description: 'Maximum applicants returned' })
+  @Transform(({ value }) => transfomerPagination(value))
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  limit: number = 10;
+
+  @ApiPropertyOptional({ description: 'Filter by job id' })
+  @IsOptional()
+  @IsUUID()
+  jobId?: string;
+}
+
+export class RequestGetRecruiterInterviewsDto extends RequestPaginationDto {
+  @ApiPropertyOptional({
+    description:
+      'Schedule lower bound. Neu khong kem timezone, backend hieu theo gio Viet Nam.',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    try {
+      return parseVietnamDateTimeInput(value);
+    } catch {
+      return value;
+    }
+  })
+  @IsDate()
+  from?: Date;
+
+  @ApiPropertyOptional({
+    description:
+      'Schedule upper bound. Neu khong kem timezone, backend hieu theo gio Viet Nam.',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    try {
+      return parseVietnamDateTimeInput(value);
+    } catch {
+      return value;
+    }
+  })
+  @IsDate()
+  to?: Date;
+
+  @ApiPropertyOptional({ description: 'Filter by job id' })
+  @IsOptional()
+  @IsUUID()
+  jobId?: string;
+
+  @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'ASC' })
   @IsOptional()
   @IsIn(['ASC', 'DESC'])
   sortOrder?: 'ASC' | 'DESC';

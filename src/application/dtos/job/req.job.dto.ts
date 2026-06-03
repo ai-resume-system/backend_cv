@@ -22,6 +22,10 @@ export interface IGetJobsDto extends IApiRequestPagination {
   status?: EJobStatus;
 }
 
+export interface IGetRelatedJobsDto {
+  limit?: number;
+}
+
 export interface IJobSkillInputDto {
   skillId: string;
   weight?: number;

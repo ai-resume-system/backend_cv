@@ -17,6 +17,7 @@ import {
 import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 import { parseJobExpiredAtInput } from 'src/common/utils/date-time.util';
+import { transfomerPagination } from 'src/common/utils/request-pagination.utils';
 
 export class RequestGetJobsDto extends RequestPaginationDto {
   @ApiPropertyOptional({ description: 'Search by title, address' })
@@ -134,6 +135,18 @@ export class RequestGetJobsDto extends RequestPaginationDto {
   @IsArray()
   @IsString({ each: true })
   skillSlugs?: string[];
+}
+
+export class RequestGetRelatedJobsDto {
+  @ApiPropertyOptional({
+    description: 'Maximum related jobs returned',
+    default: 6,
+  })
+  @Transform(({ value }) => transfomerPagination(value))
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  limit: number = 6;
 }
 
 export class RequestJobSkillDto {

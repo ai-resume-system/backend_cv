@@ -3,12 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import type { IJobEntity } from 'src/domain/entities/job.entity';
-import {
+import type {
   IFindOptions,
   IPaginatedResult,
 } from 'src/domain/repositories/base.repository.interface';
-import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
-import { IsNull, Repository } from 'typeorm';
+import type {
+  IFindRelatedJobsOptions,
+  IJobRepository,
+} from 'src/domain/repositories/job.repository.interface';
+import { Brackets, In, IsNull, Repository } from 'typeorm';
 import { JobOrmEntity } from '../entities/job.orm-entity';
 import { BaseTypeormRepository } from './base.typeorm-repository';
 
@@ -157,9 +160,20 @@ export class JobTypeormRepository
     return orms.map((orm) => this.toDomain(orm));
   }
 
+  async findByIds(ids: string[]): Promise<IJobEntity[]> {
+    if (!ids.length) {
+      return [];
+    }
+
+    const orms = await this.ormRepository.find({
+      where: { id: In(ids), deletedAt: IsNull() },
+    });
+    return orms.map((orm) => this.toDomain(orm));
+  }
+
   async findByCompanyId(companyId: string): Promise<IJobEntity[]> {
     const orms = await this.ormRepository.find({
-      where: { companyId: companyId, deletedAt: IsNull() },
+      where: { companyId, deletedAt: IsNull() },
     });
     return orms.map((orm) => this.toDomain(orm));
   }
@@ -204,6 +218,111 @@ export class JobTypeormRepository
       where: { slug, deletedAt: IsNull() },
     });
     return orm ? this.toDomain(orm) : null;
+  }
+
+  async findPublicRelatedJobs(
+    options: IFindRelatedJobsOptions,
+  ): Promise<IJobEntity[]> {
+    const queryBuilder = this.ormRepository.createQueryBuilder('job');
+    const now = new Date();
+    const overlapExpr = options.skillIds?.length
+      ? 'COUNT(DISTINCT overlapSkills.skill_id)'
+      : '0';
+    const sameCategoryExpr = options.careerCategoryId
+      ? 'CASE WHEN job.career_category_id = :careerCategoryId THEN 1 ELSE 0 END'
+      : '0';
+    const sameAddressExpr = options.address
+      ? 'CASE WHEN job.address = :address THEN 1 ELSE 0 END'
+      : '0';
+    const sameJobTypeExpr = options.jobType
+      ? 'CASE WHEN job.job_type = :jobType THEN 1 ELSE 0 END'
+      : '0';
+
+    queryBuilder
+      .innerJoin(
+        'companies',
+        'company',
+        'company.id = job.company_id AND company.deleted_at IS NULL',
+      )
+      .innerJoin(
+        'users',
+        'owner',
+        'owner.id = company.user_id AND owner.deleted_at IS NULL AND owner.role = :ownerRole AND owner.status = :ownerStatus',
+        {
+          ownerRole: EUserRole.RECRUITER,
+          ownerStatus: EUserStatus.ACTIVE,
+        },
+      )
+      .where('job.deleted_at IS NULL')
+      .andWhere('job.id != :excludedJobId', {
+        excludedJobId: options.excludedJobId,
+      })
+      .andWhere('job.status = :status', { status: EJobStatus.OPEN })
+      .andWhere('(job.expired_at > :now OR job.expired_at IS NULL)', { now });
+
+    if (options.excludedJobIds?.length) {
+      queryBuilder.andWhere('job.id NOT IN (:...excludedJobIds)', {
+        excludedJobIds: options.excludedJobIds,
+      });
+    }
+
+    if (options.skillIds?.length) {
+      queryBuilder.leftJoin(
+        'job_skills',
+        'overlapSkills',
+        'overlapSkills.job_id = job.id AND overlapSkills.deleted_at IS NULL AND overlapSkills.skill_id IN (:...skillIds)',
+        { skillIds: options.skillIds },
+      );
+    }
+
+    if (
+      options.careerCategoryId ||
+      options.address ||
+      options.jobType ||
+      options.skillIds?.length
+    ) {
+      queryBuilder.andWhere(
+        new Brackets((builder) => {
+          if (options.careerCategoryId) {
+            builder.orWhere('job.career_category_id = :careerCategoryId', {
+              careerCategoryId: options.careerCategoryId,
+            });
+          }
+          if (options.address) {
+            builder.orWhere('job.address = :address', {
+              address: options.address,
+            });
+          }
+          if (options.jobType) {
+            builder.orWhere('job.job_type = :jobType', {
+              jobType: options.jobType,
+            });
+          }
+          if (options.skillIds?.length) {
+            builder.orWhere('overlapSkills.id IS NOT NULL');
+          }
+        }),
+      );
+    }
+
+    queryBuilder
+      .addSelect(overlapExpr, 'skill_overlap_count')
+      .addSelect(sameCategoryExpr, 'same_category')
+      .addSelect(sameAddressExpr, 'same_address')
+      .addSelect(sameJobTypeExpr, 'same_job_type')
+      .groupBy('job.id')
+      .addGroupBy('company.id')
+      .addGroupBy('owner.id')
+      .orderBy('skill_overlap_count', 'DESC')
+      .addOrderBy('same_category', 'DESC')
+      .addOrderBy('same_address', 'DESC')
+      .addOrderBy('same_job_type', 'DESC')
+      .addOrderBy('job.created_at', 'DESC')
+      // .take(options.limit);
+      .limit(options.limit);
+
+    const { entities } = await queryBuilder.getRawAndEntities();
+    return entities.map((entity) => this.toDomain(entity));
   }
 
   async isSlugTaken(slug: string, excludeId?: string): Promise<boolean> {

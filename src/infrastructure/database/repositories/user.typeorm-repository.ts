@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
-import { IPaginatedResult } from 'src/domain/repositories/base.repository.interface';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import {
   IUserEntity,
   IUserWithPasswordEntity,
@@ -28,6 +26,20 @@ export class UserTypeormRepository
 
   protected getSearchableColumns(): string[] {
     return ['email', 'phone'];
+  }
+
+  async findByIds(ids: string[]): Promise<IUserEntity[]> {
+    if (!ids.length) {
+      return [];
+    }
+
+    const orms = await this.ormRepository.find({
+      where: {
+        id: In(ids),
+        deletedAt: IsNull(),
+      },
+    });
+    return orms.map((orm) => this.toDomain(orm));
   }
 
   async findByEmail(email: string): Promise<IUserEntity | null> {
