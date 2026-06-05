@@ -190,7 +190,7 @@ export const ERROR_CODES = {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   CV_FILE_TOO_LARGE: {
-    message: 'File too large (max 5MB)',
+    message: 'File too large (max 10MB)',
     status: HttpStatus.BAD_REQUEST,
   },
   CV_FILE_TYPE_INVALID: {

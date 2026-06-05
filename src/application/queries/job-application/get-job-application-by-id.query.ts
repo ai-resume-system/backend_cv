@@ -93,6 +93,7 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
 
       const jobSummary = {
         id: job.id,
+        slug: job.slug,
         title: job.title,
         address: job.address,
         company: companySummary,

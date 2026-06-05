@@ -10,6 +10,9 @@ export class ResponseFavouriteJobDto {
   id: string;
 
   @ApiProperty()
+  slug: string;
+
+  @ApiProperty()
   title: string;
 
   @ApiProperty({ required: false })
@@ -38,6 +41,9 @@ export class ResponseFavouriteJobDto {
 
   @ApiProperty()
   isFavourited: boolean;
+
+  @ApiProperty()
+  createdAt: Date;
 }
 
 export class ResponseFavouriteJobMessageDto {
@@ -50,7 +56,9 @@ export class ResponseApiFavouriteJobDto extends ApiResponseDto<ResponseFavourite
   declare data: ResponseFavouriteJobMessageDto;
 }
 
-export class ResponseListApiFavouriteJobDto extends ApiResponseDto<ResponseFavouriteJobDto[]> {
+export class ResponseListApiFavouriteJobDto extends ApiResponseDto<
+  ResponseFavouriteJobDto[]
+> {
   @ApiProperty({ type: [ResponseFavouriteJobDto] })
   declare data: ResponseFavouriteJobDto[];
 

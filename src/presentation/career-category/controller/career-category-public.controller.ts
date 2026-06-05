@@ -30,8 +30,7 @@ export class CareerCategoryPublicController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary:
-      'Get active career categories. Access: Public, Job Seeker, Recruiter.',
+    summary: 'Lay danh sach nganh nghe dang hoat dong. Truy cap: Public, Job Seeker, Recruiter.',
   })
   @ApiResponse({
     status: 200,
@@ -46,8 +45,7 @@ export class CareerCategoryPublicController extends BaseController {
 
   @Get('top')
   @ApiOperation({
-    summary:
-      'Get top active, expired jobs. Access: Public, Job Seeker, Recruiter.',
+    summary: 'Lay top nganh nghe cong khai. Truy cap: Public, Job Seeker, Recruiter.',
   })
   @ApiResponse({
     status: 200,
@@ -62,8 +60,7 @@ export class CareerCategoryPublicController extends BaseController {
 
   @Get(':slug')
   @ApiOperation({
-    summary:
-      'Get active career category detail by slug. Access: Public, Job Seeker, Recruiter.',
+    summary: 'Lay chi tiet nganh nghe dang hoat dong theo slug. Truy cap: Public, Job Seeker, Recruiter.',
   })
   @ApiResponse({
     status: 200,

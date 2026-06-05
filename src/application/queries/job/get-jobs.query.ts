@@ -23,12 +23,12 @@ import type { IFavouriteJobRepository } from 'src/domain/repositories/favourite-
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 import {
   toAdminJobDto,
   toPublicJobDto,
   toRecruiterJobDto,
 } from './job-response.mapper';
-import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 
 @Injectable()
 export class GetJobsQuery extends BaseUsecase {
@@ -113,6 +113,8 @@ export class GetJobsQuery extends BaseUsecase {
       resolvedSkillIds = skills.map((skill) => skill.id);
     }
 
+    const excludedStatuses =
+      scope === 'admin' ? [EJobStatus.DRAFT] : undefined;
     const version = await this.redis.getVersion(CACHE_VERSION_KEYS.JOB_LIST);
     const cacheScope =
       scope === 'company' && dto.companyId
@@ -128,6 +130,7 @@ export class GetJobsQuery extends BaseUsecase {
       companySlug: undefined,
       careerCategorySlug: undefined,
       skillSlugs: undefined,
+      excludedStatuses,
       page,
       limit,
     };
@@ -159,6 +162,7 @@ export class GetJobsQuery extends BaseUsecase {
         q: dto.q,
         companyId: resolvedCompanyId,
         status: scope === 'public' ? dto.status || EJobStatus.OPEN : dto.status,
+        excludedStatuses,
         careerCategoryId: resolvedCareerCategoryId,
         address: dto.address,
         skillIds: resolvedSkillIds,
@@ -167,6 +171,8 @@ export class GetJobsQuery extends BaseUsecase {
         experienceYearsMin: dto.experienceYearsMin,
         experienceYearsMax: dto.experienceYearsMax,
         jobType: dto.jobType,
+        educationLevel: dto.educationLevel,
+        workArrangement: dto.workArrangement,
         ...(scope === 'public'
           ? { notExpired: true, activeOwnerOnly: true }
           : {}),

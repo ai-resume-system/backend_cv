@@ -1,4 +1,9 @@
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import {
+  EJobEducationLevel,
+  EJobStatus,
+  EJobType,
+  EJobWorkArrangement,
+} from 'src/common/constants/enum/job.enum';
 
 export interface IJobEntity {
   id: string;
@@ -8,15 +13,18 @@ export interface IJobEntity {
   slug: string;
   shortDescription?: string;
   description?: string;
-  address?: string; // địa chỉ đầy đủ để hiển thị
+  address?: string;
   salaryMin?: number;
   salaryMax?: number;
   experienceYears?: number;
-  vacancyCount?: number; // số lượng người/vị trí cần tuyển
+  vacancyCount?: number;
   jobType: EJobType;
+  educationLevel: EJobEducationLevel;
+  workArrangement?: EJobWorkArrangement;
   status: EJobStatus;
   expiredAt?: Date;
   rejectReason?: string;
+  closeReason?: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;

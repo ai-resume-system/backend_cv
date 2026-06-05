@@ -30,6 +30,7 @@ import type { ICurrentUser } from 'src/common/decorators/current-user.decorator'
 import { ResponseApiNullDto } from 'src/common/dto/response.dto';
 import {
   RequestCreateJobDto,
+  RequestCloseJobDto,
   RequestGetJobsDto,
   RequestUpdateJobDto,
 } from '../dtos/req.job.dto';
@@ -55,7 +56,7 @@ export class JobRecruiterController extends BaseController {
   @Get()
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Get jobs of my company. Access: Recruiter.',
+    summary: 'Lay danh sach job cua cong ty toi. Truy cap: Recruiter.',
   })
   @ApiResponse({ status: 200, type: ResponseListApiRecruiterJobDto })
   async getMyJobs(
@@ -68,7 +69,7 @@ export class JobRecruiterController extends BaseController {
   @Get(':slug')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Get a job of my company by slug. Access: Recruiter.',
+    summary: 'Lay chi tiet mot job cua cong ty toi theo slug. Truy cap: Recruiter.',
   })
   @ApiResponse({ status: 200, type: ResponseApiRecruiterJobDto })
   async getMyJobBySlug(
@@ -81,7 +82,7 @@ export class JobRecruiterController extends BaseController {
   @Post()
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Create a new job for my company. Access: Recruiter.',
+    summary: 'Tao moi mot job cho cong ty toi. Truy cap: Recruiter.',
   })
   @ApiResponse({ status: 201, type: ResponseApiRecruiterJobDto })
   async createJob(
@@ -94,7 +95,7 @@ export class JobRecruiterController extends BaseController {
   @Patch(':id')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Update a job of my company. Access: Recruiter.',
+    summary: 'Cap nhat mot job cua cong ty toi. Truy cap: Recruiter.',
   })
   @ApiResponse({ status: 200, type: ResponseApiRecruiterJobDto })
   async updateJob(
@@ -108,7 +109,7 @@ export class JobRecruiterController extends BaseController {
   @Delete(':id')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Delete a job of my company. Access: Recruiter.',
+    summary: 'Xoa mot job cua cong ty toi. Truy cap: Recruiter.',
   })
   @ApiResponse({ status: 200, type: ResponseApiNullDto })
   async deleteJob(
@@ -121,12 +122,13 @@ export class JobRecruiterController extends BaseController {
   @Patch(':id/close')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Close a job. Access: Recruiter.',
+    summary: 'Dong mot job. Truy cap: Recruiter.',
   })
   @ApiResponse({ status: 200, type: ResponseApiRecruiterJobDto })
   async closeJob(
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RequestCloseJobDto,
   ): Promise<IResponseApiRecruiterJobDto> {
-    return await this.reviewJobUseCase.close(id);
+    return await this.reviewJobUseCase.close(id, dto);
   }
 }

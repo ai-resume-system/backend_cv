@@ -6,6 +6,7 @@ import {
 
 export interface IFavouriteJobItemDto {
   id: string;
+  slug: string;
   title: string;
   shortDescription?: string;
   address?: string;
@@ -17,14 +18,15 @@ export interface IFavouriteJobItemDto {
   company: IPublicJobCompanyDto;
   careerCategory?: IJobCareerCategoryDto;
   isFavourited: boolean;
+  createdAt: Date;
 }
 
 export interface IResponseFavouriteJobDto {
   message: string;
 }
 
-export interface IResponseApiFavouriteJobDto
-  extends IApiResponse<IResponseFavouriteJobDto> {}
+export interface IResponseApiFavouriteJobDto extends IApiResponse<IResponseFavouriteJobDto> {}
 
-export interface IResponseListApiFavouriteJobDto
-  extends IApiResponse<IFavouriteJobItemDto[]> {}
+export interface IResponseListApiFavouriteJobDto extends IApiResponse<
+  IFavouriteJobItemDto[]
+> {}

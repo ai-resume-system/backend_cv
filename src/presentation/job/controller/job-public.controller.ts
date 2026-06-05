@@ -33,8 +33,7 @@ export class JobPublicController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary:
-      'Search public open jobs. Access: Public, Job Seeker, Recruiter, Admin.',
+    summary: 'Lay danh sach job public dang mo. Truy cap: Public, Job Seeker, Recruiter, Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseListApiPublicJobDto })
   async getPublicJobs(
@@ -49,8 +48,7 @@ export class JobPublicController extends BaseController {
 
   @Get(':slug/related')
   @ApiOperation({
-    summary:
-      'Get related public jobs by base job slug. Access: Public, Job Seeker',
+    summary: 'Lay danh sach job lien quan theo slug job goc. Truy cap: Public, Job Seeker.',
   })
   @ApiResponse({ status: 200, type: ResponseListApiPublicJobDto })
   async getRelatedJobs(
@@ -63,8 +61,7 @@ export class JobPublicController extends BaseController {
 
   @Get(':slug')
   @ApiOperation({
-    summary:
-      'Get job detail by slug. Access: Public, Job Seeker, Recruiter, Admin.',
+    summary: 'Lay chi tiet job theo slug. Truy cap: Public, Job Seeker, Recruiter, Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiPublicJobDto })
   async getJob(

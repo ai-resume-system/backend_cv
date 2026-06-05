@@ -47,7 +47,7 @@ export class AccountController extends BaseController {
 
   @Get('me')
   @ApiOperation({
-    summary: 'Get my account profile. Access: Authenticated User.',
+    summary: 'Lay thong tin tai khoan cua toi. Truy cap: Nguoi dung da xac thuc.',
   })
   @AuthRequired()
   @ApiResponse({
@@ -63,7 +63,7 @@ export class AccountController extends BaseController {
 
   @Patch('me/profile')
   @ApiOperation({
-    summary: 'Update my personal profile. Access: Job Seeker.',
+    summary: 'Cap nhat ho so ca nhan cua toi. Truy cap: Job Seeker.',
   })
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiResponse({
@@ -80,7 +80,7 @@ export class AccountController extends BaseController {
 
   @Patch('me/company')
   @ApiOperation({
-    summary: 'Update my company profile. Access: Recruiter.',
+    summary: 'Cap nhat ho so cong ty cua toi. Truy cap: Recruiter.',
   })
   @AuthRequired(EUserRole.RECRUITER)
   @ApiResponse({
@@ -97,7 +97,7 @@ export class AccountController extends BaseController {
 
   @Patch('me/change-password')
   @ApiOperation({
-    summary: 'Change my current password. Access: Authenticated User.',
+    summary: 'Doi mat khau hien tai cua toi. Truy cap: Nguoi dung da xac thuc.',
   })
   @AuthRequired()
   @ApiResponse({
@@ -114,7 +114,7 @@ export class AccountController extends BaseController {
 
   @Delete('me/avatar')
   @ApiOperation({
-    summary: 'Delete my avatar. Access: Job Seeker.',
+    summary: 'Xoa avatar cua toi. Truy cap: Job Seeker.',
   })
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiResponse({
@@ -130,7 +130,7 @@ export class AccountController extends BaseController {
 
   @Delete('me/logo')
   @ApiOperation({
-    summary: 'Delete my company logo. Access: Recruiter.',
+    summary: 'Xoa logo cong ty cua toi. Truy cap: Recruiter.',
   })
   @AuthRequired(EUserRole.RECRUITER)
   @ApiResponse({
@@ -146,7 +146,7 @@ export class AccountController extends BaseController {
 
   @Delete('me/banner')
   @ApiOperation({
-    summary: 'Delete my company banner. Access: Recruiter.',
+    summary: 'Xoa banner cong ty cua toi. Truy cap: Recruiter.',
   })
   @AuthRequired(EUserRole.RECRUITER)
   @ApiResponse({

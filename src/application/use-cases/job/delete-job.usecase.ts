@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
+import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { BaseUsecase } from 'src/common/base/base.usecase';
@@ -31,7 +32,10 @@ export class DeleteJobUseCase extends BaseUsecase {
         if (!job || job.companyId !== company.id) {
           throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
         }
-        await this.jobRepository.delete(id);
+        if (job.status !== EJobStatus.DRAFT) {
+          throw new AppException(ERROR_CODES.JOB_INVALID_STATUS_TRANSITION);
+        }
+        await this.jobRepository.softDelete(id);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);

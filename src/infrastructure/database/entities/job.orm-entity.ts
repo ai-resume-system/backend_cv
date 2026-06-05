@@ -11,7 +11,12 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import {
+  EJobEducationLevel,
+  EJobStatus,
+  EJobType,
+  EJobWorkArrangement,
+} from 'src/common/constants/enum/job.enum';
 import type { IJobEntity } from 'src/domain/entities/job.entity';
 
 import { CareerCategoryOrmEntity } from './career-category.orm-entity';
@@ -20,19 +25,15 @@ import { JobApplicationOrmEntity } from './job-application.orm-entity';
 import { JobSkillOrmEntity } from './job-skill.orm-entity';
 
 @Entity('jobs')
-// Admin xem danh sách tất cả job chưa xoá, sort mới nhất
 @Index('idx_jobs_admin_created', ['createdAt', 'id'], {
   where: `"deleted_at" IS NULL`,
 })
-// Admin lọc theo trạng thái: pending, approved, rejected, closed...
 @Index('idx_jobs_admin_status_created', ['status', 'createdAt', 'id'], {
   where: `"deleted_at" IS NULL`,
 })
-// Recruiter xem tất cả job thuộc công ty mình
 @Index('idx_jobs_company_created', ['companyId', 'createdAt', 'id'], {
   where: `"deleted_at" IS NULL`,
 })
-// Recruiter lọc job của công ty mình theo trạng thái
 @Index(
   'idx_jobs_company_status_created',
   ['companyId', 'status', 'createdAt', 'id'],
@@ -40,7 +41,6 @@ import { JobSkillOrmEntity } from './job-skill.orm-entity';
     where: `"deleted_at" IS NULL`,
   },
 )
-// Job seeker/public lọc theo ngành nghề + trạng thái
 @Index(
   'idx_jobs_public_category_status_created',
   ['careerCategoryId', 'status', 'createdAt', 'id'],
@@ -48,7 +48,6 @@ import { JobSkillOrmEntity } from './job-skill.orm-entity';
     where: `"deleted_at" IS NULL`,
   },
 )
-// Job seeker/public lọc theo địa chỉ + trạng thái
 @Index(
   'idx_jobs_public_address_status_created',
   ['address', 'status', 'createdAt', 'id'],
@@ -56,11 +55,9 @@ import { JobSkillOrmEntity } from './job-skill.orm-entity';
     where: `"deleted_at" IS NULL`,
   },
 )
-// Hỗ trợ lọc job hết hạn/còn hạn
 @Index('idx_jobs_expired_at', ['expiredAt'], {
   where: `"deleted_at" IS NULL`,
 })
-// Slug chỉ unique với job chưa bị soft delete
 @Index('idx_jobs_active_slug', ['slug'], {
   unique: true,
   where: `"deleted_at" IS NULL`,
@@ -155,6 +152,22 @@ export class JobOrmEntity implements IJobEntity {
   jobType: EJobType;
 
   @Column({
+    name: 'education_level',
+    type: 'enum',
+    enum: EJobEducationLevel,
+    default: EJobEducationLevel.NONE,
+  })
+  educationLevel: EJobEducationLevel;
+
+  @Column({
+    name: 'work_arrangement',
+    type: 'enum',
+    enum: EJobWorkArrangement,
+    default: EJobWorkArrangement.ONSITE,
+  })
+  workArrangement: EJobWorkArrangement;
+
+  @Column({
     name: 'status',
     type: 'enum',
     enum: EJobStatus,
@@ -175,6 +188,13 @@ export class JobOrmEntity implements IJobEntity {
     nullable: true,
   })
   rejectReason?: string;
+
+  @Column({
+    name: 'close_reason',
+    type: 'text',
+    nullable: true,
+  })
+  closeReason?: string;
 
   @CreateDateColumn({
     name: 'created_at',

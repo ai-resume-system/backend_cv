@@ -53,7 +53,7 @@ export class JobSeekerJobApplicationController extends BaseController {
   @Post()
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Apply to a job. Access: Job Seeker.',
+    summary: 'Ung tuyen vao mot job. Truy cap: Job Seeker.',
   })
   @ApiResponse({
     status: 201,
@@ -70,7 +70,7 @@ export class JobSeekerJobApplicationController extends BaseController {
   @Get('me')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Get my job applications. Access: Job Seeker.',
+    summary: 'Lay danh sach don ung tuyen cua toi. Truy cap: Job Seeker.',
   })
   @ApiResponse({
     status: 200,
@@ -87,7 +87,7 @@ export class JobSeekerJobApplicationController extends BaseController {
   @Get(':id')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Get my job application detail by id. Access: Job Seeker.',
+    summary: 'Lay chi tiet don ung tuyen cua toi theo id. Truy cap: Job Seeker.',
   })
   @ApiResponse({
     status: 200,
@@ -107,7 +107,7 @@ export class JobSeekerJobApplicationController extends BaseController {
   @Delete(':id')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Withdraw a job application. Access: Job Seeker.',
+    summary: 'Rut mot don ung tuyen. Truy cap: Job Seeker.',
   })
   @ApiResponse({
     status: 200,

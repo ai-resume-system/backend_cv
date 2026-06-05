@@ -36,7 +36,7 @@ export class CVAnalysisController extends BaseController {
   @Get(':id/analysis')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Get CV analysis result. Access: Job Seeker.',
+    summary: 'Lay ket qua phan tich CV. Truy cap: Job Seeker.',
   })
   @ApiResponse({ status: 200, type: ResponseApiCVAnalysisDto })
   async getCVAnalysis(
@@ -49,7 +49,7 @@ export class CVAnalysisController extends BaseController {
   @Post(':id/analyze')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Queue a CV analysis job. Access: Job Seeker.',
+    summary: 'Day mot job phan tich CV vao hang doi. Truy cap: Job Seeker.',
   })
   @ApiResponse({ status: 201, type: ResponseApiCVAnalyzeActionDto })
   async analyzeCV(

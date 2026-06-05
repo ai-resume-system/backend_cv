@@ -1,4 +1,9 @@
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import {
+  EJobEducationLevel,
+  EJobStatus,
+  EJobType,
+  EJobWorkArrangement,
+} from 'src/common/constants/enum/job.enum';
 import { IApiResponse } from 'src/common/interface/api-response.interface';
 
 export interface IPublicJobCompanyDto {
@@ -43,6 +48,8 @@ export interface IPublicJobDto {
   experienceYears?: number;
   expiredAt?: Date;
   jobType: EJobType;
+  educationLevel: EJobEducationLevel;
+  workArrangement?: EJobWorkArrangement;
   company: IPublicJobCompanyDto;
   careerCategory?: IJobCareerCategoryDto;
   skills?: IJobSkillDto[];
@@ -54,6 +61,7 @@ export interface IPublicJobDto {
 
 export interface IManagedJobDto extends Omit<IPublicJobDto, 'isFavourited'> {
   rejectReason?: string;
+  closeReason?: string;
 }
 
 export type IPublicJobItemDto = IPublicJobDto;

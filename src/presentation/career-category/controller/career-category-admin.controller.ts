@@ -51,7 +51,7 @@ export class CareerCategoryAdminController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all career categories including inactive and soft-deleted. Access: Admin.',
+    summary: 'Lay tat ca nganh nghe, gom ca inactive va soft-deleted. Truy cap: Admin.',
   })
   @ApiResponse({
     status: 200,
@@ -66,7 +66,7 @@ export class CareerCategoryAdminController extends BaseController {
 
   @Get(':slug')
   @ApiOperation({
-    summary: 'Get career category detail including soft-deleted by slug. Access: Admin.',
+    summary: 'Lay chi tiet nganh nghe theo slug, gom ca soft-deleted. Truy cap: Admin.',
   })
   @ApiResponse({
     status: 200,
@@ -81,7 +81,7 @@ export class CareerCategoryAdminController extends BaseController {
 
   @Post()
   @ApiOperation({
-    summary: 'Create a new career category. Access: Admin.',
+    summary: 'Tao moi mot nganh nghe. Truy cap: Admin.',
   })
   @ApiResponse({
     status: 201,
@@ -96,7 +96,7 @@ export class CareerCategoryAdminController extends BaseController {
 
   @Patch(':id')
   @ApiOperation({
-    summary: 'Update a career category. Access: Admin.',
+    summary: 'Cap nhat mot nganh nghe. Truy cap: Admin.',
   })
   @ApiResponse({
     status: 200,
@@ -112,7 +112,7 @@ export class CareerCategoryAdminController extends BaseController {
 
   @Delete(':id')
   @ApiOperation({
-    summary: 'Delete a career category. Access: Admin.',
+    summary: 'Xoa mot nganh nghe. Truy cap: Admin.',
   })
   @ApiResponse({
     status: 200,

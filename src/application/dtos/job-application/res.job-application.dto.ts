@@ -20,6 +20,7 @@ export interface IApplicationJobCompanyResponse {
 
 export interface IApplicationJobResponse {
   id: string;
+  slug: string;
   title: string;
   address?: string;
   company?: IApplicationJobCompanyResponse;
@@ -52,23 +53,21 @@ export interface IJobApplicationBaseDto {
   job?: IApplicationJobResponse;
 }
 
-export interface IJobSeekerJobApplicationDto
-  extends IJobApplicationBaseDto {}
+export interface IJobSeekerJobApplicationDto extends IJobApplicationBaseDto {}
 
-export interface IRecruiterJobApplicationDto
-  extends IJobApplicationBaseDto {
+export interface IRecruiterJobApplicationDto extends IJobApplicationBaseDto {
   notes?: string;
   user?: IApplicationUserResponse;
 }
 
-export interface IResponseApiJobSeekerJobApplicationDto
-  extends IApiResponse<IJobSeekerJobApplicationDto> {}
+export interface IResponseApiJobSeekerJobApplicationDto extends IApiResponse<IJobSeekerJobApplicationDto> {}
 
-export interface IResponseListApiJobSeekerJobApplicationDto
-  extends IApiResponse<IJobSeekerJobApplicationDto[]> {}
+export interface IResponseListApiJobSeekerJobApplicationDto extends IApiResponse<
+  IJobSeekerJobApplicationDto[]
+> {}
 
-export interface IResponseApiRecruiterJobApplicationDto
-  extends IApiResponse<IRecruiterJobApplicationDto> {}
+export interface IResponseApiRecruiterJobApplicationDto extends IApiResponse<IRecruiterJobApplicationDto> {}
 
-export interface IResponseListApiRecruiterJobApplicationDto
-  extends IApiResponse<IRecruiterJobApplicationDto[]> {}
+export interface IResponseListApiRecruiterJobApplicationDto extends IApiResponse<
+  IRecruiterJobApplicationDto[]
+> {}

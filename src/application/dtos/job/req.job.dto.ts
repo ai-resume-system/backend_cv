@@ -1,5 +1,11 @@
 import { IApiRequestPagination } from 'src/common/interface/api-request.interface';
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import {
+  EJobAction,
+  EJobEducationLevel,
+  EJobStatus,
+  EJobType,
+  EJobWorkArrangement,
+} from 'src/common/constants/enum/job.enum';
 
 export interface IGetJobsDto extends IApiRequestPagination {
   q?: string;
@@ -15,9 +21,9 @@ export interface IGetJobsDto extends IApiRequestPagination {
   experienceYearsMin?: number;
   experienceYearsMax?: number;
   jobType?: EJobType;
-  // public
+  educationLevel?: EJobEducationLevel;
+  workArrangement?: EJobWorkArrangement;
   careerCategorySlug?: string;
-  // internal/admin
   careerCategoryId?: string;
   status?: EJobStatus;
 }
@@ -32,6 +38,7 @@ export interface IJobSkillInputDto {
 }
 
 export interface ICreateJobBaseDto {
+  action?: EJobAction;
   careerCategoryId?: string;
   title: string;
   description?: string;
@@ -43,6 +50,8 @@ export interface ICreateJobBaseDto {
   vacancyCount?: number;
   expiredAt?: Date;
   jobType?: EJobType;
+  educationLevel?: EJobEducationLevel;
+  workArrangement?: EJobWorkArrangement;
   skills?: IJobSkillInputDto[];
 }
 
@@ -56,4 +65,8 @@ export type IUpdateJobDto = Partial<Omit<ICreateJobDto, 'companyId'>> & {
 
 export interface IRejectJobDto {
   rejectReason: string;
+}
+
+export interface ICloseJobDto {
+  closeReason: string;
 }

@@ -122,6 +122,7 @@ export class GetMyJobApplicationsQuery {
       job: job
         ? {
             id: job.id,
+            slug: job.slug,
             title: job.title,
             address: job.address,
             company: companySummary,

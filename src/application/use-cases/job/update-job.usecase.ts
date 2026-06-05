@@ -1,9 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IUpdateJobDto } from 'src/application/dtos/job/req.job.dto';
 import { IResponseApiRecruiterJobDto } from 'src/application/dtos/job/res.job.dto';
-import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
+import { toRecruiterJobDetailDto } from 'src/application/queries/job/job-response.mapper';
 import { BaseUsecase } from 'src/common/base/base.usecase';
-import { EJobStatus } from 'src/common/constants/enum/job.enum';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
+import {
+  EJobAction,
+  EJobEducationLevel,
+  EJobStatus,
+} from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
@@ -13,7 +18,6 @@ import type { IJobRepository } from 'src/domain/repositories/job.repository.inte
 import type { IJobSkillRepository } from 'src/domain/repositories/job-skill.repository.interface';
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import { toRecruiterJobDetailDto } from 'src/application/queries/job/job-response.mapper';
 
 @Injectable()
 export class UpdateJobUseCase extends BaseUsecase {
@@ -44,6 +48,7 @@ export class UpdateJobUseCase extends BaseUsecase {
         if (!company) {
           throw new AppException(ERROR_CODES.ROLE_INSUFFICIENT_PERMISSIONS);
         }
+
         const existing = await this.jobRepository.findById(id);
         if (!existing || existing.companyId !== company.id) {
           throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
@@ -55,8 +60,28 @@ export class UpdateJobUseCase extends BaseUsecase {
           throw new AppException(ERROR_CODES.ROLE_INSUFFICIENT_PERMISSIONS);
         }
 
-        const { skills: _skills, ...jobData } = dto;
-        const updateData = { ...jobData } as typeof jobData & { slug?: string };
+        const jobAction = dto.action;
+        const shouldSubmitDraft =
+          existing.status === EJobStatus.DRAFT &&
+          jobAction === EJobAction.SUBMIT;
+
+        this.validateSalaryRange(dto.salaryMin, dto.salaryMax);
+        this.validateExpiredAt(dto.expiredAt);
+        this.validateSubmitRequirements(shouldSubmitDraft, dto, existing);
+
+        const { action: _action, skills: _skills, ...jobData } = dto;
+        const updateData = {
+          ...jobData,
+          educationLevel:
+            dto.educationLevel ??
+            existing.educationLevel ??
+            EJobEducationLevel.NONE,
+        } as typeof jobData & {
+          slug?: string;
+          status?: EJobStatus;
+          educationLevel?: EJobEducationLevel;
+        };
+
         if (dto.title && dto.title.trim() !== existing.title) {
           updateData.slug = await generateUniqueSlug(
             dto.title,
@@ -64,16 +89,7 @@ export class UpdateJobUseCase extends BaseUsecase {
             (candidate) => this.jobRepository.isSlugTaken(candidate, id),
           );
         }
-        if (
-          dto.salaryMin !== undefined &&
-          dto.salaryMax !== undefined &&
-          dto.salaryMin > dto.salaryMax
-        ) {
-          throw new AppException(ERROR_CODES.JOB_INVALID_SALARY_RANGE);
-        }
-        if (dto.expiredAt && dto.expiredAt <= new Date()) {
-          throw new AppException(ERROR_CODES.JOB_INVALID_EXPIRED_AT);
-        }
+
         let careerCategory:
           | Awaited<ReturnType<ICareerCategoryRepository['findById']>>
           | null = null;
@@ -97,6 +113,7 @@ export class UpdateJobUseCase extends BaseUsecase {
         if (skills.some((skill) => !skill)) {
           throw new AppException(ERROR_CODES.SKILL_NOT_FOUND);
         }
+
         const effectiveCareerCategoryId =
           dto.careerCategoryId ?? existing.careerCategoryId;
         if (
@@ -117,6 +134,12 @@ export class UpdateJobUseCase extends BaseUsecase {
           }
         }
 
+        if (existing.status === EJobStatus.DRAFT) {
+          updateData.status = shouldSubmitDraft
+            ? EJobStatus.PENDING
+            : EJobStatus.DRAFT;
+        }
+
         const job = await this.jobRepository.update(id, updateData);
         if (dto.skills) {
           await this.jobSkillRepository.deleteByJobId(id);
@@ -128,15 +151,18 @@ export class UpdateJobUseCase extends BaseUsecase {
             });
           }
         }
+
         const persistedJobSkills = await this.jobSkillRepository.findByJobId(id);
         const persistedSkills = await Promise.all(
           persistedJobSkills.map((jobSkill) =>
             this.skillRepository.findById(jobSkill.skillId),
           ),
         );
+
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+
         const data = toRecruiterJobDetailDto(job, {
           company,
           careerCategory,
@@ -161,5 +187,40 @@ export class UpdateJobUseCase extends BaseUsecase {
       },
       ERROR_CODES.JOB_UPDATE_FAILED,
     );
+  }
+
+  private validateSalaryRange(
+    salaryMin?: number,
+    salaryMax?: number,
+  ): void {
+    if (
+      salaryMin !== undefined &&
+      salaryMax !== undefined &&
+      salaryMin > salaryMax
+    ) {
+      throw new AppException(ERROR_CODES.JOB_INVALID_SALARY_RANGE);
+    }
+  }
+
+  private validateExpiredAt(expiredAt?: Date): void {
+    if (expiredAt && expiredAt <= new Date()) {
+      throw new AppException(ERROR_CODES.JOB_INVALID_EXPIRED_AT);
+    }
+  }
+
+  private validateSubmitRequirements(
+    shouldSubmitDraft: boolean,
+    dto: IUpdateJobDto,
+    existing: { workArrangement?: string },
+  ): void {
+    if (!shouldSubmitDraft) {
+      return;
+    }
+
+    const effectiveWorkArrangement =
+      dto.workArrangement ?? existing.workArrangement;
+    if (!effectiveWorkArrangement) {
+      throw new AppException(ERROR_CODES.VALIDATION_ERROR);
+    }
   }
 }

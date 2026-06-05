@@ -34,8 +34,7 @@ export class CompanyController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary:
-      'Get public companies list. Access: Public, Job Seeker, Recruiter, Admin.',
+    summary: 'Lay danh sach cong ty public. Truy cap: Public, Job Seeker, Recruiter, Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseListApiCompanyDto })
   async getCompanies(
@@ -46,8 +45,7 @@ export class CompanyController extends BaseController {
 
   @Get(':slug/jobs')
   @ApiOperation({
-    summary:
-      'Get public jobs by company slug. Access: Public, Job Seeker, Recruiter, Admin.',
+    summary: 'Lay danh sach job public theo slug cong ty. Truy cap: Public, Job Seeker, Recruiter, Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseListApiPublicJobDto })
   async getCompanyJobs(
@@ -60,8 +58,7 @@ export class CompanyController extends BaseController {
 
   @Get(':slug')
   @ApiOperation({
-    summary:
-      'Get company detail by slug. Access: Public, Job Seeker, Recruiter, Admin.',
+    summary: 'Lay chi tiet cong ty theo slug. Truy cap: Public, Job Seeker, Recruiter, Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiCompanyDto })
   async getCompanyBySlug(

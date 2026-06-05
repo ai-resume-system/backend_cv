@@ -42,6 +42,9 @@ export class ResponseJobApplicationJobDto {
   id: string;
 
   @ApiProperty()
+  slug: string;
+
+  @ApiProperty()
   title: string;
 
   @ApiPropertyOptional()

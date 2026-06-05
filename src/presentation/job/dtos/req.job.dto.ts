@@ -14,7 +14,13 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import {
+  EJobAction,
+  EJobEducationLevel,
+  EJobStatus,
+  EJobType,
+  EJobWorkArrangement,
+} from 'src/common/constants/enum/job.enum';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 import { parseJobExpiredAtInput } from 'src/common/utils/date-time.util';
 import { transfomerPagination } from 'src/common/utils/request-pagination.utils';
@@ -92,13 +98,23 @@ export class RequestGetJobsDto extends RequestPaginationDto {
 
   @ApiPropertyOptional({ enum: EJobStatus })
   @IsOptional()
-  @IsString()
+  @IsEnum(EJobStatus)
   status?: EJobStatus;
 
   @ApiPropertyOptional({ enum: EJobType })
   @IsOptional()
-  @IsString()
+  @IsEnum(EJobType)
   jobType?: EJobType;
+
+  @ApiPropertyOptional({ enum: EJobEducationLevel })
+  @IsOptional()
+  @IsEnum(EJobEducationLevel)
+  educationLevel?: EJobEducationLevel;
+
+  @ApiPropertyOptional({ enum: EJobWorkArrangement })
+  @IsOptional()
+  @IsEnum(EJobWorkArrangement)
+  workArrangement?: EJobWorkArrangement;
 
   @ApiPropertyOptional({
     type: [String],
@@ -168,6 +184,11 @@ export class RequestCreateJobDto {
   @IsString()
   title: string;
 
+  @ApiPropertyOptional({ enum: EJobAction, default: EJobAction.SUBMIT })
+  @IsOptional()
+  @IsEnum(EJobAction)
+  action?: EJobAction;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -224,8 +245,21 @@ export class RequestCreateJobDto {
 
   @ApiPropertyOptional({ enum: EJobType, default: EJobType.FULL_TIME })
   @IsOptional()
-  @IsString()
+  @IsEnum(EJobType)
   jobType?: EJobType;
+
+  @ApiPropertyOptional({
+    enum: EJobEducationLevel,
+    default: EJobEducationLevel.NONE,
+  })
+  @IsOptional()
+  @IsEnum(EJobEducationLevel)
+  educationLevel?: EJobEducationLevel;
+
+  @ApiPropertyOptional({ enum: EJobWorkArrangement })
+  @IsOptional()
+  @IsEnum(EJobWorkArrangement)
+  workArrangement?: EJobWorkArrangement;
 
   @ApiPropertyOptional({ type: [RequestJobSkillDto] })
   @IsOptional()
@@ -236,6 +270,11 @@ export class RequestCreateJobDto {
 }
 
 export class RequestUpdateJobDto {
+  @ApiPropertyOptional({ enum: EJobAction })
+  @IsOptional()
+  @IsEnum(EJobAction)
+  action?: EJobAction;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -298,8 +337,18 @@ export class RequestUpdateJobDto {
 
   @ApiPropertyOptional({ enum: EJobType })
   @IsOptional()
-  @IsString()
+  @IsEnum(EJobType)
   jobType?: EJobType;
+
+  @ApiPropertyOptional({ enum: EJobEducationLevel })
+  @IsOptional()
+  @IsEnum(EJobEducationLevel)
+  educationLevel?: EJobEducationLevel;
+
+  @ApiPropertyOptional({ enum: EJobWorkArrangement })
+  @IsOptional()
+  @IsEnum(EJobWorkArrangement)
+  workArrangement?: EJobWorkArrangement;
 
   @ApiPropertyOptional({ type: [RequestJobSkillDto] })
   @IsOptional()
@@ -313,4 +362,11 @@ export class RequestRejectJobDto {
   @ApiProperty()
   @IsString()
   rejectReason: string;
+}
+
+export class RequestCloseJobDto {
+  @ApiProperty()
+  @IsString()
+  @MaxLength(1000)
+  closeReason: string;
 }

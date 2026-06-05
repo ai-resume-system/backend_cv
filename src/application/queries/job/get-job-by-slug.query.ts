@@ -161,6 +161,9 @@ export class GetJobBySlugQuery extends BaseUsecase {
       if (!job) {
         throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
       }
+      if (job.status === EJobStatus.DRAFT) {
+        throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
+      }
 
       const recruiterCompany =
         await this.companyRepository.findByUserId(recruiterId);

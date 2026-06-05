@@ -5,7 +5,10 @@ import {
   OnApplicationBootstrap,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { IRejectJobDto } from 'src/application/dtos/job/req.job.dto';
+import {
+  ICloseJobDto,
+  IRejectJobDto,
+} from 'src/application/dtos/job/req.job.dto';
 import { IResponseApiManagedJobDto } from 'src/application/dtos/job/res.job.dto';
 import { toManagedJobDto } from 'src/application/queries/job/job-response.mapper';
 import { BaseUsecase } from 'src/common/base/base.usecase';
@@ -16,6 +19,11 @@ import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+
+type UpdateStatusMetadata = {
+  rejectReason?: string;
+  closeReason?: string;
+};
 
 @Injectable()
 export class ReviewJobUseCase
@@ -41,21 +49,28 @@ export class ReviewJobUseCase
     return this.updateStatus(id, EJobStatus.OPEN);
   }
 
-  async close(id: string): Promise<IResponseApiManagedJobDto> {
-    return this.updateStatus(id, EJobStatus.CLOSED);
+  async close(
+    id: string,
+    dto: ICloseJobDto,
+  ): Promise<IResponseApiManagedJobDto> {
+    return this.updateStatus(id, EJobStatus.CLOSED, {
+      closeReason: dto.closeReason,
+    });
   }
 
   async reject(
     id: string,
     dto: IRejectJobDto,
   ): Promise<IResponseApiManagedJobDto> {
-    return this.updateStatus(id, EJobStatus.REJECTED, dto.rejectReason);
+    return this.updateStatus(id, EJobStatus.REJECTED, {
+      rejectReason: dto.rejectReason,
+    });
   }
 
   private async updateStatus(
     id: string,
     status: EJobStatus,
-    rejectReason?: string,
+    metadata?: UpdateStatusMetadata,
   ): Promise<IResponseApiManagedJobDto> {
     return this.runSafe('[Review Job]: ', async () => {
       const existing = await this.jobRepository.findById(id);
@@ -71,9 +86,14 @@ export class ReviewJobUseCase
       if (status === EJobStatus.CLOSED && existing.status !== EJobStatus.OPEN) {
         throw new AppException(ERROR_CODES.JOB_INVALID_STATUS_TRANSITION);
       }
+      if (status === EJobStatus.CLOSED && !metadata?.closeReason?.trim()) {
+        throw new AppException(ERROR_CODES.VALIDATION_ERROR);
+      }
+
       const job = await this.jobRepository.update(id, {
         status,
-        rejectReason,
+        rejectReason: metadata?.rejectReason,
+        closeReason: metadata?.closeReason,
       });
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);

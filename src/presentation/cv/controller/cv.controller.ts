@@ -57,7 +57,7 @@ export class CVController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get my CV list. Access: Job Seeker.',
+    summary: 'Lay danh sach CV cua toi. Truy cap: Job Seeker.',
   })
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiResponse({ status: 200, type: ResponseListApiCVDto })
@@ -74,7 +74,7 @@ export class CVController extends BaseController {
   @Get(':id/download')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Get private CV download URL. Access: Job Seeker.',
+    summary: 'Lay URL tai xuong CV rieng tu. Truy cap: Job Seeker.',
   })
   @ApiResponse({ status: 200, type: ResponseApiCVDownloadDto })
   async getDownloadUrl(
@@ -87,7 +87,7 @@ export class CVController extends BaseController {
   @Get(':id/preview')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Get private CV preview metadata. Access: Job Seeker.',
+    summary: 'Lay thong tin preview CV rieng tu. Truy cap: Job Seeker.',
   })
   @ApiResponse({ status: 200, type: ResponseApiCVPreviewDto })
   async getPreviewUrl(
@@ -100,7 +100,7 @@ export class CVController extends BaseController {
   @Patch(':id')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Update CV metadata. Access: Job Seeker.',
+    summary: 'Cap nhat thong tin CV. Truy cap: Job Seeker.',
   })
   @ApiResponse({ status: 200, type: ResponseApiCVDto })
   async updateCV(
@@ -114,7 +114,7 @@ export class CVController extends BaseController {
   @Patch(':id/default')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Update default status of a CV. Access: Job Seeker.',
+    summary: 'Cap nhat trang thai mac dinh cua CV. Truy cap: Job Seeker.',
   })
   @ApiResponse({ status: 200, type: ResponseApiCVDto })
   async setDefaultCV(
@@ -128,7 +128,7 @@ export class CVController extends BaseController {
   @Delete(':id')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Delete a CV. Access: Job Seeker.',
+    summary: 'Xoa mot CV. Truy cap: Job Seeker.',
   })
   @ApiResponse({ status: 200, type: ResponseApiNullDto })
   async deleteCV(

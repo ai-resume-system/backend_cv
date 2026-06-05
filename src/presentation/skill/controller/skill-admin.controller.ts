@@ -37,7 +37,7 @@ export class SkillAdminController extends BaseController {
   @Post()
   @AuthRequired(EUserRole.ADMIN)
   @ApiOperation({
-    summary: 'Create a skill. Access: Admin.',
+    summary: 'Tao moi mot ky nang. Truy cap: Admin.',
   })
   @ApiResponse({ status: 201, type: ResponseApiSkillDto })
   async createSkill(
@@ -49,7 +49,7 @@ export class SkillAdminController extends BaseController {
   @Patch(':id')
   @AuthRequired(EUserRole.ADMIN)
   @ApiOperation({
-    summary: 'Update a skill. Access: Admin.',
+    summary: 'Cap nhat mot ky nang. Truy cap: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiSkillDto })
   async updateSkill(
@@ -62,7 +62,7 @@ export class SkillAdminController extends BaseController {
   @Delete(':id')
   @AuthRequired(EUserRole.ADMIN)
   @ApiOperation({
-    summary: 'Delete a skill. Access: Admin.',
+    summary: 'Xoa mot ky nang. Truy cap: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiNullDto })
   async deleteSkill(

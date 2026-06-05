@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { EJobStatus, EJobType } from 'src/common/constants/enum/job.enum';
+import {
+  EJobEducationLevel,
+  EJobStatus,
+  EJobType,
+  EJobWorkArrangement,
+} from 'src/common/constants/enum/job.enum';
 import { ApiResponseDto, PaginationDto } from 'src/common/dto/response.dto';
 import { ResponseCompanyDto } from 'src/presentation/account/dtos/res.account.dto';
 
@@ -74,6 +79,18 @@ export class ResponsePublicJobDto {
   jobType: EJobType;
 
   @ApiProperty({
+    enum: Object.values(EJobEducationLevel),
+    example: Object.values(EJobEducationLevel).join(' | '),
+  })
+  educationLevel: EJobEducationLevel;
+
+  @ApiPropertyOptional({
+    enum: Object.values(EJobWorkArrangement),
+    example: Object.values(EJobWorkArrangement).join(' | '),
+  })
+  workArrangement?: EJobWorkArrangement;
+
+  @ApiProperty({
     enum: Object.values(EJobStatus),
     example: Object.values(EJobStatus).join(' | '),
   })
@@ -101,6 +118,9 @@ export class ResponsePublicJobDto {
 export class ResponseManagedJobDto extends ResponsePublicJobDto {
   @ApiPropertyOptional()
   rejectReason?: string;
+
+  @ApiPropertyOptional()
+  closeReason?: string;
 }
 
 export class ResponseApiPublicJobDto extends ApiResponseDto<ResponsePublicJobDto> {

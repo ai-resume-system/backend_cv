@@ -49,18 +49,22 @@ export class RecruiterJobApplicationQuerySupport extends BaseUsecase {
     const cvMap = new Map(cvs.map((cv) => [cv.id, cv]));
     const jobMap = new Map(jobs.map((job) => [job.id, job]));
     const userMap = new Map(users.map((user) => [user.id, user]));
-    const companyMap = new Map(companies.map((company) => [company.id, company]));
+    const companyMap = new Map(
+      companies.map((company) => [company.id, company]),
+    );
 
     const resolvedCompanies = await Promise.all(
-      companies.map(async (company): Promise<[string, IApplicationJobCompanyResponse]> => [
-        company.id,
-        await resolveCompanyMedia(this.storage, {
-          id: company.id,
-          name: company.name,
-          slug: company.slug,
-          logoUrl: company.logoUrl,
-        }),
-      ]),
+      companies.map(
+        async (company): Promise<[string, IApplicationJobCompanyResponse]> => [
+          company.id,
+          await resolveCompanyMedia(this.storage, {
+            id: company.id,
+            name: company.name,
+            slug: company.slug,
+            logoUrl: company.logoUrl,
+          }),
+        ],
+      ),
     );
     const resolvedCompanyMap = new Map<string, IApplicationJobCompanyResponse>(
       resolvedCompanies,
@@ -88,6 +92,7 @@ export class RecruiterJobApplicationQuerySupport extends BaseUsecase {
         job: job
           ? {
               id: job.id,
+              slug: job.slug,
               title: job.title,
               address: job.address,
               company: companyDto,

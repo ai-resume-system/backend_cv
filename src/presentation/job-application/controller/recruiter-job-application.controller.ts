@@ -61,7 +61,7 @@ export class RecruiterJobApplicationController extends BaseController {
   @Get()
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Get company-wide job applications. Access: Recruiter.',
+    summary: 'Lay tat ca don ung tuyen cua cong ty. Truy cap: Recruiter.',
   })
   @ApiResponse({
     status: 200,
@@ -78,7 +78,7 @@ export class RecruiterJobApplicationController extends BaseController {
   @Get('new')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Get newest applied applicants across company jobs. Access: Recruiter.',
+    summary: 'Lay danh sach ung vien moi ung tuyen trong cong ty. Truy cap: Recruiter.',
   })
   @ApiResponse({
     status: 200,
@@ -95,7 +95,7 @@ export class RecruiterJobApplicationController extends BaseController {
   @Get('interviews')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Get interview schedules across company jobs. Access: Recruiter.',
+    summary: 'Lay danh sach lich phong van cua cong ty. Truy cap: Recruiter.',
   })
   @ApiResponse({
     status: 200,
@@ -112,7 +112,7 @@ export class RecruiterJobApplicationController extends BaseController {
   @Get('jobs/:jobId')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Get job applications by job id. Access: Recruiter.',
+    summary: 'Lay danh sach don ung tuyen theo job id. Truy cap: Recruiter.',
   })
   @ApiResponse({
     status: 200,
@@ -134,7 +134,7 @@ export class RecruiterJobApplicationController extends BaseController {
   @Get(':id')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Get job application detail by id. Access: Recruiter.',
+    summary: 'Lay chi tiet don ung tuyen theo id. Truy cap: Recruiter.',
   })
   @ApiResponse({
     status: 200,
@@ -154,7 +154,7 @@ export class RecruiterJobApplicationController extends BaseController {
   @Get(':applicationId/cv')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Get CV of a job application. Access: Recruiter.',
+    summary: 'Lay CV cua mot don ung tuyen. Truy cap: Recruiter.',
   })
   @ApiResponse({ status: 200, description: 'CV details' })
   async getApplicationCV(
@@ -167,7 +167,7 @@ export class RecruiterJobApplicationController extends BaseController {
   @Patch(':id/status')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Update job application status. Access: Recruiter.',
+    summary: 'Cap nhat trang thai don ung tuyen. Truy cap: Recruiter.',
   })
   @ApiResponse({
     status: 200,

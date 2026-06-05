@@ -51,6 +51,8 @@ export function toPublicJobDto(
     experienceYears: job.experienceYears,
     expiredAt: job.expiredAt,
     jobType: job.jobType,
+    educationLevel: job.educationLevel,
+    workArrangement: job.workArrangement,
     company: options.company,
     careerCategory: toJobCareerCategoryDto(options.careerCategory),
     skills: options.skills,
@@ -82,6 +84,7 @@ export function toManagedJobDto(
   return {
     ...publicJob,
     rejectReason: job.rejectReason,
+    closeReason: job.closeReason,
   };
 }
 

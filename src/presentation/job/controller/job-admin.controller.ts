@@ -19,7 +19,11 @@ import { ReviewJobUseCase } from 'src/application/use-cases/job/review-job.useca
 import { BaseController } from 'src/common/base/base.controller';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
-import { RequestGetJobsDto, RequestRejectJobDto } from '../dtos/req.job.dto';
+import {
+  RequestCloseJobDto,
+  RequestGetJobsDto,
+  RequestRejectJobDto,
+} from '../dtos/req.job.dto';
 import {
   ResponseApiAdminJobDto,
   ResponseListApiAdminJobDto,
@@ -39,7 +43,7 @@ export class JobAdminController extends BaseController {
   @Get()
   @AuthRequired(EUserRole.ADMIN)
   @ApiOperation({
-    summary: 'Get all jobs for moderation and management. Access: Admin.',
+    summary: 'Lay danh sach job de duyet va quan ly. Truy cap: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseListApiAdminJobDto })
   async getAdminJobs(
@@ -51,7 +55,7 @@ export class JobAdminController extends BaseController {
   @Get(':slug')
   @AuthRequired(EUserRole.ADMIN)
   @ApiOperation({
-    summary: 'Get job detail by slug for moderation and editing. Access: Admin.',
+    summary: 'Lay chi tiet job theo slug de duyet va chinh sua. Truy cap: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiAdminJobDto })
   async getAdminJobBySlug(
@@ -63,7 +67,7 @@ export class JobAdminController extends BaseController {
   @Patch(':id/approve')
   @AuthRequired(EUserRole.ADMIN)
   @ApiOperation({
-    summary: 'Approve a pending job. Access: Admin.',
+    summary: 'Duyet mot job dang cho xu ly. Truy cap: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiAdminJobDto })
   async approveJob(
@@ -75,7 +79,7 @@ export class JobAdminController extends BaseController {
   @Patch(':id/reject')
   @AuthRequired(EUserRole.ADMIN)
   @ApiOperation({
-    summary: 'Reject a pending job with reason. Access: Admin.',
+    summary: 'Tu choi mot job dang cho xu ly kem ly do. Truy cap: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiAdminJobDto })
   async rejectJob(
@@ -88,12 +92,13 @@ export class JobAdminController extends BaseController {
   @Patch(':id/close')
   @AuthRequired(EUserRole.ADMIN)
   @ApiOperation({
-    summary: 'Close a job. Access: Admin.',
+    summary: 'Dong mot job. Truy cap: Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiAdminJobDto })
   async closeJob(
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RequestCloseJobDto,
   ): Promise<IResponseApiAdminJobDto> {
-    return await this.reviewJobUseCase.close(id);
+    return await this.reviewJobUseCase.close(id, dto);
   }
 }

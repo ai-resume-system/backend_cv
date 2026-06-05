@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EJobStatus } from 'src/common/constants/enum/job.enum';
+import {
+  EJobEducationLevel,
+  EJobStatus,
+  EJobWorkArrangement,
+} from 'src/common/constants/enum/job.enum';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import type { IJobEntity } from 'src/domain/entities/job.entity';
 import type {
@@ -43,13 +47,21 @@ export class JobTypeormRepository
       experienceYearsMin,
       experienceYearsMax,
       address,
+      excludedStatuses,
       ...otherFilters
     } = options?.filter || {};
 
-    if (notExpired === true || skillIds || q || expiredAtBefore) {
+    if (
+      notExpired === true ||
+      skillIds ||
+      q ||
+      expiredAtBefore ||
+      (Array.isArray(excludedStatuses) && excludedStatuses.length > 0)
+    ) {
       const now = new Date();
       const queryBuilder = this.ormRepository.createQueryBuilder('entity');
       queryBuilder.where('entity.deletedAt IS NULL');
+
       if (notExpired === true) {
         queryBuilder.andWhere(
           '(entity.expiredAt > :now OR entity.expiredAt IS NULL)',
@@ -106,6 +118,11 @@ export class JobTypeormRepository
           experienceYearsMax,
         });
       }
+      if (Array.isArray(excludedStatuses) && excludedStatuses.length > 0) {
+        queryBuilder.andWhere('entity.status NOT IN (:...excludedStatuses)', {
+          excludedStatuses,
+        });
+      }
 
       Object.entries(otherFilters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -142,7 +159,7 @@ export class JobTypeormRepository
       const [data, totalItems] = await queryBuilder.getManyAndCount();
 
       return {
-        data: data.map((d) => this.toDomain(d)),
+        data: data.map((job) => this.toDomain(job)),
         total: totalItems,
       };
     }
@@ -318,7 +335,6 @@ export class JobTypeormRepository
       .addOrderBy('same_address', 'DESC')
       .addOrderBy('same_job_type', 'DESC')
       .addOrderBy('job.created_at', 'DESC')
-      // .take(options.limit);
       .limit(options.limit);
 
     const { entities } = await queryBuilder.getRawAndEntities();
@@ -354,7 +370,10 @@ export class JobTypeormRepository
       experienceYears: orm.experienceYears,
       expiredAt: orm.expiredAt,
       jobType: orm.jobType,
+      educationLevel: orm.educationLevel ?? EJobEducationLevel.NONE,
+      workArrangement: orm.workArrangement ?? undefined,
       rejectReason: orm.rejectReason,
+      closeReason: orm.closeReason,
       status: orm.status,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,

@@ -45,7 +45,7 @@ export class GetFavouriteJobsQuery extends BaseUsecase {
         });
 
         const data = await Promise.all(
-          result.data.map((item) => this.toItemDto(item.jobId)),
+          result.data.map((item) => this.toItemDto(item.jobId, item.createdAt)),
         );
 
         return {
@@ -64,7 +64,10 @@ export class GetFavouriteJobsQuery extends BaseUsecase {
     );
   }
 
-  private async toItemDto(jobId: string): Promise<IFavouriteJobItemDto | null> {
+  private async toItemDto(
+    jobId: string,
+    createdAt: Date,
+  ): Promise<IFavouriteJobItemDto | null> {
     const job = await this.jobRepository.findById(jobId);
     if (!job) {
       return null;
@@ -101,6 +104,7 @@ export class GetFavouriteJobsQuery extends BaseUsecase {
 
     return {
       id: job.id,
+      slug: job.slug,
       title: job.title,
       shortDescription: job.shortDescription,
       address: job.address,
@@ -118,6 +122,7 @@ export class GetFavouriteJobsQuery extends BaseUsecase {
           }
         : undefined,
       isFavourited: true,
+      createdAt,
     };
   }
 }

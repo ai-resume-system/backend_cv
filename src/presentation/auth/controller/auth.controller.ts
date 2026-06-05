@@ -71,7 +71,7 @@ export class AuthController extends BaseController {
 
   @Post('register/job-seeker')
   @ApiOperation({
-    summary: 'Register a new job seeker account. Access: Public.',
+    summary: 'Dang ky tai khoan ung vien moi. Truy cap: Public.',
   })
   @ApiResponse({
     status: 201,
@@ -89,7 +89,7 @@ export class AuthController extends BaseController {
 
   @Post('register/recruiter')
   @ApiOperation({
-    summary: 'Register a new recruiter account. Access: Public.',
+    summary: 'Dang ky tai khoan recruiter moi. Truy cap: Public.',
   })
   @ApiResponse({
     status: 201,
@@ -107,8 +107,7 @@ export class AuthController extends BaseController {
 
   @Post('send-otp')
   @ApiOperation({
-    summary:
-      'Send OTP to email for register or forgot-password flow. Access: Public.',
+    summary: 'Gui OTP den email cho luong dang ky hoac quen mat khau. Truy cap: Public.',
   })
   @ApiResponse({
     status: 201,
@@ -127,8 +126,7 @@ export class AuthController extends BaseController {
 
   @Post('verify-otp')
   @ApiOperation({
-    summary:
-      'Verify OTP code for register or forgot-password flow. Access: Public.',
+    summary: 'Xac thuc ma OTP cho luong dang ky hoac quen mat khau. Truy cap: Public.',
   })
   @ApiResponse({
     status: 201,
@@ -143,7 +141,7 @@ export class AuthController extends BaseController {
 
   @Post('login')
   @ApiOperation({
-    summary: 'Login with email and password. Access: Public.',
+    summary: 'Dang nhap bang email va mat khau. Truy cap: Public.',
   })
   @ApiResponse({
     status: 201,
@@ -169,8 +167,7 @@ export class AuthController extends BaseController {
 
   @Post('refresh-token')
   @ApiOperation({
-    summary:
-      'Refresh access token by refresh token or auth cookie. Access: Public.',
+    summary: 'Lam moi access token bang refresh token hoac auth cookie. Truy cap: Public.',
   })
   @ApiResponse({
     status: 201,
@@ -199,7 +196,7 @@ export class AuthController extends BaseController {
 
   @Post('forgot-password')
   @ApiOperation({
-    summary: 'Reset password with verified email OTP signKey. Access: Public.',
+    summary: 'Dat lai mat khau bang signKey OTP email da xac thuc. Truy cap: Public.',
   })
   @ApiResponse({
     status: 201,
@@ -214,8 +211,7 @@ export class AuthController extends BaseController {
 
   @Post('logout')
   @ApiOperation({
-    summary:
-      'Logout current account and clear refresh cookie. Access: Authenticated User.',
+    summary: 'Dang xuat tai khoan hien tai va xoa refresh cookie. Truy cap: Nguoi dung da xac thuc.',
   })
   @AuthRequired()
   @ApiResponse({

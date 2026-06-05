@@ -25,7 +25,7 @@ export class SkillController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all skills. Access: Public, Job Seeker, Recruiter, Admin.',
+    summary: 'Lay danh sach tat ca ky nang. Truy cap: Public, Job Seeker, Recruiter, Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseListApiSkillDto })
   async getSkills(
@@ -36,8 +36,7 @@ export class SkillController extends BaseController {
 
   @Get(':slug')
   @ApiOperation({
-    summary:
-      'Get skill detail by slug. Access: Public, Job Seeker, Recruiter, Admin.',
+    summary: 'Lay chi tiet ky nang theo slug. Truy cap: Public, Job Seeker, Recruiter, Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseApiSkillDto })
   async getSkillBySlug(

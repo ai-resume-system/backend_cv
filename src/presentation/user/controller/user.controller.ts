@@ -40,7 +40,7 @@ export class UserController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all users with pagination and filters. Access: Admin.',
+    summary: 'Lay danh sach nguoi dung kem phan trang va bo loc. Truy cap: Admin.',
   })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
@@ -56,7 +56,7 @@ export class UserController extends BaseController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Get user detail by id. Access: Admin.',
+    summary: 'Lay chi tiet nguoi dung theo id. Truy cap: Admin.',
   })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
@@ -72,7 +72,7 @@ export class UserController extends BaseController {
 
   @Patch(':id/status')
   @ApiOperation({
-    summary: 'Update user status such as lock or unlock. Access: Admin.',
+    summary: 'Cap nhat trang thai nguoi dung nhu khoa hoac mo khoa. Truy cap: Admin.',
   })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
