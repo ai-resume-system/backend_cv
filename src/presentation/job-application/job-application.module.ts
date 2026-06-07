@@ -29,6 +29,7 @@ import { JobOrmEntity } from 'src/infrastructure/database/entities/job.orm-entit
 import { QueueModule } from 'src/infrastructure/queue/queue.module';
 import { GetJobApplicationCVQuery } from 'src/application/queries/job-application/get-job-application-cv.querry';
 import { StorageModule } from 'src/infrastructure/storage/storage.module';
+import { RedisModule } from 'src/infrastructure/redis/redis.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { StorageModule } from 'src/infrastructure/storage/storage.module';
     JwtAuthModule,
     QueueModule,
     StorageModule,
+    RedisModule,
   ],
   controllers: [
     JobSeekerJobApplicationController,

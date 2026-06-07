@@ -11,6 +11,7 @@ import { EOtpType } from 'src/common/constants/enum/otp.enum';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { invalidateAdminAnalyticsCache } from 'src/common/utils/admin-analytics-cache.utils';
 import { hashOtp } from 'src/common/utils/hash.utils';
 import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.repository.interface';
 import type { IRegistrationSessionRepository } from 'src/domain/repositories/registration-session.repository.interface';
@@ -90,6 +91,7 @@ export class RegisterUseCase extends BaseUsecase {
           role,
           status: EUserStatus.UNVERIFIED,
         });
+        await invalidateAdminAnalyticsCache(this.redis);
 
         const tempPayload = buildTempProfile(dto);
         await this.issueRegisterOtp(email, tempPayload);

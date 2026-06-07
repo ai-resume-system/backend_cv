@@ -24,6 +24,7 @@ import type { IFavouriteJobRepository } from 'src/domain/repositories/favourite-
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 import {
+  sortJobSkillsByWeight,
   toAdminJobDetailDto,
   toPublicJobDetailDto,
   toRecruiterJobDetailDto,
@@ -118,22 +119,24 @@ export class GetJobBySlugQuery extends BaseUsecase {
       const data = toPublicJobDetailDto(job, {
         company: companyDto,
         careerCategory,
-        skills: jobSkills
-          .map((jobSkill) => {
-            const skill = skills.find(
-              (existingSkill) => existingSkill?.id === jobSkill.skillId,
-            );
-            if (!skill) {
-              return null;
-            }
-            return {
-              id: skill.id,
-              name: skill.name,
-              slug: skill.slug,
-              weight: jobSkill.weight,
-            };
-          })
-          .filter((skill) => skill !== null),
+        skills: sortJobSkillsByWeight(
+          jobSkills
+            .map((jobSkill) => {
+              const skill = skills.find(
+                (existingSkill) => existingSkill?.id === jobSkill.skillId,
+              );
+              if (!skill) {
+                return null;
+              }
+              return {
+                id: skill.id,
+                name: skill.name,
+                slug: skill.slug,
+                weight: jobSkill.weight,
+              };
+            })
+            .filter((skill) => skill !== null),
+        ),
         isFavourited: false,
       });
 
@@ -159,9 +162,6 @@ export class GetJobBySlugQuery extends BaseUsecase {
     return this.runSafe('[Get Recruiter Job By Slug]:', async () => {
       const job = await this.jobRepository.findBySlug(slug);
       if (!job) {
-        throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
-      }
-      if (job.status === EJobStatus.DRAFT) {
         throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
       }
 
@@ -256,22 +256,24 @@ export class GetJobBySlugQuery extends BaseUsecase {
     return {
       company: companyDto,
       careerCategory,
-      skills: jobSkills
-        .map((jobSkill) => {
-          const skill = skills.find(
-            (existingSkill) => existingSkill?.id === jobSkill.skillId,
-          );
-          if (!skill) {
-            return null;
-          }
-          return {
-            id: skill.id,
-            name: skill.name,
-            slug: skill.slug,
-            weight: jobSkill.weight,
-          };
-        })
-        .filter((skill) => skill !== null),
+      skills: sortJobSkillsByWeight(
+        jobSkills
+          .map((jobSkill) => {
+            const skill = skills.find(
+              (existingSkill) => existingSkill?.id === jobSkill.skillId,
+            );
+            if (!skill) {
+              return null;
+            }
+            return {
+              id: skill.id,
+              name: skill.name,
+              slug: skill.slug,
+              weight: jobSkill.weight,
+            };
+          })
+          .filter((skill) => skill !== null),
+      ),
     };
   }
 }

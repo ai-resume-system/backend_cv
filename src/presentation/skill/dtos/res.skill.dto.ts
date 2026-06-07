@@ -22,6 +22,14 @@ export class ResponseSkillDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiPropertyOptional()
+  deletedAt?: Date | null;
+}
+
+export class ResponseSkillTreeDto extends ResponseSkillDto {
+  @ApiProperty({ type: [ResponseSkillDto] })
+  children: ResponseSkillDto[];
 }
 
 export class ResponseApiSkillDto extends ApiResponseDto<ResponseSkillDto> {
@@ -30,8 +38,8 @@ export class ResponseApiSkillDto extends ApiResponseDto<ResponseSkillDto> {
 }
 
 export class ResponseListApiSkillDto extends ApiResponseDto<
-  ResponseSkillDto[]
+  ResponseSkillTreeDto[]
 > {
-  @ApiProperty({ type: [ResponseSkillDto] })
-  declare data: ResponseSkillDto[];
+  @ApiProperty({ type: [ResponseSkillTreeDto] })
+  declare data: ResponseSkillTreeDto[];
 }

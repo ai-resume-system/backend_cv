@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import {
+  buildNormalizedContainsCondition,
+  normalizeSearchKeyword,
+} from 'src/common/utils/text-search.utils';
 import { ECareerCategoriesStatus } from 'src/common/constants/enum/career_categories.enum';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
@@ -271,13 +275,14 @@ export class CareerCategoryTypeormRepository
     });
 
     if (q) {
+      const normalizedKeyword = normalizeSearchKeyword(q);
       const searchableColumns = this.getSearchableColumns();
       const searchConditions = searchableColumns
-        .map((column) => `CAST(entity.${column} AS text) ILIKE :q`)
+        .map((column) => buildNormalizedContainsCondition(`entity.${column}`))
         .join(' OR ');
 
       queryBuilder.andWhere(`(${searchConditions})`, {
-        q: `%${q}%`,
+        qNormalized: `%${normalizedKeyword}%`,
       });
     }
 

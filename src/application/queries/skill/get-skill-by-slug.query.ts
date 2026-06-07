@@ -44,10 +44,33 @@ export class GetSkillBySlugQuery extends BaseUsecase {
           parentId: skill.parentId,
           createdAt: skill.createdAt,
           updatedAt: skill.updatedAt,
+          deletedAt: skill.deletedAt ?? null,
         },
       };
       await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.DETAIL);
       return response;
+    });
+  }
+
+  async executeAdmin(slug: string): Promise<IResponseApiSkillDto> {
+    return this.runSafe('[Get Skill By Slug Admin]:', async () => {
+      const skill = await this.skillRepository.findBySlugWithDeleted(slug);
+      if (!skill) {
+        throw new AppException(ERROR_CODES.SKILL_NOT_FOUND);
+      }
+
+      return {
+        data: {
+          id: skill.id,
+          name: skill.name,
+          slug: skill.slug,
+          careerCategoryId: skill.careerCategoryId,
+          parentId: skill.parentId,
+          createdAt: skill.createdAt,
+          updatedAt: skill.updatedAt,
+          deletedAt: skill.deletedAt ?? null,
+        },
+      };
     });
   }
 }

@@ -60,6 +60,17 @@ export class ResponseUpdateCompanyDto extends ResponseBaseProfileDto {
 }
 
 //Response GET for account
+export class ResponseCareerCategoryDto {
+  @ApiPropertyOptional()
+  id?: string;
+
+  @ApiPropertyOptional()
+  name?: string;
+
+  @ApiPropertyOptional()
+  slug?: string;
+}
+
 //Response for Job Seeker
 export class ResponseProfileDto extends PartialType(
   OmitType(ResponseUpdateProfileDto, ['phone'] as const),
@@ -70,8 +81,11 @@ export class ResponseProfileDto extends PartialType(
 
 //Response for Recruiter
 export class ResponseCompanyDto extends PartialType(
-  OmitType(ResponseUpdateCompanyDto, ['phone'] as const),
+  OmitType(ResponseUpdateCompanyDto, ['phone', 'careerCategoryId'] as const),
 ) {
+  @ApiPropertyOptional({ type: ResponseCareerCategoryDto })
+  careerCategory?: ResponseCareerCategoryDto;
+
   @ApiPropertyOptional()
   logoUrl?: string;
 

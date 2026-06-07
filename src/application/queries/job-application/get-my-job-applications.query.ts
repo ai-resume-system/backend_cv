@@ -39,6 +39,7 @@ export class GetMyJobApplicationsQuery {
       const limit = query.limit || 10;
       const result = await this.jobApplicationRepository.find({
         filter: {
+          q: query.q,
           userId,
           status: query.status,
         },

@@ -9,7 +9,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { IGetUserByIdResponseDto } from 'src/application/dtos/user/res.user.dto';
 import { GetUserByIdQuery } from 'src/application/queries/user/get-user-by-id.query';
 import { GetUsersQuery } from 'src/application/queries/user/get-users.query';
 import { UpdateUserStatusUseCase } from 'src/application/use-cases/user/update-user-status.usecase';
@@ -22,10 +21,14 @@ import {
   RequestUpdateUserStatusDto,
 } from '../dtos/req.user.dto';
 import {
-  ResponseApiUserDto,
+  ResponseApiUserDetailDto,
   ResponseListApiUserDto,
 } from '../dtos/res.user.dto';
 import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
+import {
+  IResponseApiUserDetailDto,
+  IResponseListApiUserDto,
+} from 'src/application/dtos/user/res.user.dto';
 
 @Controller({ path: 'admin/users', version: '1' })
 @ApiTags('Users - Admin')
@@ -40,7 +43,7 @@ export class UserController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary: 'Lay danh sach nguoi dung kem phan trang va bo loc. Truy cap: Admin.',
+    summary: 'Lay danh sach nguoi dung he thong. Truy cap: Admin.',
   })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
@@ -50,7 +53,7 @@ export class UserController extends BaseController {
   })
   async getAllUsers(
     @Query() dto: RequestGetAllUsersDto,
-  ): Promise<ResponseListApiUserDto> {
+  ): Promise<IResponseListApiUserDto> {
     return await this.getUsersQuery.execute(dto);
   }
 
@@ -62,17 +65,17 @@ export class UserController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Get user successfully',
-    type: ResponseApiUserDto,
+    type: ResponseApiUserDetailDto,
   })
   async getUserById(
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<IGetUserByIdResponseDto> {
+  ): Promise<IResponseApiUserDetailDto> {
     return await this.getUserByIdQuery.execute(id);
   }
 
   @Patch(':id/status')
   @ApiOperation({
-    summary: 'Cap nhat trang thai nguoi dung nhu khoa hoac mo khoa. Truy cap: Admin.',
+    summary: 'Khoa hoac mo khoa tai khoan nguoi dung. Truy cap: Admin.',
   })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({

@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  buildNormalizedContainsCondition,
+  normalizeSearchKeyword,
+} from 'src/common/utils/text-search.utils';
+import {
   EJobEducationLevel,
   EJobStatus,
   EJobWorkArrangement,
@@ -13,7 +17,9 @@ import type {
 } from 'src/domain/repositories/base.repository.interface';
 import type {
   IFindRelatedJobsOptions,
+  IJobAnalyticsSummary,
   IJobRepository,
+  IRecentJobActivity,
 } from 'src/domain/repositories/job.repository.interface';
 import { Brackets, In, IsNull, Repository } from 'typeorm';
 import { JobOrmEntity } from '../entities/job.orm-entity';
@@ -33,6 +39,114 @@ export class JobTypeormRepository
 
   protected getSearchableColumns(): string[] {
     return ['title', 'address', 'slug'];
+  }
+
+  async countAnalyticsSummary(): Promise<IJobAnalyticsSummary> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('job')
+      .select('COUNT(job.id)', 'totalJobs')
+      .addSelect(
+        `COUNT(CASE WHEN job.status = :openStatus AND (job.expired_at > :now OR job.expired_at IS NULL) THEN 1 END)`,
+        'totalOpenJobs',
+      )
+      .addSelect(
+        `COUNT(CASE WHEN job.status = :pendingStatus THEN 1 END)`,
+        'totalPendingJobs',
+      )
+      .where('job.deleted_at IS NULL')
+      .andWhere('job.status != :draftStatus')
+      .setParameters({
+        now: new Date(),
+        draftStatus: EJobStatus.DRAFT,
+        openStatus: EJobStatus.OPEN,
+        pendingStatus: EJobStatus.PENDING,
+      })
+      .getRawOne<{
+        totalJobs: string;
+        totalOpenJobs: string;
+        totalPendingJobs: string;
+      }>();
+
+    return {
+      totalJobs: Number(rows?.totalJobs || 0),
+      totalOpenJobs: Number(rows?.totalOpenJobs || 0),
+      totalPendingJobs: Number(rows?.totalPendingJobs || 0),
+    };
+  }
+
+  async getJobGrowthSeries(
+    startDate: Date,
+    endDate: Date,
+    bucket: 'day' | 'month' | 'quarter',
+  ): Promise<Array<{ bucket: string; total: number }>> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('job')
+      .select(
+        `TO_CHAR(DATE_TRUNC('${bucket}', job.created_at AT TIME ZONE 'Asia/Saigon'), '${bucket === 'day' ? 'YYYY-MM-DD' : bucket === 'month' ? 'YYYY-MM' : 'YYYY-"Q"Q'}')`,
+        'bucket',
+      )
+      .addSelect('COUNT(job.id)', 'total')
+      .where('job.deleted_at IS NULL')
+      .andWhere('job.status != :draftStatus', { draftStatus: EJobStatus.DRAFT })
+      .andWhere('job.created_at >= :startDate', { startDate })
+      .andWhere('job.created_at <= :endDate', { endDate })
+      .groupBy(
+        `DATE_TRUNC('${bucket}', job.created_at AT TIME ZONE 'Asia/Saigon')`,
+      )
+      .orderBy(
+        `DATE_TRUNC('${bucket}', job.created_at AT TIME ZONE 'Asia/Saigon')`,
+        'ASC',
+      )
+      .getRawMany<{ bucket: string; total: string }>();
+
+    return rows.map((row) => ({
+      bucket: row.bucket,
+      total: Number(row.total),
+    }));
+  }
+
+  async getRecentCreatedJobs(limit: number): Promise<IRecentJobActivity[]> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('job')
+      .where('job.deleted_at IS NULL')
+      .andWhere('job.status != :draftStatus', { draftStatus: EJobStatus.DRAFT })
+      .orderBy('job.created_at', 'DESC')
+      .limit(limit)
+      .getMany();
+
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      status: row.status,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+  }
+
+  async getRecentReviewedJobs(limit: number): Promise<IRecentJobActivity[]> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('job')
+      .where('job.deleted_at IS NULL')
+      .andWhere('job.status IN (:...statuses)', {
+        statuses: [
+          EJobStatus.OPEN,
+          EJobStatus.REJECTED,
+          EJobStatus.CLOSED,
+          EJobStatus.EXPIRED,
+        ],
+      })
+      .andWhere('job.updated_at > job.created_at')
+      .orderBy('job.updated_at', 'DESC')
+      .limit(limit)
+      .getMany();
+
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      status: row.status,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
   }
 
   async find(options?: IFindOptions): Promise<IPaginatedResult<IJobEntity>> {
@@ -141,14 +255,24 @@ export class JobTypeormRepository
       const skip = (page - 1) * limit;
 
       if (q) {
+        const normalizedKeyword = normalizeSearchKeyword(q);
+        queryBuilder.leftJoin(
+          'companies',
+          'companySearch',
+          'companySearch.id = entity.company_id AND companySearch.deleted_at IS NULL',
+        );
+
         const searchableColumns = this.getSearchableColumns();
         if (searchableColumns.length) {
-          const searchConditions = searchableColumns
-            .map((column) => `CAST(entity.${column} AS text) ILIKE :q`)
-            .join(' OR ');
+          const searchConditions = [
+            ...searchableColumns.map(
+              (column) => buildNormalizedContainsCondition(`entity.${column}`),
+            ),
+            buildNormalizedContainsCondition('companySearch.name'),
+          ].join(' OR ');
 
           queryBuilder.andWhere(`(${searchConditions})`, {
-            q: `%${q}%`,
+            qNormalized: `%${normalizedKeyword}%`,
           });
         }
       }

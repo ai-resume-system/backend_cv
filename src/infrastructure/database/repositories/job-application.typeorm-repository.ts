@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, IsNull, Repository } from 'typeorm';
-import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import {
+  buildNormalizedContainsCondition,
+  normalizeSearchKeyword,
+} from 'src/common/utils/text-search.utils';
+import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import type {
   IFindOptions,
   IPaginatedResult,
 } from 'src/domain/repositories/base.repository.interface';
+import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import { FindOptionsWhere, In, IsNull, Repository } from 'typeorm';
 import { JobApplicationOrmEntity } from '../entities/job-application.orm-entity';
 import { BaseTypeormRepository } from './base.typeorm-repository';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 
 @Injectable()
 export class JobApplicationTypeormRepository
@@ -21,6 +25,78 @@ export class JobApplicationTypeormRepository
     ormRepository: Repository<JobApplicationOrmEntity>,
   ) {
     super(ormRepository);
+  }
+
+  protected getSearchableColumns(): string[] {
+    return ['fullName', 'contactEmail', 'contactPhone'];
+  }
+
+  async countAnalyticsSummary(): Promise<{
+    totalApplications: number;
+  }> {
+    const totalApplications = await this.ormRepository.count({
+      where: {
+        deletedAt: IsNull(),
+      } as FindOptionsWhere<JobApplicationOrmEntity>,
+    });
+
+    return { totalApplications };
+  }
+
+  async getApplicationGrowthSeries(
+    startDate: Date,
+    endDate: Date,
+    bucket: 'day' | 'month' | 'quarter',
+  ): Promise<Array<{ bucket: string; total: number }>> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('application')
+      .select(
+        `TO_CHAR(DATE_TRUNC('${bucket}', application.created_at AT TIME ZONE 'Asia/Saigon'), '${bucket === 'day' ? 'YYYY-MM-DD' : bucket === 'month' ? 'YYYY-MM' : 'YYYY-"Q"Q'}')`,
+        'bucket',
+      )
+      .addSelect('COUNT(application.id)', 'total')
+      .where('application.deleted_at IS NULL')
+      .andWhere('application.created_at >= :startDate', { startDate })
+      .andWhere('application.created_at <= :endDate', { endDate })
+      .groupBy(
+        `DATE_TRUNC('${bucket}', application.created_at AT TIME ZONE 'Asia/Saigon')`,
+      )
+      .orderBy(
+        `DATE_TRUNC('${bucket}', application.created_at AT TIME ZONE 'Asia/Saigon')`,
+        'ASC',
+      )
+      .getRawMany<{ bucket: string; total: string }>();
+
+    return rows.map((row) => ({
+      bucket: row.bucket,
+      total: Number(row.total),
+    }));
+  }
+
+  async getRecentApplications(limit: number): Promise<
+    Array<{
+      id: string;
+      fullName: string;
+      contactEmail: string;
+      jobId: string;
+      createdAt: Date;
+    }>
+  > {
+    const rows = await this.ormRepository.find({
+      where: {
+        deletedAt: IsNull(),
+      } as FindOptionsWhere<JobApplicationOrmEntity>,
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      fullName: row.fullName || '',
+      contactEmail: row.contactEmail || '',
+      jobId: row.jobId,
+      createdAt: row.createdAt,
+    }));
   }
 
   async findByJobId(jobId: string): Promise<IJobApplicationEntity[]> {
@@ -143,9 +219,14 @@ export class JobApplicationTypeormRepository
     }
 
     if (q) {
+      const normalizedKeyword = normalizeSearchKeyword(q);
       queryBuilder.andWhere(
-        `(application.full_name ILIKE :q OR application.contact_email ILIKE :q OR application.contact_phone ILIKE :q)`,
-        { q: `%${q}%` },
+        `(${[
+          buildNormalizedContainsCondition('application.full_name'),
+          buildNormalizedContainsCondition('application.contact_email'),
+          buildNormalizedContainsCondition('application.contact_phone'),
+        ].join(' OR ')})`,
+        { qNormalized: `%${normalizedKeyword}%` },
       );
     }
 

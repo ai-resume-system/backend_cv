@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
-import { IUpdateUserStatusDto } from 'src/application/dtos/user/req.user.dto';
+import { IRequestUpdateUserStatusDto } from 'src/application/dtos/user/req.user.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
@@ -19,7 +19,7 @@ export class UpdateUserStatusUseCase extends BaseUsecase {
 
   async execute(
     userId: string,
-    dto: IUpdateUserStatusDto,
+    dto: IRequestUpdateUserStatusDto,
   ): Promise<IResponseApiNullDto> {
     return this.runSafe('[Update User Status]:', async () => {
       const user = await this.userRepository.findById(userId);
@@ -30,6 +30,7 @@ export class UpdateUserStatusUseCase extends BaseUsecase {
       await this.userRepository.updateStatus(userId, dto.status);
       await Promise.all([
         this.redis.bumpVersion(CACHE_VERSION_KEYS.USER_LIST),
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.USER_DETAIL),
         this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_LIST),
         this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_DETAIL),
         this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST),

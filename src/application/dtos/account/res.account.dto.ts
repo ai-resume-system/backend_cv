@@ -12,7 +12,11 @@ export interface IMyProfileResponseDto {
     bio?: string;
   } | null;
   company?: {
-    careerCategoryId?: string;
+    careerCategory?: {
+      id: string;
+      name: string;
+      slug: string;
+    };
     name?: string;
     slug?: string;
     logoUrl?: string | null;

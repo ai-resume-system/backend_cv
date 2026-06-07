@@ -8,6 +8,7 @@ import {
   resolveCompanyMedia,
   resolveProfileAvatar,
 } from 'src/common/helpers/media-url.helper';
+import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
@@ -22,6 +23,8 @@ export class GetMyProfileQuery extends BaseUsecase {
     @Inject('IUserRepository') private readonly userRepository: IUserRepository,
     @Inject('IUserProfileRepository')
     private readonly profileRepository: IUserProfileRepository,
+    @Inject('ICareerCategoryRepository')
+    private readonly careerCategoryRepository: ICareerCategoryRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     private readonly redis: RedisAdapter,
@@ -73,11 +76,22 @@ export class GetMyProfileQuery extends BaseUsecase {
           break;
         case EUserRole.RECRUITER:
           const company = await this.companyRepository.findByUserId(userId);
+          const careerCategory = company?.careerCategoryId
+            ? await this.careerCategoryRepository.findById(
+                company.careerCategoryId,
+              )
+            : null;
           result = {
             company: company
               ? await resolveCompanyMedia(this.storage, {
                   slug: company.slug,
-                  careerCategoryId: company.careerCategoryId,
+                  careerCategory: careerCategory
+                    ? {
+                        id: careerCategory.id,
+                        name: careerCategory.name,
+                        slug: careerCategory.slug,
+                      }
+                    : null,
                   name: company.name,
                   logoUrl: company.logoUrl,
                   bannerUrl: company.bannerUrl,

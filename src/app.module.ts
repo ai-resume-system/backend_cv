@@ -21,6 +21,7 @@ import { ConfigModule } from './common/config/config.module';
 import { SkillModule } from './presentation/skill/skill.module';
 import { FavouriteJobModule } from './presentation/favourite-job/favourite-job.module';
 import { CompanyModule } from './presentation/company/company.module';
+import { AdminAnalyticsModule } from './presentation/admin-analytics/admin-analytics.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { CompanyModule } from './presentation/company/company.module';
     SkillModule,
     FavouriteJobModule,
     JobApplicationModule,
+    AdminAnalyticsModule,
   ],
   controllers: [],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -11,6 +11,21 @@ export interface ICreateUserDto {
 }
 
 export interface IUserRepository extends IBaseRepository<IUserEntity> {
+  countAnalyticsSummary(): Promise<{
+    totalUsers: number;
+    totalRecruiters: number;
+    totalJobSeekers: number;
+  }>;
+  getUserGrowthSeries(
+    startDate: Date,
+    endDate: Date,
+    bucket: 'day' | 'month' | 'quarter',
+  ): Promise<Array<{ bucket: string; total: number }>>;
+  getRecentRegisteredUsers(
+    limit: number,
+  ): Promise<
+    Array<{ id: string; email: string; role: EUserRole; createdAt: Date }>
+  >;
   findByIds(ids: string[]): Promise<IUserEntity[]>;
   findByEmail(email: string): Promise<IUserEntity | null>;
   findByEmailWithPassword(

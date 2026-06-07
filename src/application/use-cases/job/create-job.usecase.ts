@@ -12,6 +12,7 @@ import {
 } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { invalidateAdminAnalyticsCache } from 'src/common/utils/admin-analytics-cache.utils';
 import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
@@ -19,6 +20,7 @@ import type { IJobRepository } from 'src/domain/repositories/job.repository.inte
 import type { IJobSkillRepository } from 'src/domain/repositories/job-skill.repository.interface';
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { sortJobSkillsByWeight } from 'src/application/queries/job/job-response.mapper';
 
 @Injectable()
 export class CreateJobUseCase extends BaseUsecase {
@@ -127,11 +129,14 @@ export class CreateJobUseCase extends BaseUsecase {
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+        if (job.status !== EJobStatus.DRAFT) {
+          await invalidateAdminAnalyticsCache(this.redis);
+        }
 
         const data = toRecruiterJobDetailDto(job, {
           company,
           careerCategory,
-          skills: jobSkills,
+          skills: sortJobSkillsByWeight(jobSkills),
         });
         return { data };
       },

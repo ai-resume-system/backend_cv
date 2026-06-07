@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
-import { UserProfileOrmEntity } from '../entities/user_profile.orm-entity';
 import { IUserProfileEntity } from 'src/domain/entities/user_profile.entity';
+import { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
+import { In, IsNull, Repository } from 'typeorm';
+import { UserProfileOrmEntity } from '../entities/user_profile.orm-entity';
 import { BaseTypeormRepository } from './base.typeorm-repository';
 
 @Injectable()
@@ -18,16 +18,37 @@ export class UserProfileTypeormRepository
     super(ormRepository);
   }
 
+  async findByUserIds(userIds: string[]): Promise<IUserProfileEntity[]> {
+    if (!userIds.length) {
+      return [];
+    }
+
+    const orms = await this.ormRepository.find({
+      where: {
+        userId: In(userIds),
+        deletedAt: IsNull(),
+      },
+    });
+
+    return orms.map((orm) => this.toDomain(orm));
+  }
+
   async findByUserId(userId: string): Promise<IUserProfileEntity | null> {
-    return await this.ormRepository.findOne({ where: { userId: userId } });
+    const orm = await this.ormRepository.findOne({
+      where: {
+        userId,
+        deletedAt: IsNull(),
+      },
+    });
+    return orm ? this.toDomain(orm) : null;
   }
 
   async updateWithUserId(
     userId: string,
     data: Partial<IUserProfileEntity>,
   ): Promise<IUserProfileEntity> {
-    await this.ormRepository.update({ userId: userId }, data);
-    return this.findByUserId(userId) as Promise<IUserProfileEntity>;
+    await this.ormRepository.update({ userId }, data);
+    return (await this.findByUserId(userId)) as IUserProfileEntity;
   }
 
   protected toDomain(orm: UserProfileOrmEntity): IUserProfileEntity {

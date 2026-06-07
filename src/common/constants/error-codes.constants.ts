@@ -241,9 +241,17 @@ export const ERROR_CODES = {
     message: 'Failed to delete career category',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
+  CAREER_CATEGORY_NOT_DELETED: {
+    message: 'Career category is not deleted',
+    status: HttpStatus.CONFLICT,
+  },
   CAREER_CATEGORY_IN_USE: {
     message: 'Category in use, cannot delete',
     status: HttpStatus.CONFLICT,
+  },
+  CAREER_CATEGORY_RESTORE_FAILED: {
+    message: 'Failed to restore career category',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
 
   // SKILL
@@ -264,9 +272,21 @@ export const ERROR_CODES = {
     message: 'Failed to delete skill',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
+  SKILL_NOT_DELETED: {
+    message: 'Skill is not deleted',
+    status: HttpStatus.CONFLICT,
+  },
   SKILL_IN_USE: {
     message: 'Skill in use, cannot delete',
     status: HttpStatus.CONFLICT,
+  },
+  SKILL_CAREER_CATEGORY_DELETED: {
+    message: 'Career category of this skill is deleted',
+    status: HttpStatus.CONFLICT,
+  },
+  SKILL_RESTORE_FAILED: {
+    message: 'Failed to restore skill',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
 
   // FAVOURITE JOB

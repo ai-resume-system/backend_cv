@@ -8,10 +8,14 @@ export interface ISkillResponseDto {
   parentId?: string;
   createdAt: Date;
   updatedAt: Date;
+  deletedAt?: Date | null;
+}
+
+export interface ISkillTreeResponseDto extends ISkillResponseDto {
+  children: ISkillResponseDto[];
 }
 
 export interface IResponseApiSkillDto extends IApiResponse<ISkillResponseDto> {}
 
-export interface IResponseListApiSkillDto extends IApiResponse<
-  ISkillResponseDto[]
-> {}
+export interface IResponseListApiSkillDto
+  extends IApiResponse<ISkillTreeResponseDto[]> {}

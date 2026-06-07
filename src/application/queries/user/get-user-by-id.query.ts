@@ -1,8 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { IGetUserByIdResponseDto } from 'src/application/dtos/user/res.user.dto';
+import { IResponseApiUserDetailDto } from 'src/application/dtos/user/res.user.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+  CACHE_VERSION_KEYS,
+} from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
-import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { AppException } from 'src/common/exceptions/app.exception';
 import {
   resolveCompanyMedia,
@@ -13,8 +17,6 @@ import type { IUserProfileRepository } from 'src/domain/repositories/user-profil
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
-
-const USER_DETAIL_CACHE_TTL_SECONDS = 900;
 
 @Injectable()
 export class GetUserByIdQuery extends BaseUsecase {
@@ -30,70 +32,69 @@ export class GetUserByIdQuery extends BaseUsecase {
     super(new Logger(GetUserByIdQuery.name));
   }
 
-  async execute(userId: string): Promise<IGetUserByIdResponseDto> {
+  async execute(userId: string): Promise<IResponseApiUserDetailDto> {
     return this.runSafe('[Get User By Id]:', async () => {
-      const cacheKey = `user:detail:${userId}`;
+      const version = await this.redis.getVersion(
+        CACHE_VERSION_KEYS.USER_DETAIL,
+      );
+      const cacheKey = `${CACHE_KEYS.USER_DETAIL}:v${version}:${userId}`;
       const cached =
-        await this.redis.safeGetJson<IGetUserByIdResponseDto>(cacheKey);
-      if (cached) return cached;
+        await this.redis.safeGetJson<IResponseApiUserDetailDto>(cacheKey);
+      if (cached) {
+        return cached;
+      }
 
       const user = await this.userRepository.findById(userId);
       if (!user) {
         throw new AppException(ERROR_CODES.USER_NOT_FOUND);
       }
 
-      const baseData = {
-        id: user.id,
-        email: user.email,
-        phone: user.phone || '',
-        role: user.role,
-        status: user.status,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      const [profileRecord, companyRecord] = await Promise.all([
+        this.profileRepository.findByUserId(userId),
+        this.companyRepository.findByUserId(userId),
+      ]);
+      const [profile, company] = await Promise.all([
+        resolveProfileAvatar(this.storage, profileRecord),
+        resolveCompanyMedia(this.storage, companyRecord),
+      ]);
 
-      if (user.role === EUserRole.JOB_SEEKER) {
-        const profile = await this.profileRepository.findByUserId(userId);
-        const response = {
-          ...baseData,
+      const response: IResponseApiUserDetailDto = {
+        data: {
+          id: user.id,
+          email: user.email,
+          phone: user.phone || '',
+          role: user.role,
+          status: user.status,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
           profile: profile
-            ? await resolveProfileAvatar(this.storage, profile)
-            : undefined,
-        };
-        await this.redis.safeSetJson(
-          cacheKey,
-          response,
-          USER_DETAIL_CACHE_TTL_SECONDS,
-        );
-        return response;
-      }
-
-      if (user.role === EUserRole.RECRUITER) {
-        const profile = await this.profileRepository.findByUserId(userId);
-        const company = await this.companyRepository.findByUserId(userId);
-        const response = {
-          ...baseData,
-          profile: profile
-            ? await resolveProfileAvatar(this.storage, profile)
+            ? {
+                fullName: profile.fullName,
+                avatarUrl: profile.avatarUrl ?? null,
+                bio: profile.bio,
+              }
             : undefined,
           company: company
-            ? await resolveCompanyMedia(this.storage, company)
+            ? {
+                careerCategoryId: company.careerCategoryId,
+                name: company.name,
+                taxCode: company.taxCode,
+                logoUrl: company.logoUrl ?? null,
+                bannerUrl: company.bannerUrl ?? null,
+                address: company.address,
+                latitude: company.latitude,
+                longitude: company.longitude,
+                description: company.description,
+                websiteUrl: company.websiteUrl,
+                employeeMin: company.employeeMin,
+                employeeMax: company.employeeMax,
+              }
             : undefined,
-        };
-        await this.redis.safeSetJson(
-          cacheKey,
-          response,
-          USER_DETAIL_CACHE_TTL_SECONDS,
-        );
-        return response;
-      }
+        },
+      };
 
-      await this.redis.safeSetJson(
-        cacheKey,
-        baseData,
-        USER_DETAIL_CACHE_TTL_SECONDS,
-      );
-      return baseData;
+      await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.DETAIL);
+      return response;
     });
   }
 }

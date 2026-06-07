@@ -23,7 +23,7 @@ import type { IJobSkillRepository } from 'src/domain/repositories/job-skill.repo
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
-import { toPublicJobDto } from './job-response.mapper';
+import { sortJobSkillsByWeight, toPublicJobDto } from './job-response.mapper';
 
 @Injectable()
 export class GetRelatedJobsQuery extends BaseUsecase {
@@ -180,7 +180,7 @@ export class GetRelatedJobsQuery extends BaseUsecase {
               careerCategory: job.careerCategoryId
                 ? careerCategoryMap.get(job.careerCategoryId)
                 : undefined,
-              skills: mappedSkills,
+              skills: sortJobSkillsByWeight(mappedSkills),
               isFavourited: false,
             });
           })

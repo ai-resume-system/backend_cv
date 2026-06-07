@@ -13,8 +13,30 @@ export interface IFindRelatedJobsOptions {
   skillIds?: string[];
 }
 
+export interface IJobAnalyticsSummary {
+  totalJobs: number;
+  totalOpenJobs: number;
+  totalPendingJobs: number;
+}
+
+export interface IRecentJobActivity {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface IJobRepository
   extends IBaseRepository<IJobEntity>, ISlugRepository<IJobEntity> {
+  countAnalyticsSummary(): Promise<IJobAnalyticsSummary>;
+  getJobGrowthSeries(
+    startDate: Date,
+    endDate: Date,
+    bucket: 'day' | 'month' | 'quarter',
+  ): Promise<Array<{ bucket: string; total: number }>>;
+  getRecentCreatedJobs(limit: number): Promise<IRecentJobActivity[]>;
+  getRecentReviewedJobs(limit: number): Promise<IRecentJobActivity[]>;
   findExpiredJobs(): Promise<IJobEntity[]>;
   findByIds(ids: string[]): Promise<IJobEntity[]>;
   findByCompanyId(companyId: string): Promise<IJobEntity[]>;

@@ -27,6 +27,26 @@ export function toJobCareerCategoryDto(
   };
 }
 
+export function sortJobSkillsByWeight(
+  skills?: IJobSkillDto[],
+): IJobSkillDto[] | undefined {
+  if (!skills?.length) {
+    return skills;
+  }
+
+  return [...skills].sort((leftSkill, rightSkill) => {
+    const leftWeight = leftSkill.weight ?? 1;
+    const rightWeight = rightSkill.weight ?? 1;
+    if (leftWeight !== rightWeight) {
+      return rightWeight - leftWeight;
+    }
+
+    return leftSkill.name.localeCompare(rightSkill.name, 'vi', {
+      sensitivity: 'base',
+    });
+  });
+}
+
 type PublicJobOptions = {
   company: IPublicJobCompanyDto;
   careerCategory?: ICareerCategoryEntity | null;
@@ -55,7 +75,7 @@ export function toPublicJobDto(
     workArrangement: job.workArrangement,
     company: options.company,
     careerCategory: toJobCareerCategoryDto(options.careerCategory),
-    skills: options.skills,
+    skills: sortJobSkillsByWeight(options.skills),
     status: job.status,
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,

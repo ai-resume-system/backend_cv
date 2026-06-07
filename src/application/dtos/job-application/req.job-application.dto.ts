@@ -19,6 +19,7 @@ export interface IRequestUpdateJobApplicationStatusDto {
 }
 
 export interface IRequestGetJobApplicationsDto extends IApiRequestPagination {
+  q?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
   status?: EJobApplicationStatus;

@@ -6,10 +6,12 @@ import { EJobApplicationStatus } from 'src/common/constants/enum/job-application
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { invalidateAdminAnalyticsCache } from 'src/common/utils/admin-analytics-cache.utils';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { toJobSeekerJobApplicationDto } from 'src/application/queries/job-application/job-application-response.mapper';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class CreateJobApplicationUseCase extends BaseUsecase {
@@ -18,6 +20,7 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
     private readonly jobApplicationRepository: IJobApplicationRepository,
     @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(CreateJobApplicationUseCase.name));
   }
@@ -74,6 +77,7 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
           contactPhone: dto.contactPhone,
           coverLetter: dto.coverLetter,
         });
+        await invalidateAdminAnalyticsCache(this.redis);
 
         return { data: toJobSeekerJobApplicationDto(application) };
       },

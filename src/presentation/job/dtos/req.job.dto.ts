@@ -26,7 +26,9 @@ import { parseJobExpiredAtInput } from 'src/common/utils/date-time.util';
 import { transfomerPagination } from 'src/common/utils/request-pagination.utils';
 
 export class RequestGetJobsDto extends RequestPaginationDto {
-  @ApiPropertyOptional({ description: 'Search by title, address' })
+  @ApiPropertyOptional({
+    description: 'Search by title, address and search company name',
+  })
   @IsOptional()
   @IsString()
   q?: string;
@@ -224,6 +226,12 @@ export class RequestCreateJobDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsInt()
+  vacancyCount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsUUID()
   careerCategoryId?: string;
 
@@ -313,6 +321,12 @@ export class RequestUpdateJobDto {
   @Transform(({ value }) => Number(value))
   @IsInt()
   experienceYears?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsInt()
+  vacancyCount?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

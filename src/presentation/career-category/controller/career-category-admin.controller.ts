@@ -15,15 +15,17 @@ import type {
   IResponseApiAdminCareerCategoryDto,
   IResponseListApiAdminCareerCategoryDto,
 } from 'src/application/dtos/career-category/res.career-category-admin.dto';
-import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
+import { GetCareerCategoryBySlugQuery } from 'src/application/queries/career-categories/get-career-category-by-slug.query';
 import { GetCareerCategoriesQuery } from 'src/application/queries/career-categories/get-career-categories.query';
 import { CreateCareerCategoryUseCase } from 'src/application/use-cases/career-category/create-career-category.usecase';
 import { DeleteCareerCategoryUseCase } from 'src/application/use-cases/career-category/delete-career-category.usecase';
+import { RestoreCareerCategoryUseCase } from 'src/application/use-cases/career-category/restore-career-category.usecase';
 import { UpdateCareerCategoryUseCase } from 'src/application/use-cases/career-category/update-career-category.usecase';
 import { BaseController } from 'src/common/base/base.controller';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
-import { ResponseApiNullDto } from 'src/common/dto/response.dto';
 import { AuthRequired } from 'src/common/decorators/auth.decorator';
+import { ResponseApiNullDto } from 'src/common/dto/response.dto';
+import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 import {
   RequestCreateCareerCategoryDto,
   RequestGetCareerCategoriesDto,
@@ -33,7 +35,6 @@ import {
   ResponseApiAdminCareerCategoryDto,
   ResponseListApiAdminCareerCategoryDto,
 } from '../dtos/res.career-category-admin.dto';
-import { GetCareerCategoryBySlugQuery } from 'src/application/queries/career-categories/get-career-category-by-slug.query';
 
 @Controller({ path: 'admin/career-categories', version: '1' })
 @ApiTags('Career Categories - Admin')
@@ -45,6 +46,7 @@ export class CareerCategoryAdminController extends BaseController {
     private readonly createCareerCategoryUseCase: CreateCareerCategoryUseCase,
     private readonly updateCareerCategoryUseCase: UpdateCareerCategoryUseCase,
     private readonly deleteCareerCategoryUseCase: DeleteCareerCategoryUseCase,
+    private readonly restoreCareerCategoryUseCase: RestoreCareerCategoryUseCase,
   ) {
     super(new Logger(CareerCategoryAdminController.name));
   }
@@ -123,5 +125,20 @@ export class CareerCategoryAdminController extends BaseController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiNullDto> {
     return await this.deleteCareerCategoryUseCase.execute(id);
+  }
+
+  @Post(':id/restore')
+  @ApiOperation({
+    summary: 'Khoi phuc mot nganh nghe da xoa mem. Truy cap: Admin.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Career category restored successfully',
+    type: ResponseApiNullDto,
+  })
+  async restoreCareerCategory(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<IResponseApiNullDto> {
+    return await this.restoreCareerCategoryUseCase.execute(id);
   }
 }

@@ -12,16 +12,16 @@ export interface ICareerCategoryRepository
     ISlugRepository<ICareerCategoryEntity> {
   findActive(
     options?: IFindOptions,
-  ): Promise<IPaginatedResult<ICareerCategoryEntity>>; // Tìm các danh mục nghề nghiệp đang hoạt động
-  findActiveBySlug(slug: string): Promise<ICareerCategoryEntity | null>; // Tìm danh mục nghề nghiệp đang hoạt động theo slug
+  ): Promise<IPaginatedResult<ICareerCategoryEntity>>;
+  findActiveBySlug(slug: string): Promise<ICareerCategoryEntity | null>;
   findWithDeleted(
     options?: IFindOptions,
-  ): Promise<IPaginatedResult<ICareerCategoryEntity>>; // Tìm các danh mục nghề nghiệp đã bị xóa
-  findBySlugWithDeleted(slug: string): Promise<ICareerCategoryEntity | null>; // Tìm danh mục nghề nghiệp đã bị xóa theo slug
-  findByIds(ids: string[]): Promise<ICareerCategoryEntity[]>; // Tìm các danh mục nghề nghiệp theo id
-  findByName(name: string): Promise<ICareerCategoryEntity | null>; // Tìm danh mục nghề nghiệp theo tên
-  findBySlugs(slugs: string[]): Promise<ICareerCategoryEntity[]>; // Tìm danh mục nghề nghiệp theo slug
+  ): Promise<IPaginatedResult<ICareerCategoryEntity>>;
+  findBySlugWithDeleted(slug: string): Promise<ICareerCategoryEntity | null>;
+  findByIds(ids: string[]): Promise<ICareerCategoryEntity[]>;
+  findByName(name: string): Promise<ICareerCategoryEntity | null>;
+  findBySlugs(slugs: string[]): Promise<ICareerCategoryEntity[]>;
   findTopCategoriesByOpenJobCount(
     limit: number,
-  ): Promise<Array<{ category: ICareerCategoryEntity; jobCount: number }>>; // Tìm các danh mục nghề nghiệp theo số lượng công việc đang mở
+  ): Promise<Array<{ category: ICareerCategoryEntity; jobCount: number }>>;
 }

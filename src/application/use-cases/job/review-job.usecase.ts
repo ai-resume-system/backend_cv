@@ -16,6 +16,7 @@ import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { invalidateAdminAnalyticsCache } from 'src/common/utils/admin-analytics-cache.utils';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
@@ -98,6 +99,7 @@ export class ReviewJobUseCase
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+      await invalidateAdminAnalyticsCache(this.redis);
 
       const company = await this.companyRepository.findById(job.companyId);
       const data = toManagedJobDto(job, {
@@ -147,6 +149,7 @@ export class ReviewJobUseCase
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+      await invalidateAdminAnalyticsCache(this.redis);
       this.logger.log(
         `[Auto Expire Jobs] Trigger=${trigger} expired ${expiredJobs.data.length} jobs`,
       );

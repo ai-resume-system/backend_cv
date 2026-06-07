@@ -8,6 +8,25 @@ import {
 
 export interface IJobApplicationRepository
   extends IBaseRepository<IJobApplicationEntity> {
+  countAnalyticsSummary(): Promise<{
+    totalApplications: number;
+  }>;
+  getApplicationGrowthSeries(
+    startDate: Date,
+    endDate: Date,
+    bucket: 'day' | 'month' | 'quarter',
+  ): Promise<Array<{ bucket: string; total: number }>>;
+  getRecentApplications(
+    limit: number,
+  ): Promise<
+    Array<{
+      id: string;
+      fullName: string;
+      contactEmail: string;
+      jobId: string;
+      createdAt: Date;
+    }>
+  >;
   findByJobId(jobId: string): Promise<IJobApplicationEntity[]>;
   findByUserId(userId: string): Promise<IJobApplicationEntity[]>;
   findByCvId(cvId: string): Promise<IJobApplicationEntity[]>;

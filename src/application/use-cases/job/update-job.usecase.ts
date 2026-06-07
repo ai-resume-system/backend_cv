@@ -1,7 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IUpdateJobDto } from 'src/application/dtos/job/req.job.dto';
 import { IResponseApiRecruiterJobDto } from 'src/application/dtos/job/res.job.dto';
-import { toRecruiterJobDetailDto } from 'src/application/queries/job/job-response.mapper';
+import {
+  sortJobSkillsByWeight,
+  toRecruiterJobDetailDto,
+} from 'src/application/queries/job/job-response.mapper';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import {
@@ -11,6 +14,7 @@ import {
 } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { invalidateAdminAnalyticsCache } from 'src/common/utils/admin-analytics-cache.utils';
 import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
@@ -162,26 +166,29 @@ export class UpdateJobUseCase extends BaseUsecase {
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+        await invalidateAdminAnalyticsCache(this.redis);
 
         const data = toRecruiterJobDetailDto(job, {
           company,
           careerCategory,
-          skills: persistedJobSkills
-            .map((jobSkill) => {
-              const skill = persistedSkills.find(
-                (existingSkill) => existingSkill?.id === jobSkill.skillId,
-              );
-              if (!skill) {
-                return null;
-              }
-              return {
-                id: skill.id,
-                name: skill.name,
-                slug: skill.slug,
-                weight: jobSkill.weight,
-              };
-            })
-            .filter((skill) => skill !== null),
+          skills: sortJobSkillsByWeight(
+            persistedJobSkills
+              .map((jobSkill) => {
+                const skill = persistedSkills.find(
+                  (existingSkill) => existingSkill?.id === jobSkill.skillId,
+                );
+                if (!skill) {
+                  return null;
+                }
+                return {
+                  id: skill.id,
+                  name: skill.name,
+                  slug: skill.slug,
+                  weight: jobSkill.weight,
+                };
+              })
+              .filter((skill) => skill !== null),
+          ),
         });
         return { data };
       },

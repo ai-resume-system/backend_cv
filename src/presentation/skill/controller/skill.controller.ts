@@ -1,5 +1,5 @@
 import { Controller, Get, Logger, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiExtraModels, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type {
   IResponseApiSkillDto,
   IResponseListApiSkillDto,
@@ -11,10 +11,12 @@ import { RequestGetSkillsDto } from '../dtos/req.skill.dto';
 import {
   ResponseApiSkillDto,
   ResponseListApiSkillDto,
+  ResponseSkillTreeDto,
 } from '../dtos/res.skill.dto';
 
 @Controller({ path: 'skills', version: '1' })
 @ApiTags('Skills - Public')
+@ApiExtraModels(ResponseSkillTreeDto)
 export class SkillController extends BaseController {
   constructor(
     private readonly getSkillsQuery: GetSkillsQuery,
@@ -25,7 +27,8 @@ export class SkillController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary: 'Lay danh sach tat ca ky nang. Truy cap: Public, Job Seeker, Recruiter, Admin.',
+    summary:
+      'Lay danh sach tat ca ky nang theo nhom skill cha va skill con. Truy cap: Public, Job Seeker, Recruiter, Admin.',
   })
   @ApiResponse({ status: 200, type: ResponseListApiSkillDto })
   async getSkills(

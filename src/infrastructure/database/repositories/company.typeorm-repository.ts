@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import {
+  buildNormalizedContainsCondition,
+  normalizeSearchKeyword,
+} from 'src/common/utils/text-search.utils';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ICompanyEntity } from 'src/domain/entities/company.entity';
-import { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import {
   IFindOptions,
   IPaginatedResult,
 } from 'src/domain/repositories/base.repository.interface';
+import { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import { In, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
 import { CompanyOrmEntity } from '../entities/company.orm-entity';
 import { BaseTypeormRepository } from './base.typeorm-repository';
@@ -35,6 +39,21 @@ export class CompanyTypeormRepository
     const orms = await this.repository.find({
       where: {
         id: In(ids),
+        deletedAt: IsNull(),
+      },
+    });
+
+    return orms.map((orm) => this.toDomain(orm));
+  }
+
+  async findByUserIds(userIds: string[]): Promise<ICompanyEntity[]> {
+    if (!userIds.length) {
+      return [];
+    }
+
+    const orms = await this.repository.find({
+      where: {
+        userId: In(userIds),
         deletedAt: IsNull(),
       },
     });
@@ -126,8 +145,8 @@ export class CompanyTypeormRepository
     userId: string,
     data: Partial<ICompanyEntity>,
   ): Promise<ICompanyEntity> {
-    await this.repository.update({ userId: userId }, data);
-    return this.findByUserId(userId) as Promise<ICompanyEntity>;
+    await this.repository.update({ userId }, data);
+    return (await this.findByUserId(userId)) as ICompanyEntity;
   }
 
   private createPublicQueryBuilder(): SelectQueryBuilder<CompanyOrmEntity> {
@@ -151,13 +170,14 @@ export class CompanyTypeormRepository
     const { q, ...otherFilters } = filter;
 
     if (q) {
+      const normalizedKeyword = normalizeSearchKeyword(q);
       const searchableColumns = this.getSearchableColumns();
       const searchConditions = searchableColumns
-        .map((column) => `CAST(company.${column} AS text) ILIKE :q`)
+        .map((column) => buildNormalizedContainsCondition(`company.${column}`))
         .join(' OR ');
 
       queryBuilder.andWhere(`(${searchConditions})`, {
-        q: `%${q}%`,
+        qNormalized: `%${normalizedKeyword}%`,
       });
     }
 

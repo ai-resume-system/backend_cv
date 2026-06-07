@@ -4,6 +4,7 @@ import { GetSkillBySlugQuery } from 'src/application/queries/skill/get-skill-by-
 import { GetSkillsQuery } from 'src/application/queries/skill/get-skills.query';
 import { CreateSkillUseCase } from 'src/application/use-cases/skill/create-skill.usecase';
 import { DeleteSkillUseCase } from 'src/application/use-cases/skill/delete-skill.usecase';
+import { RestoreSkillUseCase } from 'src/application/use-cases/skill/restore-skill.usecase';
 import { UpdateSkillUseCase } from 'src/application/use-cases/skill/update-skill.usecase';
 import { JwtAuthModule } from 'src/common/guards/jwt-auth.module';
 import { CareerCategoryOrmEntity } from 'src/infrastructure/database/entities/career-category.orm-entity';
@@ -36,6 +37,7 @@ import { SkillAdminController } from './controller/skill-admin.controller';
     CreateSkillUseCase,
     UpdateSkillUseCase,
     DeleteSkillUseCase,
+    RestoreSkillUseCase,
     { provide: 'ISkillRepository', useClass: SkillTypeormRepository },
     {
       provide: 'ICareerCategoryRepository',
