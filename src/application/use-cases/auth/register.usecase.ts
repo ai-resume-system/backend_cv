@@ -7,6 +7,7 @@ import {
 } from 'src/application/dtos/auth/req.auth.dto';
 import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
@@ -91,6 +92,7 @@ export class RegisterUseCase extends BaseUsecase {
           role,
           status: EUserStatus.UNVERIFIED,
         });
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.USER_LIST);
         await invalidateAdminAnalyticsCache(this.redis);
 
         const tempPayload = buildTempProfile(dto);

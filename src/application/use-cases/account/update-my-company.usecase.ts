@@ -5,12 +5,14 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
+import { invalidateCompanyReadCaches } from 'src/common/utils/company-cache.utils';
 import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
 import type { ICompanyEntity } from 'src/domain/entities/company.entity';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 
 @Injectable()
@@ -22,6 +24,7 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
     private readonly companyRepository: ICompanyRepository,
     @Inject('ICareerCategoryRepository')
     private readonly careerCategoryRepository: ICareerCategoryRepository,
+    private readonly redis: RedisAdapter,
     private readonly queueDispatch: QueueDispatchService,
     private readonly storage: S3StorageService,
   ) {
@@ -91,9 +94,13 @@ export class UpdateMyCompanyUseCase extends BaseUsecase {
           )
         : company;
 
+      if (phone !== undefined || hasCompanyFields) {
+        await invalidateCompanyReadCaches(this.redis);
+      }
+
       await this.queueDispatch.dispatchCacheInvalidation({
-        keys: [`account:profile:${userId}`, `user:detail:${userId}`],
-        prefixes: ['user:list:'],
+        keys: [`account:profile:${userId}`],
+        prefixes: [],
       });
 
       const resolvedCompany = await resolveCompanyMedia(this.storage, {

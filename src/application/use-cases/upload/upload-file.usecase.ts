@@ -5,6 +5,7 @@ import { IRequestUploadFileDto } from 'src/application/dtos/upload/req.upload.dt
 import { IResponseApiUploadDto } from 'src/application/dtos/upload/res.upload.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
+import { invalidateCompanyReadCaches } from 'src/common/utils/company-cache.utils';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import {
   EBucketType,
@@ -12,6 +13,7 @@ import {
 } from 'src/common/constants/enum/upload.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { invalidateUserReadCaches } from 'src/common/utils/user-cache.utils';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
@@ -141,6 +143,7 @@ export class UploadFileUseCase extends BaseUsecase {
       await this.profileRepository.updateWithUserId(userId, {
         avatarUrl: objectKey,
       });
+      await invalidateUserReadCaches(this.redis);
       await this.queueDispatch.dispatchCacheInvalidation({
         keys: [`account:profile:${userId}`],
         prefixes: [],
@@ -152,6 +155,7 @@ export class UploadFileUseCase extends BaseUsecase {
       await this.companyRepository.updateWithUserId(userId, {
         logoUrl: objectKey,
       });
+      await invalidateCompanyReadCaches(this.redis);
       await this.queueDispatch.dispatchCacheInvalidation({
         keys: [`account:profile:${userId}`],
         prefixes: [],
@@ -163,6 +167,7 @@ export class UploadFileUseCase extends BaseUsecase {
       await this.companyRepository.updateWithUserId(userId, {
         bannerUrl: objectKey,
       });
+      await invalidateCompanyReadCaches(this.redis);
       await this.queueDispatch.dispatchCacheInvalidation({
         keys: [`account:profile:${userId}`],
         prefixes: [],

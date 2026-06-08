@@ -3,6 +3,7 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { invalidateAllAccountProfileCaches } from 'src/common/utils/account-cache.utils';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { IRequestUpdateCareerCategoryDto } from '../../dtos/career-category/req.career-category.dto';
@@ -48,18 +49,29 @@ export class UpdateCareerCategoryUseCase extends BaseUsecase {
         ...dto,
         slug:
           dto.name && dto.name.trim() !== existing.name
-            ? await generateUniqueSlug(dto.name, 'career-category', (candidate) =>
-                this.careerCategoryRepository.isSlugTaken(candidate, id),
+            ? await generateUniqueSlug(
+                dto.name,
+                'career-category',
+                (candidate) =>
+                  this.careerCategoryRepository.isSlugTaken(candidate, id),
               )
             : undefined,
       };
 
-      const updated = await this.careerCategoryRepository.update(id, updateData);
+      const updated = await this.careerCategoryRepository.update(
+        id,
+        updateData,
+      );
       await Promise.all([
         this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_LIST),
         this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_DETAIL),
         this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP),
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_LIST),
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_DETAIL),
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST),
+        this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL),
       ]);
+      await invalidateAllAccountProfileCaches(this.redis);
       return { data: updated };
     });
   }

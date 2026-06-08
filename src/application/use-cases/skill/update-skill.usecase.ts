@@ -26,66 +26,73 @@ export class UpdateSkillUseCase extends BaseUsecase {
     id: string,
     dto: IRequestUpdateSkillDto,
   ): Promise<IResponseApiSkillDto> {
-    return this.runSafe('[Update Skill]:', async () => {
-      const existing = await this.skillRepository.findById(id);
-      if (!existing) {
-        throw new AppException(ERROR_CODES.SKILL_NOT_FOUND);
-      }
-
-      if (dto.name) {
-        const duplicated = await this.skillRepository.findByName(dto.name);
-        if (duplicated && duplicated.id !== id) {
-          throw new AppException(ERROR_CODES.SKILL_ALREADY_EXISTS);
-        }
-      }
-
-      if (dto.careerCategoryId) {
-        const careerCategory = await this.careerCategoryRepository.findById(
-          dto.careerCategoryId,
-        );
-        if (!careerCategory) {
-          throw new AppException(ERROR_CODES.CAREER_CATEGORY_NOT_FOUND);
-        }
-      }
-
-      if (dto.parentId) {
-        if (dto.parentId === id) {
-          throw new AppException(ERROR_CODES.VALIDATION_ERROR);
-        }
-        const parentSkill = await this.skillRepository.findById(dto.parentId);
-        if (!parentSkill) {
+    return this.runSafe(
+      '[Update Skill]:',
+      async () => {
+        const existing = await this.skillRepository.findById(id);
+        if (!existing) {
           throw new AppException(ERROR_CODES.SKILL_NOT_FOUND);
         }
-      }
 
-      const slug =
-        dto.name && dto.name.trim() !== existing.name
-          ? await generateUniqueSlug(dto.name, 'skill', (candidate) =>
-              this.skillRepository.isSlugTaken(candidate, id),
-            )
-          : existing.slug;
+        if (dto.name) {
+          const duplicated = await this.skillRepository.findByName(dto.name);
+          if (duplicated && duplicated.id !== id) {
+            throw new AppException(ERROR_CODES.SKILL_ALREADY_EXISTS);
+          }
+        }
 
-      const updated = await this.skillRepository.update(id, {
-        name: dto.name?.trim(),
-        slug,
-        careerCategoryId: dto.careerCategoryId,
-        parentId: dto.parentId,
-      });
+        if (dto.careerCategoryId) {
+          const careerCategory = await this.careerCategoryRepository.findById(
+            dto.careerCategoryId,
+          );
+          if (!careerCategory) {
+            throw new AppException(ERROR_CODES.CAREER_CATEGORY_NOT_FOUND);
+          }
+        }
 
-      await this.redis.bumpVersion(CACHE_VERSION_KEYS.SKILL_LIST);
-      await this.redis.bumpVersion(CACHE_VERSION_KEYS.SKILL_DETAIL);
+        if (dto.parentId) {
+          if (dto.parentId === id) {
+            throw new AppException(ERROR_CODES.VALIDATION_ERROR);
+          }
+          const parentSkill = await this.skillRepository.findById(dto.parentId);
+          if (!parentSkill) {
+            throw new AppException(ERROR_CODES.SKILL_NOT_FOUND);
+          }
+        }
 
-      return {
-        data: {
-          id: updated.id,
-          name: updated.name,
-          slug: updated.slug,
-          careerCategoryId: updated.careerCategoryId,
-          parentId: updated.parentId,
-          createdAt: updated.createdAt,
-          updatedAt: updated.updatedAt,
-        },
-      };
-    }, ERROR_CODES.SKILL_UPDATE_FAILED);
+        const slug =
+          dto.name && dto.name.trim() !== existing.name
+            ? await generateUniqueSlug(dto.name, 'skill', (candidate) =>
+                this.skillRepository.isSlugTaken(candidate, id),
+              )
+            : existing.slug;
+
+        const updated = await this.skillRepository.update(id, {
+          name: dto.name?.trim(),
+          slug,
+          careerCategoryId: dto.careerCategoryId,
+          parentId: dto.parentId,
+        });
+
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.SKILL_LIST);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.SKILL_DETAIL);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_DETAIL);
+
+        return {
+          data: {
+            id: updated.id,
+            name: updated.name,
+            slug: updated.slug,
+            careerCategoryId: updated.careerCategoryId,
+            parentId: updated.parentId,
+            createdAt: updated.createdAt,
+            updatedAt: updated.updatedAt,
+          },
+        };
+      },
+      ERROR_CODES.SKILL_UPDATE_FAILED,
+    );
   }
 }

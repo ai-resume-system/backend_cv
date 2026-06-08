@@ -74,17 +74,21 @@ export class GetRelatedJobsQuery extends BaseUsecase {
 
       const limit = query.limit || 6;
       const version = await this.redis.getVersion(CACHE_VERSION_KEYS.JOB_LIST);
-      const cacheKey = `${CACHE_KEYS.JOB_LIST}:v${version}:related:${baseJob.id}:${limit}`;
-      const cached =
-        await this.redis.safeGetJson<IResponseListApiPublicJobDto>(cacheKey);
-      if (cached) {
-        return cached;
+      const cacheKey = userId
+        ? null
+        : `${CACHE_KEYS.JOB_LIST}:v${version}:related:${baseJob.id}:${limit}`;
+      if (cacheKey) {
+        const cached =
+          await this.redis.safeGetJson<IResponseListApiPublicJobDto>(cacheKey);
+        if (cached) {
+          return cached;
+        }
       }
 
-      const baseJobSkills = await this.jobSkillRepository.findByJobId(baseJob.id);
-      const excludedJobIds = userId
-        ? await this.getExcludedJobIds(userId)
-        : [];
+      const baseJobSkills = await this.jobSkillRepository.findByJobId(
+        baseJob.id,
+      );
+      const excludedJobIds = userId ? await this.getExcludedJobIds(userId) : [];
       const relatedJobs = await this.jobRepository.findPublicRelatedJobs({
         excludedJobId: baseJob.id,
         excludedJobIds,
@@ -105,11 +109,13 @@ export class GetRelatedJobsQuery extends BaseUsecase {
       ];
       const jobIds = relatedJobs.map((job) => job.id);
 
-      const [companies, careerCategories, relatedJobSkills] = await Promise.all([
-        this.companyRepository.findPublicByIds(companyIds),
-        this.careerCategoryRepository.findByIds(careerCategoryIds),
-        this.jobSkillRepository.findByJobIds(jobIds),
-      ]);
+      const [companies, careerCategories, relatedJobSkills] = await Promise.all(
+        [
+          this.companyRepository.findPublicByIds(companyIds),
+          this.careerCategoryRepository.findByIds(careerCategoryIds),
+          this.jobSkillRepository.findByJobIds(jobIds),
+        ],
+      );
 
       const skillIds = [
         ...new Set(relatedJobSkills.map((jobSkill) => jobSkill.skillId)),
@@ -117,24 +123,26 @@ export class GetRelatedJobsQuery extends BaseUsecase {
       const skills = await this.skillRepository.findByIds(skillIds);
 
       const companyEntries = await Promise.all(
-        companies.map(async (company): Promise<[string, IPublicJobCompanyDto]> => [
-          company.id,
-          (await resolveCompanyMedia(this.storage, {
-            id: company.id,
-            slug: company.slug,
-            name: company.name,
-            logoUrl: company.logoUrl,
-            bannerUrl: company.bannerUrl,
-            address: company.address,
-            latitude: company.latitude,
-            longitude: company.longitude,
-            description: company.description,
-            websiteUrl: company.websiteUrl,
-            taxCode: company.taxCode,
-            employeeMin: company.employeeMin,
-            employeeMax: company.employeeMax,
-          })) as IPublicJobCompanyDto,
-        ]),
+        companies.map(
+          async (company): Promise<[string, IPublicJobCompanyDto]> => [
+            company.id,
+            (await resolveCompanyMedia(this.storage, {
+              id: company.id,
+              slug: company.slug,
+              name: company.name,
+              logoUrl: company.logoUrl,
+              bannerUrl: company.bannerUrl,
+              address: company.address,
+              latitude: company.latitude,
+              longitude: company.longitude,
+              description: company.description,
+              websiteUrl: company.websiteUrl,
+              taxCode: company.taxCode,
+              employeeMin: company.employeeMin,
+              employeeMax: company.employeeMax,
+            })) as IPublicJobCompanyDto,
+          ],
+        ),
       );
 
       const companyMap = new Map<string, IPublicJobCompanyDto>(companyEntries);
@@ -142,15 +150,14 @@ export class GetRelatedJobsQuery extends BaseUsecase {
         careerCategories.map((category) => [category.id, category]),
       );
       const skillMap = new Map(skills.map((skill) => [skill.id, skill]));
-      const jobSkillsMap = relatedJobSkills.reduce<Map<string, typeof relatedJobSkills>>(
-        (result, jobSkill) => {
-          const existing = result.get(jobSkill.jobId) || [];
-          existing.push(jobSkill);
-          result.set(jobSkill.jobId, existing);
-          return result;
-        },
-        new Map(),
-      );
+      const jobSkillsMap = relatedJobSkills.reduce<
+        Map<string, typeof relatedJobSkills>
+      >((result, jobSkill) => {
+        const existing = result.get(jobSkill.jobId) || [];
+        existing.push(jobSkill);
+        result.set(jobSkill.jobId, existing);
+        return result;
+      }, new Map());
 
       const response: IResponseListApiPublicJobDto = {
         data: relatedJobs
@@ -173,7 +180,9 @@ export class GetRelatedJobsQuery extends BaseUsecase {
                   weight: jobSkill.weight,
                 };
               })
-              .filter((item): item is NonNullable<typeof item> => item !== null);
+              .filter(
+                (item): item is NonNullable<typeof item> => item !== null,
+              );
 
             return toPublicJobDto(job, {
               company,
@@ -187,7 +196,9 @@ export class GetRelatedJobsQuery extends BaseUsecase {
           .filter((item): item is NonNullable<typeof item> => item !== null),
       };
 
-      await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.LIST);
+      if (cacheKey) {
+        await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.LIST);
+      }
       return response;
     });
   }
@@ -202,9 +213,11 @@ export class GetRelatedJobsQuery extends BaseUsecase {
       this.jobApplicationRepository.findByUserId(userId),
     ]);
 
-    return [...new Set([
-      ...favouriteJobIds,
-      ...appliedApplications.map((application) => application.jobId),
-    ])];
+    return [
+      ...new Set([
+        ...favouriteJobIds,
+        ...appliedApplications.map((application) => application.jobId),
+      ]),
+    ];
   }
 }

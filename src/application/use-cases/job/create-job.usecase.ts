@@ -58,9 +58,9 @@ export class CreateJobUseCase extends BaseUsecase {
         this.validateExpiredAt(dto.expiredAt);
         this.validateSubmitRequirements(isSubmitAction, dto.workArrangement);
 
-        let careerCategory:
-          | Awaited<ReturnType<ICareerCategoryRepository['findById']>>
-          | null = null;
+        let careerCategory: Awaited<
+          ReturnType<ICareerCategoryRepository['findById']>
+        > | null = null;
         if (dto.careerCategoryId) {
           careerCategory = await this.careerCategoryRepository.findById(
             dto.careerCategoryId,
@@ -70,7 +70,9 @@ export class CreateJobUseCase extends BaseUsecase {
           }
         }
 
-        const skillIds = [...new Set((dto.skills || []).map((skill) => skill.skillId))];
+        const skillIds = [
+          ...new Set((dto.skills || []).map((skill) => skill.skillId)),
+        ];
         const skills = await Promise.all(
           skillIds.map((skillId) => this.skillRepository.findById(skillId)),
         );
@@ -87,10 +89,8 @@ export class CreateJobUseCase extends BaseUsecase {
         }
 
         const { action: _action, skills: _skills, ...jobData } = dto;
-        const slug = await generateUniqueSlug(
-          dto.title,
-          'job',
-          (candidate) => this.jobRepository.isSlugTaken(candidate),
+        const slug = await generateUniqueSlug(dto.title, 'job', (candidate) =>
+          this.jobRepository.isSlugTaken(candidate),
         );
         const job = await this.jobRepository.create({
           ...jobData,
@@ -128,6 +128,8 @@ export class CreateJobUseCase extends BaseUsecase {
 
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_LIST);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_DETAIL);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
         if (job.status !== EJobStatus.DRAFT) {
           await invalidateAdminAnalyticsCache(this.redis);
@@ -144,10 +146,7 @@ export class CreateJobUseCase extends BaseUsecase {
     );
   }
 
-  private validateSalaryRange(
-    salaryMin?: number,
-    salaryMax?: number,
-  ): void {
+  private validateSalaryRange(salaryMin?: number, salaryMax?: number): void {
     if (
       salaryMin !== undefined &&
       salaryMax !== undefined &&

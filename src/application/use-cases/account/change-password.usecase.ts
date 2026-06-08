@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { IChangePasswordDto } from 'src/application/dtos/account/req.account.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { invalidateUserReadCaches } from 'src/common/utils/user-cache.utils';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { IRefreshTokenRepository } from 'src/domain/repositories/refresh-token.repository.interface';
@@ -50,9 +51,10 @@ export class ChangePasswordUseCase extends BaseUsecase {
         await this.userRepository.updatePassword(user.id, hashedPassword);
         await this.refreshTokenRepository.revokeAll(user.id);
         await this.redis.deleteAllRefreshTokenCacheByUserId(user.id);
+        await invalidateUserReadCaches(this.redis);
         await this.queueDispatch.dispatchCacheInvalidation({
-          keys: [`account:profile:${user.id}`, `user:detail:${user.id}`],
-          prefixes: ['user:list:'],
+          keys: [`account:profile:${user.id}`],
+          prefixes: [],
         });
 
         return { data: null };

@@ -9,7 +9,9 @@ import { IVerifyOtpDto } from 'src/application/dtos/auth/req.auth.dto';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { TTL_10M } from 'src/common/constants/ttl.constants';
+import { invalidateCompanyReadCaches } from 'src/common/utils/company-cache.utils';
 import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
+import { invalidateUserReadCaches } from 'src/common/utils/user-cache.utils';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
@@ -153,6 +155,7 @@ export class VerifyOtpUseCase extends BaseUsecase {
                   userId: user.id,
                   fullName: tempProfile.fullName,
                 });
+                await invalidateUserReadCaches(this.redis);
               } else if (tempProfile.role === EUserRole.RECRUITER) {
                 const slug = await generateUniqueSlug(
                   tempProfile.name || 'company',
@@ -165,6 +168,7 @@ export class VerifyOtpUseCase extends BaseUsecase {
                   address: tempProfile.address,
                   slug,
                 });
+                await invalidateCompanyReadCaches(this.redis);
               }
               try {
                 await this.redis.clearTempProfile(dto.email);

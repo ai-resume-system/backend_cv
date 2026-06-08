@@ -94,9 +94,9 @@ export class UpdateJobUseCase extends BaseUsecase {
           );
         }
 
-        let careerCategory:
-          | Awaited<ReturnType<ICareerCategoryRepository['findById']>>
-          | null = null;
+        let careerCategory: Awaited<
+          ReturnType<ICareerCategoryRepository['findById']>
+        > | null = null;
         if (dto.careerCategoryId) {
           careerCategory = await this.careerCategoryRepository.findById(
             dto.careerCategoryId,
@@ -110,7 +110,9 @@ export class UpdateJobUseCase extends BaseUsecase {
           );
         }
 
-        const skillIds = [...new Set((dto.skills || []).map((skill) => skill.skillId))];
+        const skillIds = [
+          ...new Set((dto.skills || []).map((skill) => skill.skillId)),
+        ];
         const skills = await Promise.all(
           skillIds.map((skillId) => this.skillRepository.findById(skillId)),
         );
@@ -156,7 +158,8 @@ export class UpdateJobUseCase extends BaseUsecase {
           }
         }
 
-        const persistedJobSkills = await this.jobSkillRepository.findByJobId(id);
+        const persistedJobSkills =
+          await this.jobSkillRepository.findByJobId(id);
         const persistedSkills = await Promise.all(
           persistedJobSkills.map((jobSkill) =>
             this.skillRepository.findById(jobSkill.skillId),
@@ -165,6 +168,8 @@ export class UpdateJobUseCase extends BaseUsecase {
 
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_LIST);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_DETAIL);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
         await invalidateAdminAnalyticsCache(this.redis);
 
@@ -196,10 +201,7 @@ export class UpdateJobUseCase extends BaseUsecase {
     );
   }
 
-  private validateSalaryRange(
-    salaryMin?: number,
-    salaryMax?: number,
-  ): void {
+  private validateSalaryRange(salaryMin?: number, salaryMax?: number): void {
     if (
       salaryMin !== undefined &&
       salaryMax !== undefined &&

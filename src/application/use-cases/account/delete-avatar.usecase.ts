@@ -1,17 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { invalidateUserReadCaches } from 'src/common/utils/user-cache.utils';
 import { EBucketType } from 'src/common/constants/enum/upload.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
 import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class DeleteAvatarUseCase extends BaseUsecase {
   constructor(
     @Inject('IUserProfileRepository')
     private readonly profileRepository: IUserProfileRepository,
+    private readonly redis: RedisAdapter,
     private readonly queueDispatch: QueueDispatchService,
   ) {
     super(new Logger(DeleteAvatarUseCase.name));
@@ -29,6 +32,8 @@ export class DeleteAvatarUseCase extends BaseUsecase {
       await this.profileRepository.updateWithUserId(userId, {
         avatarUrl: null,
       });
+
+      await invalidateUserReadCaches(this.redis);
 
       await this.queueDispatch.dispatchCacheInvalidation({
         keys: [`account:profile:${userId}`],

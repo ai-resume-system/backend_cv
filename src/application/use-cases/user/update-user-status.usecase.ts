@@ -5,6 +5,7 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { invalidateAccountProfileCache } from 'src/common/utils/account-cache.utils';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
@@ -36,6 +37,7 @@ export class UpdateUserStatusUseCase extends BaseUsecase {
         this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST),
         this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL),
       ]);
+      await invalidateAccountProfileCache(this.redis, userId);
 
       return { data: null };
     });

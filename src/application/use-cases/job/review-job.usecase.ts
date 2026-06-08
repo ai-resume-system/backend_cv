@@ -98,6 +98,8 @@ export class ReviewJobUseCase
       });
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_LIST);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_DETAIL);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
       await invalidateAdminAnalyticsCache(this.redis);
 
@@ -148,6 +150,8 @@ export class ReviewJobUseCase
 
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_LIST);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_DETAIL);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
       await invalidateAdminAnalyticsCache(this.redis);
       this.logger.log(
