@@ -3,12 +3,14 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AiAnalysisModule } from '../ai/ai-analysis.module';
+import { CareerCategoryOrmEntity } from '../database/entities/career-category.orm-entity';
 import { CVParsedDataOrmEntity } from '../database/entities/cv-parsed-data.orm-entity';
 import { CVSkillOrmEntity } from '../database/entities/cv-skill.orm-entity';
 import { CVOrmEntity } from '../database/entities/cv.orm-entity';
 import { JobOrmEntity } from '../database/entities/job.orm-entity';
 import { OutboxEventOrmEntity } from '../database/entities/outbox-event.orm-entity';
 import { SkillOrmEntity } from '../database/entities/skill.orm-entity';
+import { CareerCategoryTypeormRepository } from '../database/repositories/career-category.typeorm-repository';
 import { CVParsedDataTypeormRepository } from '../database/repositories/cv-parsed-data.typeorm-repository';
 import { CVSkillTypeormRepository } from '../database/repositories/cv-skill.typeorm-repository';
 import { CVTypeormRepository } from '../database/repositories/cv.typeorm-repository';
@@ -68,6 +70,7 @@ const queueRetryStrategy = (times: number): number | null => {
     ),
     TypeOrmModule.forFeature([
       CVOrmEntity,
+      CareerCategoryOrmEntity,
       CVParsedDataOrmEntity,
       CVSkillOrmEntity,
       SkillOrmEntity,
@@ -90,6 +93,10 @@ const queueRetryStrategy = (times: number): number | null => {
       useClass: CVParsedDataTypeormRepository,
     },
     { provide: 'ICVSkillRepository', useClass: CVSkillTypeormRepository },
+    {
+      provide: 'ICareerCategoryRepository',
+      useClass: CareerCategoryTypeormRepository,
+    },
     { provide: 'ISkillRepository', useClass: SkillTypeormRepository },
     { provide: 'IJobRepository', useClass: JobTypeormRepository },
     {

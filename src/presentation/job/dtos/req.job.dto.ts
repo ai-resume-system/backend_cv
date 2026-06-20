@@ -167,6 +167,12 @@ export class RequestGetRelatedJobsDto {
   limit: number = 6;
 }
 
+export class RequestGetJobMatchDto {
+  @ApiProperty()
+  @IsUUID()
+  cvId: string;
+}
+
 export class RequestJobSkillDto {
   @ApiProperty()
   @IsUUID()

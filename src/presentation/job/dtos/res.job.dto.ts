@@ -161,3 +161,74 @@ export class ResponseListApiAdminJobDto extends ApiResponseDto<ResponseManagedJo
   @ApiProperty({ type: PaginationDto })
   declare pagination?: PaginationDto;
 }
+
+export class ResponseJobMatchBreakdownDto {
+  @ApiProperty()
+  skillMatch: number;
+
+  @ApiProperty()
+  careerCategoryMatch: number;
+
+  @ApiProperty()
+  experienceMatch: number;
+
+  @ApiProperty()
+  titleKeywordSimilarity: number;
+
+  @ApiProperty()
+  preferenceMatch: number;
+}
+
+export class ResponseJobMatchSkillEvidenceDto {
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  normalizedName: string;
+
+  @ApiPropertyOptional()
+  systemSkillSlug?: string;
+
+  @ApiPropertyOptional()
+  confidence?: number;
+}
+
+export class ResponseJobMatchDto {
+  @ApiProperty()
+  cvId: string;
+
+  @ApiProperty()
+  jobId: string;
+
+  @ApiProperty()
+  jobSlug: string;
+
+  @ApiProperty()
+  matchScore: number;
+
+  @ApiProperty({ type: ResponseJobMatchBreakdownDto })
+  breakdown: ResponseJobMatchBreakdownDto;
+
+  @ApiProperty({ type: [ResponseJobMatchSkillEvidenceDto] })
+  matchedSkills: ResponseJobMatchSkillEvidenceDto[];
+
+  @ApiProperty({ type: [ResponseJobSkillDto] })
+  missingSkills: ResponseJobSkillDto[];
+
+  @ApiProperty({ type: [String] })
+  strengths: string[];
+
+  @ApiProperty({ type: [String] })
+  risks: string[];
+
+  @ApiProperty({ type: [String] })
+  improvementSuggestions: string[];
+
+  @ApiProperty()
+  computedAt: Date;
+}
+
+export class ResponseApiJobMatchDto extends ApiResponseDto<ResponseJobMatchDto> {
+  @ApiProperty({ type: ResponseJobMatchDto })
+  declare data: ResponseJobMatchDto;
+}

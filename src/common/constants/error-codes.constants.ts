@@ -219,6 +219,22 @@ export const ERROR_CODES = {
     message: 'Failed to start CV analysis',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
+  CV_ANALYSIS_COOLDOWN_ERROR: {
+    message: 'Please wait before analyzing another CV',
+    status: HttpStatus.TOO_MANY_REQUESTS,
+  },
+  CV_ANALYSIS_TEMP_FILE_NOT_FOUND: {
+    message: 'Temporary CV file not found or expired',
+    status: HttpStatus.NOT_FOUND,
+  },
+  CV_ANALYSIS_PREVIEW_NOT_FOUND: {
+    message: 'Temporary CV analysis preview not found or expired',
+    status: HttpStatus.NOT_FOUND,
+  },
+  CV_ANALYSIS_NOT_READY: {
+    message: 'CV analysis result is not ready',
+    status: HttpStatus.CONFLICT,
+  },
 
   // CAREER CATEGORY
   CAREER_CATEGORY_NOT_FOUND: {

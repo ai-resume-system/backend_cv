@@ -17,7 +17,7 @@ export interface ICvParseJob {
   parsedDataId: string;
   fileKey: string;
   extension: 'pdf' | 'docx' | 'doc';
-  requestedProvider?: 'gemini' | 'openai' | 'groq';
+  requestedProvider?: 'groq' | 'gemini' | 'glm';
 }
 
 export interface ICacheInvalidateJob {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { In, IsNull, LessThan, Repository } from 'typeorm';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { ICVEntity } from 'src/domain/entities/cv.entity';
 import { CVOrmEntity } from '../entities/cv.orm-entity';
@@ -44,6 +44,14 @@ export class CVTypeormRepository
     return this.ormRepository.count({
       where: { userId, deletedAt: IsNull() },
     });
+  }
+
+  async findSoftDeletedBefore(before: Date): Promise<ICVEntity[]> {
+    const orms = await this.ormRepository.find({
+      where: { deletedAt: LessThan(before) },
+      withDeleted: true,
+    });
+    return orms.map((orm) => this.toDomain(orm));
   }
 
   async findDefaultByUserId(userId: string): Promise<ICVEntity | null> {

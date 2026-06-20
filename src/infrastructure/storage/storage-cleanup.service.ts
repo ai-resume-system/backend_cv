@@ -9,6 +9,8 @@ import { EBucketType } from 'src/common/constants/enum/upload.enum';
 import { S3StorageService } from './s3-storage.service';
 
 const ORPHAN_FILE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const TEMP_CV_ANALYSIS_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+const TEMP_CV_ANALYSIS_PREFIX = 'temp/ai-cv/';
 
 @Injectable()
 export class StorageCleanupService {
@@ -26,6 +28,8 @@ export class StorageCleanupService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async cleanupOrphanFiles(): Promise<void> {
+    await this.cleanupTempCvAnalysisFiles();
+
     const referenced = await this.collectReferencedObjectKeys();
     const bucketTypes = [
       EBucketType.CV,
@@ -38,6 +42,30 @@ export class StorageCleanupService {
       await this.cleanupBucket(
         bucketType,
         referenced.get(bucketType) || new Set(),
+      );
+    }
+  }
+
+  private async cleanupTempCvAnalysisFiles(): Promise<void> {
+    try {
+      const objects = await this.storage.listObjects(
+        EBucketType.CV,
+        TEMP_CV_ANALYSIS_PREFIX,
+      );
+      const now = Date.now();
+
+      for (const object of objects) {
+        if (!object.lastModified) continue;
+        const isExpired =
+          now - object.lastModified.getTime() > TEMP_CV_ANALYSIS_MAX_AGE_MS;
+        if (!isExpired) continue;
+
+        await this.storage.deleteObject(object.key, EBucketType.CV);
+        this.logger.log(`Deleted expired temp CV analysis object ${object.key}`);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Cleanup temp CV analysis files failed: ${error.message}`,
       );
     }
   }

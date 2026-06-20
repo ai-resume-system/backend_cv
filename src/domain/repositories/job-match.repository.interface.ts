@@ -1,17 +1,12 @@
 import { IJobMatchEntity } from '../entities/job-match.entity';
+import { IBaseRepository } from './base.repository.interface';
 
-export interface IJobMatchRepository {
-  findById(id: string): Promise<IJobMatchEntity | null>;
+export interface IJobMatchRepository extends IBaseRepository<IJobMatchEntity> {
   findByCvId(cvId: string): Promise<IJobMatchEntity[]>;
   findByJobId(jobId: string): Promise<IJobMatchEntity[]>;
   findByCvIdAndJobId(
     cvId: string,
     jobId: string,
   ): Promise<IJobMatchEntity | null>;
-  create(jobMatch: Partial<IJobMatchEntity>): Promise<IJobMatchEntity>;
-  update(
-    id: string,
-    jobMatch: Partial<IJobMatchEntity>,
-  ): Promise<IJobMatchEntity>;
-  delete(id: string): Promise<void>;
+  deleteByCvIds(cvIds: string[]): Promise<void>;
 }

@@ -32,6 +32,10 @@ export interface IGetRelatedJobsDto {
   limit?: number;
 }
 
+export interface IGetJobMatchDto {
+  cvId: string;
+}
+
 export interface IJobSkillInputDto {
   skillId: string;
   weight?: number;

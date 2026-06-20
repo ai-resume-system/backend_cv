@@ -22,6 +22,7 @@ import { SkillModule } from './presentation/skill/skill.module';
 import { FavouriteJobModule } from './presentation/favourite-job/favourite-job.module';
 import { CompanyModule } from './presentation/company/company.module';
 import { AdminAnalyticsModule } from './presentation/admin-analytics/admin-analytics.module';
+import { DatabaseCleanupModule } from './infrastructure/scheduler/database-cleanup.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AdminAnalyticsModule } from './presentation/admin-analytics/admin-analy
     MailModule,
     JwtAuthModule,
     QueueModule,
+    DatabaseCleanupModule,
     AuthModule,
     AccountModule,
     UploadModule,

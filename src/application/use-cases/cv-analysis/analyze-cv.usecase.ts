@@ -1,9 +1,10 @@
-import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IResponseApiCVAnalyzeActionDto } from 'src/application/dtos/cv-analysis/res.cv-analysis.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
+import { TTL_10M } from 'src/common/constants/ttl.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
@@ -38,6 +39,13 @@ export class AnalyzeCVUseCase extends BaseUsecase {
           throw new AppException(ERROR_CODES.CV_ANALYSIS_FILE_MISSING_ERROR);
         }
 
+        // Cooldown tránh spam phân tích CV liên tiếp.
+        // const cooldownKey = `cooldown:cv-analyze:${userId}`;
+        // const isCoolingDown = await this.redis.safeGet(cooldownKey);
+        // if (isCoolingDown) {
+        //   throw new AppException(ERROR_CODES.CV_ANALYSIS_COOLDOWN_ERROR);
+        // }
+
         const latestParsedData =
           await this.cvParsedDataRepository.findLatestByCvId(id);
         if (
@@ -61,6 +69,13 @@ export class AnalyzeCVUseCase extends BaseUsecase {
           extension: cv.fileExtension as 'pdf' | 'docx' | 'doc',
         });
 
+        // // Tránh spam phân tích CV liên tiếp.
+        // await this.redis.safeSet(
+        //   cooldownKey,
+        //   new Date().toISOString(),
+        //   TTL_10M,
+        // );
+
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_LIST);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_DETAIL);
 
@@ -69,6 +84,7 @@ export class AnalyzeCVUseCase extends BaseUsecase {
             cvId: id,
             processingStatus: EProcessingStatus.PROCESSING,
             message: 'CV analysis job has been queued successfully',
+            reusedExistingResult: false,
           },
         };
       },

@@ -93,3 +93,35 @@ export interface IResponseApiAdminJobDto extends IResponseApiManagedJobDto {}
 
 export interface IResponseListApiAdminJobDto
   extends IResponseListApiManagedJobDto {}
+
+export interface IJobMatchBreakdownDto {
+  skillMatch: number;
+  careerCategoryMatch: number;
+  experienceMatch: number;
+  titleKeywordSimilarity: number;
+  preferenceMatch: number;
+}
+
+export interface IJobMatchSkillEvidenceDto {
+  name: string;
+  normalizedName: string;
+  systemSkillSlug?: string;
+  confidence?: number;
+}
+
+export interface IJobMatchResultDto {
+  cvId: string;
+  jobId: string;
+  jobSlug: string;
+  matchScore: number;
+  breakdown: IJobMatchBreakdownDto;
+  matchedSkills: IJobMatchSkillEvidenceDto[];
+  missingSkills: IJobSkillDto[];
+  strengths: string[];
+  risks: string[];
+  improvementSuggestions: string[];
+  computedAt: Date;
+}
+
+export interface IResponseApiJobMatchDto
+  extends IApiResponse<IJobMatchResultDto> {}

@@ -1,21 +1,27 @@
 import { Controller, Get, Logger, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type {
+  IResponseApiJobMatchDto,
   IResponseApiPublicJobDto,
   IResponseListApiPublicJobDto,
 } from 'src/application/dtos/job/res.job.dto';
 import { GetJobBySlugQuery } from 'src/application/queries/job/get-job-by-slug.query';
+import { GetJobMatchQuery } from 'src/application/queries/job/get-job-match.query';
 import { GetJobsQuery } from 'src/application/queries/job/get-jobs.query';
 import { GetRelatedJobsQuery } from 'src/application/queries/job/get-related-jobs.query';
 import { BaseController } from 'src/common/base/base.controller';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
+import { EUserRole } from 'src/common/constants/enum/user.enum';
+import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
 import {
+  RequestGetJobMatchDto,
   RequestGetJobsDto,
   RequestGetRelatedJobsDto,
 } from '../dtos/req.job.dto';
 import {
+  ResponseApiJobMatchDto,
   ResponseApiPublicJobDto,
   ResponseListApiPublicJobDto,
 } from '../dtos/res.job.dto';
@@ -26,6 +32,7 @@ export class JobPublicController extends BaseController {
   constructor(
     private readonly getJobsQuery: GetJobsQuery,
     private readonly getJobBySlugQuery: GetJobBySlugQuery,
+    private readonly getJobMatchQuery: GetJobMatchQuery,
     private readonly getRelatedJobsQuery: GetRelatedJobsQuery,
   ) {
     super(new Logger(JobPublicController.name));
@@ -57,6 +64,20 @@ export class JobPublicController extends BaseController {
     @AuthCurrentUser() user?: ICurrentUser,
   ): Promise<IResponseListApiPublicJobDto> {
     return await this.getRelatedJobsQuery.execute(slug, query, user?.id);
+  }
+
+  @Get(':slug/match')
+  @AuthRequired(EUserRole.JOB_SEEKER)
+  @ApiOperation({
+    summary: 'Tinh muc do phu hop giua CV va job. Truy cap: Job Seeker.',
+  })
+  @ApiResponse({ status: 200, type: ResponseApiJobMatchDto })
+  async getJobMatch(
+    @Param('slug') slug: string,
+    @Query() query: RequestGetJobMatchDto,
+    @AuthCurrentUser() user: ICurrentUser,
+  ): Promise<IResponseApiJobMatchDto> {
+    return await this.getJobMatchQuery.execute(slug, query.cvId, user.id);
   }
 
   @Get(':slug')

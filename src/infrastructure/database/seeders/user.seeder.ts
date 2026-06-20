@@ -6,8 +6,8 @@ import { UserOrmEntity } from '../entities/user.orm-entity';
 export async function seedAdmin(dataSource: DataSource) {
   const userRepo = dataSource.getRepository(UserOrmEntity);
 
-  const email = process.env.ACCOUNT_EMAIL || 'admin@gmail.com';
-  const password = process.env.ACCOUNT_PASSWORD || '123456';
+  const email = 'admin@gmail.com';
+  const password = '123456';
 
   const existing = await userRepo.findOne({ where: { email } });
   if (existing) return;

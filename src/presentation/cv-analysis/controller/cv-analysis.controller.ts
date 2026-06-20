@@ -11,6 +11,8 @@ import type {
   IResponseApiCVAnalysisDto,
   IResponseApiCVAnalyzeActionDto,
 } from 'src/application/dtos/cv-analysis/res.cv-analysis.dto';
+import type { IResponseListApiPublicJobDto } from 'src/application/dtos/job/res.job.dto';
+import { GetRecommendedJobsQuery } from 'src/application/queries/cv-analysis/get-recommended-jobs.query';
 import { GetCVAnalysisQuery } from 'src/application/queries/cv-analysis/get-cv-analysis.query';
 import { AnalyzeCVUseCase } from 'src/application/use-cases/cv-analysis/analyze-cv.usecase';
 import { BaseController } from 'src/common/base/base.controller';
@@ -22,12 +24,14 @@ import {
   ResponseApiCVAnalysisDto,
   ResponseApiCVAnalyzeActionDto,
 } from '../dtos/res.cv-analysis.dto';
+import { ResponseListApiPublicJobDto } from 'src/presentation/job/dtos/res.job.dto';
 
 @Controller({ path: 'cvs', version: '1' })
 @ApiTags('CV Analysis')
 export class CVAnalysisController extends BaseController {
   constructor(
     private readonly getCVAnalysisQuery: GetCVAnalysisQuery,
+    private readonly getRecommendedJobsQuery: GetRecommendedJobsQuery,
     private readonly analyzeCVUseCase: AnalyzeCVUseCase,
   ) {
     super(new Logger(CVAnalysisController.name));
@@ -57,5 +61,18 @@ export class CVAnalysisController extends BaseController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IResponseApiCVAnalyzeActionDto> {
     return await this.analyzeCVUseCase.execute(id, user.id);
+  }
+
+  @Get(':id/recommended-jobs')
+  @AuthRequired(EUserRole.JOB_SEEKER)
+  @ApiOperation({
+    summary: 'Lay danh sach job de xuat dua tren CV da phan tich. Truy cap: Job Seeker.',
+  })
+  @ApiResponse({ status: 200, type: ResponseListApiPublicJobDto })
+  async getRecommendedJobs(
+    @AuthCurrentUser() user: ICurrentUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<IResponseListApiPublicJobDto> {
+    return await this.getRecommendedJobsQuery.execute(id, user.id);
   }
 }
