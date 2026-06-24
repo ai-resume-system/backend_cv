@@ -16,6 +16,7 @@ import type {
   IResponseApiCVPreviewDto,
   IResponseListApiCVDto,
 } from 'src/application/dtos/cv/res.cv.dto';
+import { GetCVByIdQuery } from 'src/application/queries/cv/get-cv-by-id.query';
 import { GetCVsQuery } from 'src/application/queries/cv/get-cvs.query';
 import { GetCVDownloadUrlQuery } from 'src/application/queries/cv/get-cv-download-url.query';
 import { GetCVPreviewUrlQuery } from 'src/application/queries/cv/get-cv-preview-url.query';
@@ -46,6 +47,7 @@ import {
 export class CVController extends BaseController {
   constructor(
     private readonly getCVsQuery: GetCVsQuery,
+    private readonly getCVByIdQuery: GetCVByIdQuery,
     private readonly getCVDownloadUrlQuery: GetCVDownloadUrlQuery,
     private readonly getCVPreviewUrlQuery: GetCVPreviewUrlQuery,
     private readonly updateCVUseCase: UpdateCVUseCase,
@@ -69,6 +71,19 @@ export class CVController extends BaseController {
       ...query,
       userId: user.id,
     });
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Lay chi tiet CV cua toi. Truy cap: Job Seeker.',
+  })
+  @AuthRequired(EUserRole.JOB_SEEKER)
+  @ApiResponse({ status: 200, type: ResponseApiCVDto })
+  async getCVById(
+    @AuthCurrentUser() user: ICurrentUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<IResponseApiCVDto> {
+    return await this.getCVByIdQuery.execute(id, user.id);
   }
 
   @Get(':id/download')

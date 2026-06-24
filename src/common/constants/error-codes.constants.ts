@@ -167,7 +167,6 @@ export const ERROR_CODES = {
     message: 'Invalid salary range',
     status: HttpStatus.BAD_REQUEST,
   },
-
   // CV
   CV_NOT_FOUND: {
     message: 'CV not found',

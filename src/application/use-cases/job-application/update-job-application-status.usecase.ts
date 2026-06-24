@@ -6,10 +6,12 @@ import { EJobApplicationStatus } from 'src/common/constants/enum/job-application
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { formatDateTimeVN } from 'src/common/utils/date-time.util';
+import { invalidateJobApplicationReadCaches } from 'src/common/utils/job-application-cache.utils';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { toRecruiterJobApplicationDto } from 'src/application/queries/job-application/job-application-response.mapper';
 
 const JOB_APPLICATION_STATUS_TRANSITIONS: Record<
@@ -17,10 +19,6 @@ const JOB_APPLICATION_STATUS_TRANSITIONS: Record<
   EJobApplicationStatus[]
 > = {
   [EJobApplicationStatus.APPLIED]: [
-    EJobApplicationStatus.REVIEWING,
-    EJobApplicationStatus.REJECTED,
-  ],
-  [EJobApplicationStatus.REVIEWING]: [
     EJobApplicationStatus.INTERVIEW,
     EJobApplicationStatus.REJECTED,
   ],
@@ -46,6 +44,7 @@ export class UpdateJobApplicationStatusUseCase extends BaseUsecase {
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     private readonly queueDispatch: QueueDispatchService,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(UpdateJobApplicationStatusUseCase.name));
   }
@@ -101,6 +100,7 @@ export class UpdateJobApplicationStatusUseCase extends BaseUsecase {
             scheduleLink: dto.scheduleLink,
           },
         );
+        await invalidateJobApplicationReadCaches(this.redis);
 
         if (
           updated.contactEmail &&

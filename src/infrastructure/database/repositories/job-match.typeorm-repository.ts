@@ -42,6 +42,30 @@ export class JobMatchTypeormRepository
     return orm ? this.toDomain(orm) : null;
   }
 
+  async upsertByCvIdAndJobId(
+    cvId: string,
+    jobId: string,
+    data: Partial<IJobMatchEntity>,
+  ): Promise<IJobMatchEntity> {
+    const existing = await this.ormRepository.findOne({
+      where: { cvId, jobId, deletedAt: IsNull() },
+    });
+
+    if (existing) {
+      const merged = this.ormRepository.merge(existing, data);
+      const saved = await this.ormRepository.save(merged);
+      return this.toDomain(saved);
+    }
+
+    const created = this.ormRepository.create({
+      ...data,
+      cvId,
+      jobId,
+    });
+    const saved = await this.ormRepository.save(created);
+    return this.toDomain(saved);
+  }
+
   async deleteByCvIds(cvIds: string[]): Promise<void> {
     if (!cvIds.length) return;
     await this.ormRepository.delete({ cvId: In(cvIds) });

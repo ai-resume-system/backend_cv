@@ -1,147 +1,192 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Backend CV - AI Resume System
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+`backend_cv` là backend chính của hệ thống tuyển dụng và phân tích CV bằng AI. Source này cung cấp API cho frontend người tìm việc, frontend nhà tuyển dụng, trang quản trị CMS và kết nối với `ai_service` để phân tích nội dung CV.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Liên Kết Source
 
-## Description
+Khi chạy hoặc kiểm tra từng phần của hệ thống, mở đúng source tương ứng:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Backend API: [ai-resume-system/backend_cv](https://github.com/ai-resume-system/backend_cv)
+- Frontend cho nhà tuyển dụng và người tìm việc: [ai-resume-system/frontend_cv](https://github.com/ai-resume-system/frontend_cv)
+- Frontend quản trị admin: [ai-resume-system/cms_frontend_cv](https://github.com/ai-resume-system/cms_frontend_cv)
 
-## Project setup
+## Mục Tiêu
 
-```bash
-$ npm install
+- Quản lý người dùng theo vai trò: `admin`, `job_seeker`, `recruiter`.
+- Quản lý tài khoản, hồ sơ cá nhân, thông tin công ty và media liên quan.
+- Quản lý CV, upload file CV, preview/download CV và phân tích CV bằng AI.
+- Quản lý danh mục nghề nghiệp, kỹ năng, tin tuyển dụng và kỹ năng yêu cầu của job.
+- Hỗ trợ ứng tuyển, quản lý trạng thái ứng tuyển, lịch phỏng vấn và gửi email thông báo.
+- Tính điểm phù hợp giữa CV và công việc để phục vụ hiển thị AI Match.
+- Cung cấp API thống kê cho dashboard quản trị.
+
+## Kiến Trúc Hiện Tại
+
+Backend được xây dựng bằng NestJS theo định hướng Clean Architecture, kết hợp cách tổ chức module của NestJS. Kiến trúc chưa hoàn toàn "sạch" tuyệt đối, nhưng đã tách tương đối rõ các lớp trách nhiệm:
+
+- `domain`: định nghĩa entity nghiệp vụ và repository interface.
+- `application`: chứa use case, query, DTO ứng dụng và điều phối nghiệp vụ.
+- `infrastructure`: triển khai database, repository TypeORM, Redis, queue, mail, storage, AI client.
+- `presentation`: controller, DTO request/response và module API.
+- `common`: guard, interceptor, exception, constants, helper và utility dùng chung.
+
+Luồng tổng quát:
+
+```txt
+Controller -> UseCase/Query -> Repository Interface -> TypeORM Repository -> PostgreSQL
+                         -> Redis / Queue / Mail / MinIO / AI Service
 ```
 
-## Compile and run the project
+## Công Nghệ Sử Dụng
+
+- Node.js, TypeScript
+- NestJS
+- TypeORM
+- PostgreSQL
+- Redis
+- BullMQ
+- MinIO/S3-compatible storage
+- Nodemailer
+- Swagger
+- Docker Compose cho hạ tầng local
+
+## Yêu Cầu Cài Đặt
+
+- Node.js 20+ khuyến nghị
+- npm
+- Docker Desktop hoặc Docker Engine
+- PostgreSQL, Redis, MinIO nếu không dùng Docker Compose
+- `ai_service` chạy ở port `8001` nếu cần phân tích CV bằng AI
+
+## Cấu Hình Môi Trường
+
+Tạo file `.env` từ `.env.example`:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cp .env.example .env
 ```
 
-## Run tests
+Các biến quan trọng:
+
+```env
+IP_ADDRESS=localhost
+WEB_PORT=3000
+WEB_ENV=development
+CORS_ALLOWED_ORIGINS=
+
+JWT_SECRET=your-secret
+JWT_ACCESS_EXPIRATION=7d
+JWT_REFRESH_EXPIRATION=30d
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=123456
+DB_DATABASE=ai_resume_system_db
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+MINIO_ENDPOINT=localhost
+MINIO_ACCESS_KEY_ID=admin
+MINIO_SECRET_ACCESS_KEY=admin123
+MINIO_S3_BUCKET_CV=cv
+MINIO_S3_BUCKET_LOGO=company-logos
+MINIO_S3_BUCKET_AVATAR=avatars
+MINIO_S3_BUCKET_BANNER=company-banners
+
+AI_SERVICE_BASE_URL=http://localhost:8001
+AI_SERVICE_TIMEOUT_MS=60000
+AI_SERVICE_API_KEY=internal-shared-secret
+```
+
+Lưu ý: `AI_SERVICE_API_KEY` phải trùng với biến cùng tên bên `ai_service`.
+
+## Chạy Hạ Tầng Local
+
+Từ thư mục gốc project:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cd docker
+docker compose -f docker-compose.postgres.yml up -d
 ```
 
-## Deployment
+File compose hiện chạy:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- PostgreSQL: `localhost:5432`
+- Redis: `localhost:6379`
+- MinIO API: `localhost:9000`
+- MinIO Console: `localhost:9001`
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Cài Dependency
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cd backend_cv
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Migration Và Seed
 
-## Resources
+Chạy migration:
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+npm run migration:run
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Chạy seed dữ liệu dev:
 
-## Support
+```bash
+npm run seed:dev
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Không tự chạy migration nếu bạn chỉ đang đọc source hoặc sửa tài liệu.
 
-## Stay in touch
+## Chạy Development
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+npm run start:dev
+```
 
-## License
+API mặc định:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```txt
+http://localhost:3000/api/v1
+```
 
-/////////
+Swagger:
 
-dự án backend_cv của tôi đang theo câu trúc gì @src/
-dir src/
-Thinking: The user is asking about the structure of their backend_cv project. Based on the directory listing they provided, I can see the structure of the src/ folder.
-Let me analyze the structure:
+```txt
+http://localhost:3000/api/docs
+```
 
-- app.controller.spec.ts, app.controller.ts, app.module.ts, app.service.ts - These are NestJS boilerplate files
-- application/ - likely contains application services/use cases
-- domain/ - likely contains entities, interfaces, business logic
-- infrastructure/ - likely contains infrastructure implementations (DB, external services)
-- modules/ - likely contains feature modules
-- shared/ - likely contains shared utilities, guards, filters, etc.
-- main.ts - Entry point
-  This looks like a Clean Architecture / Hexagonal Architecture pattern used in NestJS.
-  I should provide a concise answer about the architecture pattern being used.
-  Dự án theo cấu trúc Clean Architecture (Hexagonal Architecture) trong NestJS với các thư mục chính:
-- application/ - Application services, use cases
-- domain/ - Entities, interfaces, business logic
-- infrastructure/ - Infrastructure (DB, external services)
-- modules/ - Feature modules
-- shared/ - Shared utilities, guards, filters, DTOs
-  Đây là kiến trúc phân lớp rõ ràng, tách biệt logic nghiệp vụ khỏi infrastructure.
-  ▣ Build · minimax-m2.5-free · 7.1s
-  giải thích nhiệm vụ tằng cấu trúc đi
-  Thinking: The user wants me to explain the purpose of each layer in the Clean Architecture structure of their backend_cv project.
-  Nhiệm vụ từng thư mục trong Clean Architecture:
-  Thư mục Nhiệm vụ
-  domain/ Chứa entities, interfaces, business rules - lõi nghiệp vụ, không phụ thuộc bất kỳ lớp nào khác
-  application/ Chứa use cases, application services - điều phối domain, xử lý nghiệp vụ
-  infrastructure/ Chứa implementations cụ thể: database, external APIs, repositories
-  modules/ Chứa các feature modules của NestJS (auth, users, jobs...)
-  shared/ Chứa code dùng chung: DTOs, guards, filters, constants, helpers
-  app.controller/service/module Entry point của NestJS app
-  Luồng dữ liệu: modules → application → domain ← infrastructure
-  domain là lớp trung tâm, không phụ thuộc các lớp khác. infrastructure implement các interface trong domain.
-# Production services setup
+Port thực tế phụ thuộc `WEB_PORT` trong `.env`.
 
-Required services for CV/Job production flow:
+## Lệnh Hữu Ích
 
-- PostgreSQL: source of truth, run migrations with `npm run migration:run`.
-- Redis: cache, auth best-effort cache, BullMQ connection.
-- Elasticsearch: indexes `jobs` and `cvs`; workers create/update documents async.
-- AWS S3: private bucket for CV files, public bucket/prefix for avatar/logo assets via CloudFront.
+```bash
+npm run build
+npm run start
+npm run start:prod
+npm run test
+npm run test:e2e
+npm run test:cov
+npm run lint
+```
 
-Required env keys are listed in `.env.example`: `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_PRIVATE_BUCKET`, `AWS_S3_PUBLIC_BUCKET`, `CLOUDFRONT_PUBLIC_URL`, `S3_PRESIGNED_TTL_SECONDS`, Redis and Elasticsearch variables.
+## Luồng Chạy Toàn Hệ Thống
 
----
+1. Chạy PostgreSQL, Redis, MinIO bằng Docker Compose.
+2. Chạy `ai_service` ở port `8001`.
+3. Chạy `backend_cv`.
+4. Chạy `frontend_cv` cho job seeker/recruiter.
+5. Chạy `cms_frontend_cv` cho admin.
+
+## Ghi Chú Vận Hành
+
+- Backend dùng global prefix `/api` và version URI `/v1`, nên endpoint có dạng `/api/v1/...`.
+- Redis dùng cho cache, auth cache và queue.
+- BullMQ dùng Redis để xử lý tác vụ bất đồng bộ như parse/phân tích CV.
+- MinIO dùng để lưu CV, avatar, logo và banner.
+- `job_matches` lưu kết quả AI Match theo cặp CV-job; Redis chỉ cache response phụ trợ.
+- Nếu frontend bị lỗi CORS, kiểm tra `CORS_ALLOWED_ORIGINS` hoặc `WEB_ENV`.

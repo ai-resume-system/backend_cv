@@ -4,12 +4,18 @@ import {
   IResponseApiRecruiterJobApplicationDto,
 } from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+  CACHE_VERSION_KEYS,
+} from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ICurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
@@ -34,6 +40,7 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     @Inject('IUserRepository') private readonly userRepository: IUserRepository,
+    private readonly redis: RedisAdapter,
     private readonly storage: S3StorageService,
   ) {
     super(new Logger(GetJobApplicationByIdQuery.name));
@@ -73,6 +80,16 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
         throw new AppException(ERROR_CODES.ROLE_INSUFFICIENT_PERMISSIONS);
       }
 
+      const version = await this.redis.getVersion(
+        CACHE_VERSION_KEYS.JOB_APPLICATION_DETAIL,
+      );
+      const cacheKey = `${CACHE_KEYS.JOB_APPLICATION_DETAIL}:v${version}:${currentUser.role}:${currentUser.id}:${jobApplicationId}`;
+      const cached = await this.redis.safeGetJson<
+        | IResponseApiJobSeekerJobApplicationDto
+        | IResponseApiRecruiterJobApplicationDto
+      >(cacheKey);
+      if (cached) return cached;
+
       const [cv, user, company] = await Promise.all([
         this.cvRepository.findById(application.cvId),
         this.userRepository.findById(application.userId),
@@ -110,7 +127,7 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
         : undefined;
 
       if (currentUser.role === EUserRole.RECRUITER) {
-        return {
+        const response = {
           data: toRecruiterJobApplicationDto(application, {
             cv: cvSummary,
             job: jobSummary,
@@ -123,14 +140,26 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
               : undefined,
           }),
         };
+        await this.redis.safeSetJson(
+          cacheKey,
+          response,
+          CACHE_TTL.JOB_APPLICATION_DETAIL,
+        );
+        return response;
       }
 
-      return {
+      const response = {
         data: toJobSeekerJobApplicationDto(application, {
           cv: cvSummary,
           job: jobSummary,
         }),
       };
+      await this.redis.safeSetJson(
+        cacheKey,
+        response,
+        CACHE_TTL.JOB_APPLICATION_DETAIL,
+      );
+      return response;
     });
   }
 }

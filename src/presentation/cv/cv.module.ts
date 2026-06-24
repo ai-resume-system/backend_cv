@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-// import { GetCVByIdQuery } from 'src/application/queries/cv/get-cv-by-id.query';
+import { GetCVByIdQuery } from 'src/application/queries/cv/get-cv-by-id.query';
 import { GetCVDownloadUrlQuery } from 'src/application/queries/cv/get-cv-download-url.query';
 import { GetCVPreviewUrlQuery } from 'src/application/queries/cv/get-cv-preview-url.query';
 import { GetCVsQuery } from 'src/application/queries/cv/get-cvs.query';
@@ -33,6 +33,7 @@ import { CVController } from 'src/presentation/cv/controller/cv.controller';
   controllers: [CVController],
   providers: [
     GetCVsQuery,
+    GetCVByIdQuery,
     GetCVDownloadUrlQuery,
     GetCVPreviewUrlQuery,
     CreateCVUseCase,

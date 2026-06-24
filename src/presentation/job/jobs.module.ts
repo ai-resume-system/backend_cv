@@ -4,6 +4,7 @@ import { GetJobBySlugQuery } from 'src/application/queries/job/get-job-by-slug.q
 import { GetJobMatchQuery } from 'src/application/queries/job/get-job-match.query';
 import { GetJobsQuery } from 'src/application/queries/job/get-jobs.query';
 import { GetRelatedJobsQuery } from 'src/application/queries/job/get-related-jobs.query';
+import { CalculateJobMatchUseCase } from 'src/application/use-cases/job/calculate-job-match.usecase';
 import { CreateJobUseCase } from 'src/application/use-cases/job/create-job.usecase';
 import { DeleteJobUseCase } from 'src/application/use-cases/job/delete-job.usecase';
 import { ReviewJobUseCase } from 'src/application/use-cases/job/review-job.usecase';
@@ -14,12 +15,14 @@ import { CVParsedDataOrmEntity } from 'src/infrastructure/database/entities/cv-p
 import { CVSkillOrmEntity } from 'src/infrastructure/database/entities/cv-skill.orm-entity';
 import { CVOrmEntity } from 'src/infrastructure/database/entities/cv.orm-entity';
 import { JobOrmEntity } from 'src/infrastructure/database/entities/job.orm-entity';
+import { JobMatchOrmEntity } from 'src/infrastructure/database/entities/job-match.orm-entity';
 import { JobSkillOrmEntity } from 'src/infrastructure/database/entities/job-skill.orm-entity';
 import { CompanyTypeormRepository } from 'src/infrastructure/database/repositories/company.typeorm-repository';
 import { CVParsedDataTypeormRepository } from 'src/infrastructure/database/repositories/cv-parsed-data.typeorm-repository';
 import { CVSkillTypeormRepository } from 'src/infrastructure/database/repositories/cv-skill.typeorm-repository';
 import { CVTypeormRepository } from 'src/infrastructure/database/repositories/cv.typeorm-repository';
 import { JobApplicationTypeormRepository } from 'src/infrastructure/database/repositories/job-application.typeorm-repository';
+import { JobMatchTypeormRepository } from 'src/infrastructure/database/repositories/job-match.typeorm-repository';
 import { JobSkillTypeormRepository } from 'src/infrastructure/database/repositories/job-skill.typeorm-repository';
 import { JobTypeormRepository } from 'src/infrastructure/database/repositories/job.typeorm-repository';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
@@ -41,6 +44,7 @@ import { StorageModule } from 'src/infrastructure/storage/storage.module';
       CVOrmEntity,
       CVParsedDataOrmEntity,
       CVSkillOrmEntity,
+      JobMatchOrmEntity,
       JobSkillOrmEntity,
       FavouriteJobOrmEntity,
       JobApplicationOrmEntity,
@@ -61,6 +65,7 @@ import { StorageModule } from 'src/infrastructure/storage/storage.module';
     GetJobBySlugQuery,
     GetJobMatchQuery,
     GetRelatedJobsQuery,
+    CalculateJobMatchUseCase,
     CreateJobUseCase,
     UpdateJobUseCase,
     DeleteJobUseCase,
@@ -74,6 +79,7 @@ import { StorageModule } from 'src/infrastructure/storage/storage.module';
     },
     { provide: 'ICVSkillRepository', useClass: CVSkillTypeormRepository },
     { provide: 'IJobSkillRepository', useClass: JobSkillTypeormRepository },
+    { provide: 'IJobMatchRepository', useClass: JobMatchTypeormRepository },
     {
       provide: 'IFavouriteJobRepository',
       useClass: FavouriteJobTypeormRepository,

@@ -1,7 +1,8 @@
-import { Controller, Get, Logger, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type {
   IResponseApiJobMatchDto,
+  IResponseApiJobMatchOrEmptyDto,
   IResponseApiPublicJobDto,
   IResponseListApiPublicJobDto,
 } from 'src/application/dtos/job/res.job.dto';
@@ -9,6 +10,7 @@ import { GetJobBySlugQuery } from 'src/application/queries/job/get-job-by-slug.q
 import { GetJobMatchQuery } from 'src/application/queries/job/get-job-match.query';
 import { GetJobsQuery } from 'src/application/queries/job/get-jobs.query';
 import { GetRelatedJobsQuery } from 'src/application/queries/job/get-related-jobs.query';
+import { CalculateJobMatchUseCase } from 'src/application/use-cases/job/calculate-job-match.usecase';
 import { BaseController } from 'src/common/base/base.controller';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
@@ -16,6 +18,7 @@ import { AuthRequired } from 'src/common/decorators/auth.decorator';
 import { AuthCurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ICurrentUser } from 'src/common/decorators/current-user.decorator';
 import {
+  RequestCalculateJobMatchDto,
   RequestGetJobMatchDto,
   RequestGetJobsDto,
   RequestGetRelatedJobsDto,
@@ -34,6 +37,7 @@ export class JobPublicController extends BaseController {
     private readonly getJobBySlugQuery: GetJobBySlugQuery,
     private readonly getJobMatchQuery: GetJobMatchQuery,
     private readonly getRelatedJobsQuery: GetRelatedJobsQuery,
+    private readonly calculateJobMatchUseCase: CalculateJobMatchUseCase,
   ) {
     super(new Logger(JobPublicController.name));
   }
@@ -69,15 +73,29 @@ export class JobPublicController extends BaseController {
   @Get(':slug/match')
   @AuthRequired(EUserRole.JOB_SEEKER)
   @ApiOperation({
-    summary: 'Tinh muc do phu hop giua CV va job. Truy cap: Job Seeker.',
+    summary: 'Lay ket qua match da co giua CV va job. Truy cap: Job Seeker.',
   })
   @ApiResponse({ status: 200, type: ResponseApiJobMatchDto })
   async getJobMatch(
     @Param('slug') slug: string,
     @Query() query: RequestGetJobMatchDto,
     @AuthCurrentUser() user: ICurrentUser,
-  ): Promise<IResponseApiJobMatchDto> {
+  ): Promise<IResponseApiJobMatchOrEmptyDto> {
     return await this.getJobMatchQuery.execute(slug, query.cvId, user.id);
+  }
+
+  @Post(':slug/match')
+  @AuthRequired(EUserRole.JOB_SEEKER)
+  @ApiOperation({
+    summary: 'Tinh va luu ket qua match giua CV va job. Truy cap: Job Seeker.',
+  })
+  @ApiResponse({ status: 201, type: ResponseApiJobMatchDto })
+  async calculateJobMatch(
+    @Param('slug') slug: string,
+    @Body() dto: RequestCalculateJobMatchDto,
+    @AuthCurrentUser() user: ICurrentUser,
+  ): Promise<IResponseApiJobMatchDto> {
+    return await this.calculateJobMatchUseCase.execute(slug, dto, user.id);
   }
 
   @Get(':slug')

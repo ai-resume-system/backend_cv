@@ -4,12 +4,16 @@ import {
   IRecruiterJobApplicationDto,
 } from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
-import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
+import {
+  resolveCompanyMedia,
+  resolveProfileAvatar,
+} from 'src/common/helpers/media-url.helper';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 import { toRecruiterJobApplicationDto } from './job-application-response.mapper';
 
@@ -21,6 +25,8 @@ export class RecruiterJobApplicationQuerySupport extends BaseUsecase {
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     @Inject('IUserRepository') private readonly userRepository: IUserRepository,
+    @Inject('IUserProfileRepository')
+    private readonly userProfileRepository: IUserProfileRepository,
     private readonly storage: S3StorageService,
   ) {
     super(new Logger(RecruiterJobApplicationQuerySupport.name));
@@ -37,10 +43,11 @@ export class RecruiterJobApplicationQuerySupport extends BaseUsecase {
     const jobIds = [...new Set(applications.map((item) => item.jobId))];
     const userIds = [...new Set(applications.map((item) => item.userId))];
 
-    const [cvs, jobs, users] = await Promise.all([
+    const [cvs, jobs, users, profiles] = await Promise.all([
       this.cvRepository.findByIds(cvIds),
       this.jobRepository.findByIds(jobIds),
       this.userRepository.findByIds(userIds),
+      this.userProfileRepository.findByUserIds(userIds),
     ]);
 
     const companyIds = [...new Set(jobs.map((job) => job.companyId))];
@@ -51,6 +58,11 @@ export class RecruiterJobApplicationQuerySupport extends BaseUsecase {
     const userMap = new Map(users.map((user) => [user.id, user]));
     const companyMap = new Map(
       companies.map((company) => [company.id, company]),
+    );
+
+    // Map profile theo userId để tra cứu nhanh
+    const profileMap = new Map(
+      profiles.map((profile) => [profile.userId, profile]),
     );
 
     const resolvedCompanies = await Promise.all(
@@ -69,6 +81,20 @@ export class RecruiterJobApplicationQuerySupport extends BaseUsecase {
     const resolvedCompanyMap = new Map<string, IApplicationJobCompanyResponse>(
       resolvedCompanies,
     );
+
+    // Resolve avatar URL cho từng profile (song song để tối ưu hiệu năng)
+    const resolvedAvatars = await Promise.all(
+      [...profileMap.entries()].map(async ([userId, profile]) => {
+        const resolved = await resolveProfileAvatar(this.storage, {
+          avatarUrl: profile.avatarUrl,
+        });
+        return [userId, resolved.avatarUrl ?? null] as [
+          string,
+          string | null,
+        ];
+      }),
+    );
+    const resolvedAvatarMap = new Map<string, string | null>(resolvedAvatars);
 
     return applications.map((application) => {
       const cv = cvMap.get(application.cvId);
@@ -103,6 +129,7 @@ export class RecruiterJobApplicationQuerySupport extends BaseUsecase {
               id: user.id,
               email: user.email,
               phone: user.phone,
+              avatarUrl: resolvedAvatarMap.get(user.id) ?? null,
             }
           : undefined,
       });

@@ -15,10 +15,12 @@ import { JwtAuthModule } from 'src/common/guards/jwt-auth.module';
 import { CompanyOrmEntity } from 'src/infrastructure/database/entities/company.orm-entity';
 import { CVParsedDataOrmEntity } from 'src/infrastructure/database/entities/cv-parsed-data.orm-entity';
 import { JobApplicationOrmEntity } from 'src/infrastructure/database/entities/job-application.orm-entity';
+import { JobMatchOrmEntity } from 'src/infrastructure/database/entities/job-match.orm-entity';
 import { UserOrmEntity } from 'src/infrastructure/database/entities/user.orm-entity';
 import { CompanyTypeormRepository } from 'src/infrastructure/database/repositories/company.typeorm-repository';
 import { CVParsedDataTypeormRepository } from 'src/infrastructure/database/repositories/cv-parsed-data.typeorm-repository';
 import { JobApplicationTypeormRepository } from 'src/infrastructure/database/repositories/job-application.typeorm-repository';
+import { JobMatchTypeormRepository } from 'src/infrastructure/database/repositories/job-match.typeorm-repository';
 import { JobSeekerJobApplicationController } from './controller/job-seeker-job-application.controller';
 import { RecruiterJobApplicationController } from './controller/recruiter-job-application.controller';
 import { CVTypeormRepository } from 'src/infrastructure/database/repositories/cv.typeorm-repository';
@@ -30,6 +32,7 @@ import { QueueModule } from 'src/infrastructure/queue/queue.module';
 import { GetJobApplicationCVQuery } from 'src/application/queries/job-application/get-job-application-cv.querry';
 import { StorageModule } from 'src/infrastructure/storage/storage.module';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
+import { UsersModule } from 'src/presentation/user/users.module';
 
 @Module({
   imports: [
@@ -38,6 +41,7 @@ import { RedisModule } from 'src/infrastructure/redis/redis.module';
       CVOrmEntity,
       CVParsedDataOrmEntity,
       JobOrmEntity,
+      JobMatchOrmEntity,
       CompanyOrmEntity,
       UserOrmEntity,
     ]),
@@ -45,6 +49,7 @@ import { RedisModule } from 'src/infrastructure/redis/redis.module';
     QueueModule,
     StorageModule,
     RedisModule,
+    UsersModule,
   ],
   controllers: [
     JobSeekerJobApplicationController,
@@ -77,6 +82,10 @@ import { RedisModule } from 'src/infrastructure/redis/redis.module';
     {
       provide: 'IJobRepository',
       useClass: JobTypeormRepository,
+    },
+    {
+      provide: 'IJobMatchRepository',
+      useClass: JobMatchTypeormRepository,
     },
     {
       provide: 'ICompanyRepository',

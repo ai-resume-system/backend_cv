@@ -120,7 +120,9 @@ export class RequestGetJobApplicationsDto extends RequestPaginationDto {
 }
 
 export class RequestGetRecruiterJobApplicationsDto extends RequestPaginationDto {
-  @ApiPropertyOptional({ description: 'Search by applicant name, email, phone' })
+  @ApiPropertyOptional({
+    description: 'Search by applicant name, email, phone',
+  })
   @IsOptional()
   @IsString()
   q?: string;
@@ -130,7 +132,9 @@ export class RequestGetRecruiterJobApplicationsDto extends RequestPaginationDto 
   @IsUUID()
   jobId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by status' })
+  @ApiPropertyOptional({
+    enum: EJobApplicationStatus,
+  })
   @IsOptional()
   @IsEnum(EJobApplicationStatus)
   status?: EJobApplicationStatus;
@@ -150,7 +154,10 @@ export class RequestGetRecruiterJobApplicationsDto extends RequestPaginationDto 
 }
 
 export class RequestGetRecruiterNewApplicantsDto {
-  @ApiPropertyOptional({ default: 10, description: 'Maximum applicants returned' })
+  @ApiPropertyOptional({
+    default: 10,
+    description: 'Maximum applicants returned',
+  })
   @Transform(({ value }) => transfomerPagination(value))
   @IsOptional()
   @IsInt()

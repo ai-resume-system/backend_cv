@@ -36,6 +36,10 @@ export interface IGetJobMatchDto {
   cvId: string;
 }
 
+export interface ICalculateJobMatchDto {
+  cvId: string;
+}
+
 export interface IJobSkillInputDto {
   skillId: string;
   weight?: number;

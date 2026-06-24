@@ -13,7 +13,6 @@ import { IResponseApiNullDto } from 'src/common/interface/api-response.interface
 
 const ACTIVE_APPLICATION_STATUSES = [
   EJobApplicationStatus.APPLIED,
-  EJobApplicationStatus.REVIEWING,
   EJobApplicationStatus.INTERVIEW,
   EJobApplicationStatus.OFFERED,
 ];
@@ -51,6 +50,7 @@ export class DeleteCVUseCase extends BaseUsecase {
 
         await this.cvRepository.softDelete(id);
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_LIST);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_DETAIL);
 
         // Delete trên S3
         if (cv.fileUrl) {

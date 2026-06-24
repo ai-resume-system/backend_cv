@@ -57,6 +57,7 @@ export class UpdateCVUseCase extends BaseUsecase {
           cv.id,
         );
         await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_LIST);
+        await this.redis.bumpVersion(CACHE_VERSION_KEYS.CV_DETAIL);
         return {
           data: {
             ...cv,

@@ -173,6 +173,12 @@ export class RequestGetJobMatchDto {
   cvId: string;
 }
 
+export class RequestCalculateJobMatchDto {
+  @ApiProperty()
+  @IsUUID()
+  cvId: string;
+}
+
 export class RequestJobSkillDto {
   @ApiProperty()
   @IsUUID()

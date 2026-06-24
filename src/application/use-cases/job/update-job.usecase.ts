@@ -1,5 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IUpdateJobDto } from 'src/application/dtos/job/req.job.dto';
+import {
+  IJobSkillInputDto,
+  IUpdateJobDto,
+} from 'src/application/dtos/job/req.job.dto';
 import { IResponseApiRecruiterJobDto } from 'src/application/dtos/job/res.job.dto';
 import {
   sortJobSkillsByWeight,
@@ -148,14 +151,7 @@ export class UpdateJobUseCase extends BaseUsecase {
 
         const job = await this.jobRepository.update(id, updateData);
         if (dto.skills) {
-          await this.jobSkillRepository.deleteByJobId(id);
-          for (const skill of dto.skills) {
-            await this.jobSkillRepository.create({
-              jobId: id,
-              skillId: skill.skillId,
-              weight: skill.weight ?? 1,
-            });
-          }
+          await this.syncJobSkills(id, dto.skills);
         }
 
         const persistedJobSkills =
@@ -208,6 +204,57 @@ export class UpdateJobUseCase extends BaseUsecase {
       salaryMin > salaryMax
     ) {
       throw new AppException(ERROR_CODES.JOB_INVALID_SALARY_RANGE);
+    }
+  }
+
+  private async syncJobSkills(
+    jobId: string,
+    incomingSkills: IJobSkillInputDto[],
+  ): Promise<void> {
+    const incomingSkillIds = incomingSkills.map((skill) => skill.skillId);
+    const uniqueSkillIds = new Set(incomingSkillIds);
+
+    if (uniqueSkillIds.size !== incomingSkillIds.length) {
+      throw new AppException(ERROR_CODES.VALIDATION_ERROR);
+    }
+
+    const existingJobSkills =
+      await this.jobSkillRepository.findByJobIdWithDeleted(jobId);
+    const existingBySkillId = new Map(
+      existingJobSkills.map((jobSkill) => [jobSkill.skillId, jobSkill]),
+    );
+    const incomingBySkillId = new Map(
+      incomingSkills.map((skill) => [skill.skillId, skill]),
+    );
+
+    for (const skill of incomingSkills) {
+      const existingJobSkill = existingBySkillId.get(skill.skillId);
+      const nextWeight = skill.weight ?? 1;
+
+      if (!existingJobSkill) {
+        await this.jobSkillRepository.create({
+          jobId,
+          skillId: skill.skillId,
+          weight: nextWeight,
+        });
+        continue;
+      }
+
+      if (existingJobSkill.deletedAt) {
+        await this.jobSkillRepository.restore(existingJobSkill.id);
+      }
+
+      if ((existingJobSkill.weight ?? 1) !== nextWeight) {
+        await this.jobSkillRepository.update(existingJobSkill.id, {
+          weight: nextWeight,
+        });
+      }
+    }
+
+    for (const existingJobSkill of existingJobSkills) {
+      if (!incomingBySkillId.has(existingJobSkill.skillId)) {
+        await this.jobSkillRepository.delete(existingJobSkill.id);
+      }
     }
   }
 

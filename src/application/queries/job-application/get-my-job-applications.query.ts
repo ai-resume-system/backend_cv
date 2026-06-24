@@ -12,7 +12,14 @@ import type { ICompanyRepository } from 'src/domain/repositories/company.reposit
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+  CACHE_VERSION_KEYS,
+} from 'src/common/constants/cache-keys.constants';
 import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
+import { stableHash } from 'src/common/utils/hash.utils';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 import { toJobSeekerJobApplicationDto } from './job-application-response.mapper';
 
@@ -27,6 +34,7 @@ export class GetMyJobApplicationsQuery {
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
+    private readonly redis: RedisAdapter,
     private readonly storage: S3StorageService,
   ) {}
 
@@ -37,6 +45,24 @@ export class GetMyJobApplicationsQuery {
     try {
       const page = query.page || 1;
       const limit = query.limit || 10;
+      const sortBy = query.sortBy || 'createdAt';
+      const sortOrder = query.sortOrder || 'DESC';
+      const version = await this.redis.getVersion(
+        CACHE_VERSION_KEYS.JOB_APPLICATION_LIST,
+      );
+      const cacheKey = `${CACHE_KEYS.JOB_APPLICATION_LIST}:v${version}:job-seeker:${userId}:${stableHash({
+        ...query,
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+      })}`;
+      const cached =
+        await this.redis.safeGetJson<IResponseListApiJobSeekerJobApplicationDto>(
+          cacheKey,
+        );
+      if (cached) return cached;
+
       const result = await this.jobApplicationRepository.find({
         filter: {
           q: query.q,
@@ -45,15 +71,15 @@ export class GetMyJobApplicationsQuery {
         },
         pagination: { page, limit },
         sort: {
-          sortBy: query.sortBy || 'createdAt',
-          sortOrder: query.sortOrder || 'DESC',
+          sortBy,
+          sortOrder,
         },
       });
       const data = await Promise.all(
         result.data.map((app) => this.toResponseDto(app)),
       );
 
-      return {
+      const response = {
         data,
         pagination: {
           page,
@@ -62,6 +88,12 @@ export class GetMyJobApplicationsQuery {
           totalPages: Math.ceil(result.total / limit),
         },
       };
+      await this.redis.safeSetJson(
+        cacheKey,
+        response,
+        CACHE_TTL.JOB_APPLICATION_LIST,
+      );
+      return response;
     } catch (error) {
       this.logger.error('[GetMyJobApplications]:', error);
       throw new AppException(ERROR_CODES.INTERNAL_SERVER_ERROR);

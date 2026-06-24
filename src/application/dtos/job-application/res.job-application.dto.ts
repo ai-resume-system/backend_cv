@@ -30,6 +30,7 @@ export interface IApplicationUserResponse {
   id: string;
   email: string;
   phone?: string;
+  avatarUrl?: string | null;
 }
 
 export interface IJobApplicationBaseDto {
@@ -41,7 +42,7 @@ export interface IJobApplicationBaseDto {
   contactEmail?: string;
   contactPhone?: string;
   coverLetter?: string;
-  matchingScore?: number;
+  matchingScore: number;
   status: EJobApplicationStatus;
   scheduleTime?: Date;
   scheduleLocation?: string;

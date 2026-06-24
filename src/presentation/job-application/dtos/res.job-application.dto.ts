@@ -90,8 +90,8 @@ export class ResponseJobSeekerJobApplicationDto {
   @ApiPropertyOptional()
   coverLetter?: string;
 
-  @ApiPropertyOptional()
-  matchingScore?: number;
+  @ApiProperty({ default: 0 })
+  matchingScore: number;
 
   @ApiProperty({
     enum: Object.values(EJobApplicationStatus),

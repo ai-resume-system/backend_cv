@@ -136,7 +136,6 @@ export class JobApplicationTypeormRepository
   async findActiveByCvId(cvId: string): Promise<IJobApplicationEntity[]> {
     const activeStatuses = [
       EJobApplicationStatus.APPLIED,
-      EJobApplicationStatus.REVIEWING,
       EJobApplicationStatus.INTERVIEW,
       EJobApplicationStatus.OFFERED,
       EJobApplicationStatus.ACCEPTED,
@@ -168,7 +167,6 @@ export class JobApplicationTypeormRepository
   async hasActiveApplication(jobId: string, userId: string): Promise<boolean> {
     const activeStatuses = [
       EJobApplicationStatus.APPLIED,
-      EJobApplicationStatus.REVIEWING,
       EJobApplicationStatus.INTERVIEW,
       EJobApplicationStatus.OFFERED,
       EJobApplicationStatus.ACCEPTED,
@@ -288,7 +286,7 @@ export class JobApplicationTypeormRepository
       contactEmail: orm.contactEmail,
       contactPhone: orm.contactPhone,
       coverLetter: orm.coverLetter,
-      matchingScore: orm.matchingScore ? Number(orm.matchingScore) : undefined,
+      matchingScore: Number(orm.matchingScore ?? 0),
       notes: orm.notes,
       status: orm.status,
       scheduleTime: orm.scheduleTime,
@@ -317,7 +315,7 @@ export class JobApplicationTypeormRepository
       contactEmail: orm.contactEmail,
       contactPhone: orm.contactPhone,
       coverLetter: orm.coverLetter,
-      matchingScore: orm.matchingScore ? Number(orm.matchingScore) : undefined,
+      matchingScore: Number(orm.matchingScore ?? 0),
       notes: orm.notes,
       status: orm.status,
       scheduleTime: orm.scheduleTime,

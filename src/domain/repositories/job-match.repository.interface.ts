@@ -8,5 +8,10 @@ export interface IJobMatchRepository extends IBaseRepository<IJobMatchEntity> {
     cvId: string,
     jobId: string,
   ): Promise<IJobMatchEntity | null>;
+  upsertByCvIdAndJobId(
+    cvId: string,
+    jobId: string,
+    data: Partial<IJobMatchEntity>,
+  ): Promise<IJobMatchEntity>;
   deleteByCvIds(cvIds: string[]): Promise<void>;
 }

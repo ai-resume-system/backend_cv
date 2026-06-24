@@ -7,8 +7,10 @@ import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { invalidateAdminAnalyticsCache } from 'src/common/utils/admin-analytics-cache.utils';
+import { invalidateJobApplicationReadCaches } from 'src/common/utils/job-application-cache.utils';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import type { IJobMatchRepository } from 'src/domain/repositories/job-match.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { toJobSeekerJobApplicationDto } from 'src/application/queries/job-application/job-application-response.mapper';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
@@ -20,6 +22,8 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
     private readonly jobApplicationRepository: IJobApplicationRepository,
     @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
+    @Inject('IJobMatchRepository')
+    private readonly jobMatchRepository: IJobMatchRepository,
     private readonly redis: RedisAdapter,
   ) {
     super(new Logger(CreateJobApplicationUseCase.name));
@@ -58,7 +62,6 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
         if (existing) {
           const activeStatuses = [
             EJobApplicationStatus.APPLIED,
-            EJobApplicationStatus.REVIEWING,
             EJobApplicationStatus.INTERVIEW,
             EJobApplicationStatus.OFFERED,
             EJobApplicationStatus.ACCEPTED,
@@ -68,16 +71,25 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
           }
         }
 
+        const savedMatch = await this.jobMatchRepository.findByCvIdAndJobId(
+          dto.cvId,
+          dto.jobId,
+        );
+
         const application = await this.jobApplicationRepository.create({
           cvId: dto.cvId,
           userId,
           jobId: dto.jobId,
+          matchingScore: savedMatch?.matchScore ?? 0,
           fullName: dto.fullName,
           contactEmail: dto.contactEmail,
           contactPhone: dto.contactPhone,
           coverLetter: dto.coverLetter,
         });
-        await invalidateAdminAnalyticsCache(this.redis);
+        await Promise.all([
+          invalidateJobApplicationReadCaches(this.redis),
+          invalidateAdminAnalyticsCache(this.redis),
+        ]);
 
         return { data: toJobSeekerJobApplicationDto(application) };
       },

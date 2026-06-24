@@ -26,6 +26,15 @@ export class JobSkillTypeormRepository
     return orms.map((orm) => this.toDomain(orm));
   }
 
+  async findByJobIdWithDeleted(jobId: string): Promise<IJobSkillEntity[]> {
+    const orms = await this.ormRepository.find({
+      where: { jobId },
+      withDeleted: true,
+      order: { createdAt: 'ASC' },
+    });
+    return orms.map((orm) => this.toDomain(orm));
+  }
+
   async findByJobIds(jobIds: string[]): Promise<IJobSkillEntity[]> {
     if (!jobIds.length) {
       return [];
@@ -47,7 +56,7 @@ export class JobSkillTypeormRepository
   }
 
   async deleteByJobId(jobId: string): Promise<void> {
-    await this.ormRepository.softDelete({ jobId });
+    await this.ormRepository.delete({ jobId });
   }
 
   protected toDomain(orm: JobSkillOrmEntity): IJobSkillEntity {

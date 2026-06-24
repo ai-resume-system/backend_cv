@@ -125,3 +125,6 @@ export interface IJobMatchResultDto {
 
 export interface IResponseApiJobMatchDto
   extends IApiResponse<IJobMatchResultDto> {}
+
+export interface IResponseApiJobMatchOrEmptyDto
+  extends IApiResponse<IJobMatchResultDto | []> {}

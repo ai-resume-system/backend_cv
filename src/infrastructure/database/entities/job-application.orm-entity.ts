@@ -44,9 +44,9 @@ export class JobApplicationOrmEntity implements IJobApplicationEntity {
     type: 'decimal',
     precision: 5,
     scale: 2,
-    nullable: true,
+    default: 0,
   })
-  matchingScore?: number;
+  matchingScore: number;
 
   @Column({ name: 'full_name', type: 'varchar', length: 255, nullable: true })
   fullName?: string;

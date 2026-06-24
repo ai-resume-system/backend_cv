@@ -9,7 +9,7 @@ export interface IJobApplicationEntity {
   contactEmail?: string;
   contactPhone?: string;
   coverLetter?: string;
-  matchingScore?: number;
+  matchingScore: number;
   notes?: string;
   status: EJobApplicationStatus;
   scheduleTime?: Date;

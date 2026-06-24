@@ -6,10 +6,17 @@ import {
   IResponseListApiRecruiterJobApplicationDto,
 } from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+  CACHE_VERSION_KEYS,
+} from 'src/common/constants/cache-keys.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { stableHash } from 'src/common/utils/hash.utils';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import { RecruiterJobApplicationQuerySupport } from './recruiter-job-application-query.support';
 
 @Injectable()
@@ -20,6 +27,7 @@ export class GetRecruiterJobApplicationsQuery extends BaseUsecase {
     @Inject('IJobApplicationRepository')
     private readonly jobApplicationRepository: IJobApplicationRepository,
     private readonly recruiterJobApplicationQuerySupport: RecruiterJobApplicationQuerySupport,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(GetRecruiterJobApplicationsQuery.name));
   }
@@ -36,6 +44,24 @@ export class GetRecruiterJobApplicationsQuery extends BaseUsecase {
 
       const page = query.page || 1;
       const limit = query.limit || 10;
+      const sortBy = query.sortBy || 'createdAt';
+      const sortOrder = query.sortOrder || 'DESC';
+      const version = await this.redis.getVersion(
+        CACHE_VERSION_KEYS.JOB_APPLICATION_LIST,
+      );
+      const cacheKey = `${CACHE_KEYS.JOB_APPLICATION_LIST}:v${version}:recruiter:${recruiterId}:company:${company.id}:${stableHash({
+        ...query,
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+      })}`;
+      const cached =
+        await this.redis.safeGetJson<IResponseListApiRecruiterJobApplicationDto>(
+          cacheKey,
+        );
+      if (cached) return cached;
+
       const result = await this.jobApplicationRepository.findByCompanyId(
         company.id,
         {
@@ -46,13 +72,13 @@ export class GetRecruiterJobApplicationsQuery extends BaseUsecase {
           },
           pagination: { page, limit },
           sort: {
-            sortBy: query.sortBy || 'createdAt',
-            sortOrder: query.sortOrder || 'DESC',
+            sortBy,
+            sortOrder,
           },
         },
       );
 
-      return {
+      const response = {
         data: await this.recruiterJobApplicationQuerySupport.toRecruiterDtos(
           result.data,
         ),
@@ -63,6 +89,12 @@ export class GetRecruiterJobApplicationsQuery extends BaseUsecase {
           totalPages: Math.ceil(result.total / limit),
         },
       };
+      await this.redis.safeSetJson(
+        cacheKey,
+        response,
+        CACHE_TTL.JOB_APPLICATION_LIST,
+      );
+      return response;
     });
   }
 }
