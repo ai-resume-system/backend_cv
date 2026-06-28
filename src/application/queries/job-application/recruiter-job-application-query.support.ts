@@ -7,7 +7,9 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import {
   resolveCompanyMedia,
   resolveProfileAvatar,
+  toPreviewUrl,
 } from 'src/common/helpers/media-url.helper';
+import { EBucketType } from 'src/common/constants/enum/upload.enum';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
@@ -96,6 +98,15 @@ export class RecruiterJobApplicationQuerySupport extends BaseUsecase {
     );
     const resolvedAvatarMap = new Map<string, string | null>(resolvedAvatars);
 
+    // Resolve CV fileUrl cho từng CV (song song để tối ưu hiệu năng)
+    const resolvedCvs = await Promise.all(
+      cvs.map(async (cv) => {
+        const fileUrl = await toPreviewUrl(this.storage, cv.fileUrl, EBucketType.CV);
+        return [cv.id, fileUrl ?? null] as [string, string | null];
+      }),
+    );
+    const resolvedCvMap = new Map<string, string | null>(resolvedCvs);
+
     return applications.map((application) => {
       const cv = cvMap.get(application.cvId);
       const job = jobMap.get(application.jobId);
@@ -110,7 +121,7 @@ export class RecruiterJobApplicationQuerySupport extends BaseUsecase {
           ? {
               id: cv.id,
               title: cv.title,
-              fileUrl: cv.fileUrl,
+              fileUrl: resolvedCvMap.get(cv.id) ?? undefined,
               status: cv.status,
               createdAt: cv.createdAt,
             }

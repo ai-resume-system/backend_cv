@@ -4,7 +4,10 @@ import {
   buildNormalizedContainsCondition,
   normalizeSearchKeyword,
 } from 'src/common/utils/text-search.utils';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewStatus,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import type {
   IFindOptions,
@@ -137,7 +140,6 @@ export class JobApplicationTypeormRepository
     const activeStatuses = [
       EJobApplicationStatus.APPLIED,
       EJobApplicationStatus.INTERVIEW,
-      EJobApplicationStatus.OFFERED,
       EJobApplicationStatus.ACCEPTED,
     ];
     const orms = await this.ormRepository.find({
@@ -168,7 +170,6 @@ export class JobApplicationTypeormRepository
     const activeStatuses = [
       EJobApplicationStatus.APPLIED,
       EJobApplicationStatus.INTERVIEW,
-      EJobApplicationStatus.OFFERED,
       EJobApplicationStatus.ACCEPTED,
     ];
     const count = await this.ormRepository.count({
@@ -209,7 +210,13 @@ export class JobApplicationTypeormRepository
       .andWhere('job.company_id = :companyId', { companyId });
 
     if (status) {
-      queryBuilder.andWhere('application.status = :status', { status });
+      if (Array.isArray(status)) {
+        queryBuilder.andWhere('application.status IN (:...statuses)', {
+          statuses: status,
+        });
+      } else {
+        queryBuilder.andWhere('application.status = :status', { status });
+      }
     }
 
     if (jobId) {
@@ -244,8 +251,13 @@ export class JobApplicationTypeormRepository
       });
     }
 
-    const normalizedSortBy =
-      sortBy === 'matchingScore' ? 'matchingScore' : 'createdAt';
+    let normalizedSortBy = 'createdAt';
+    if (sortBy === 'matchingScore') {
+      normalizedSortBy = 'matchingScore';
+    } else if (sortBy === 'scheduleTime') {
+      normalizedSortBy = 'scheduleTime';
+    }
+
     queryBuilder.orderBy(
       `application.${normalizedSortBy}`,
       sortOrder,
@@ -268,11 +280,23 @@ export class JobApplicationTypeormRepository
   ): Promise<IJobApplicationEntity> {
     await this.ormRepository.update(id, {
       status,
-      notes: data?.notes,
+      rejectionReason: data?.rejectionReason,
+      interviewType: data?.interviewType,
+      interviewStatus: data?.interviewStatus,
+      interviewNotes: data?.interviewNotes,
+      onboardingNotes: data?.onboardingNotes,
       scheduleTime: data?.scheduleTime,
       scheduleLocation: data?.scheduleLocation,
       scheduleLink: data?.scheduleLink,
     });
+    return (await this.findById(id)) as IJobApplicationEntity;
+  }
+
+  async updateInterviewStatus(
+    id: string,
+    interviewStatus: EInterviewStatus,
+  ): Promise<IJobApplicationEntity> {
+    await this.ormRepository.update(id, { interviewStatus });
     return (await this.findById(id)) as IJobApplicationEntity;
   }
 
@@ -287,8 +311,12 @@ export class JobApplicationTypeormRepository
       contactPhone: orm.contactPhone,
       coverLetter: orm.coverLetter,
       matchingScore: Number(orm.matchingScore ?? 0),
-      notes: orm.notes,
+      rejectionReason: orm.rejectionReason,
       status: orm.status,
+      interviewType: orm.interviewType,
+      interviewStatus: orm.interviewStatus,
+      interviewNotes: orm.interviewNotes,
+      onboardingNotes: orm.onboardingNotes,
       scheduleTime: orm.scheduleTime,
       scheduleLocation: orm.scheduleLocation,
       scheduleLink: orm.scheduleLink,
@@ -316,8 +344,12 @@ export class JobApplicationTypeormRepository
       contactPhone: orm.contactPhone,
       coverLetter: orm.coverLetter,
       matchingScore: Number(orm.matchingScore ?? 0),
-      notes: orm.notes,
+      rejectionReason: orm.rejectionReason,
       status: orm.status,
+      interviewType: orm.interviewType,
+      interviewStatus: orm.interviewStatus,
+      interviewNotes: orm.interviewNotes,
+      onboardingNotes: orm.onboardingNotes,
       scheduleTime: orm.scheduleTime,
       scheduleLocation: orm.scheduleLocation,
       scheduleLink: orm.scheduleLink,

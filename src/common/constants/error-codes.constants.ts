@@ -371,6 +371,26 @@ export const ERROR_CODES = {
     message: 'Interview schedule required',
     status: HttpStatus.BAD_REQUEST,
   },
+  JOB_APPLICATION_INTERVIEW_TYPE_REQUIRED: {
+    message: 'Interview type required',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_APPLICATION_INTERVIEW_LOCATION_OR_LINK_REQUIRED: {
+    message: 'Interview location or link required',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_APPLICATION_REJECTION_REASON_REQUIRED: {
+    message: 'Rejection reason required',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_APPLICATION_ONBOARDING_NOTES_REQUIRED: {
+    message: 'Onboarding notes required',
+    status: HttpStatus.BAD_REQUEST,
+  },
+  JOB_APPLICATION_INTERVIEW_STATUS_NOT_UPDATABLE: {
+    message: 'Interview status cannot be updated',
+    status: HttpStatus.BAD_REQUEST,
+  },
 
   // MEDIA / ROLE
   MEDIA_FILE_REQUIRED: {

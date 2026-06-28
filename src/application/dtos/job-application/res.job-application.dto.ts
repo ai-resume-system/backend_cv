@@ -1,4 +1,8 @@
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewStatus,
+  EInterviewType,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 import { IApiResponse } from 'src/common/interface/api-response.interface';
 
 export interface IApplicationCVResponse {
@@ -44,6 +48,11 @@ export interface IJobApplicationBaseDto {
   coverLetter?: string;
   matchingScore: number;
   status: EJobApplicationStatus;
+  interviewType?: EInterviewType;
+  interviewStatus: EInterviewStatus;
+  interviewNotes?: string;
+  onboardingNotes?: string;
+  rejectionReason?: string;
   scheduleTime?: Date;
   scheduleLocation?: string;
   scheduleLink?: string;
@@ -57,7 +66,6 @@ export interface IJobApplicationBaseDto {
 export interface IJobSeekerJobApplicationDto extends IJobApplicationBaseDto {}
 
 export interface IRecruiterJobApplicationDto extends IJobApplicationBaseDto {
-  notes?: string;
   user?: IApplicationUserResponse;
 }
 

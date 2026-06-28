@@ -2,7 +2,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRequestUpdateJobApplicationStatusDto } from 'src/application/dtos/job-application/req.job-application.dto';
 import { IResponseApiRecruiterJobApplicationDto } from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewStatus,
+  EInterviewType,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { formatDateTimeVN } from 'src/common/utils/date-time.util';
@@ -23,10 +27,6 @@ const JOB_APPLICATION_STATUS_TRANSITIONS: Record<
     EJobApplicationStatus.REJECTED,
   ],
   [EJobApplicationStatus.INTERVIEW]: [
-    EJobApplicationStatus.OFFERED,
-    EJobApplicationStatus.REJECTED,
-  ],
-  [EJobApplicationStatus.OFFERED]: [
     EJobApplicationStatus.ACCEPTED,
     EJobApplicationStatus.REJECTED,
   ],
@@ -83,32 +83,96 @@ export class UpdateJobApplicationStatusUseCase extends BaseUsecase {
 
         if (
           dto.status === EJobApplicationStatus.INTERVIEW &&
-          (!dto.scheduleTime || !dto.scheduleLocation)
+          !dto.scheduleTime
         ) {
           throw new AppException(
             ERROR_CODES.JOB_APPLICATION_INTERVIEW_SCHEDULE_REQUIRED,
           );
         }
 
+        if (
+          dto.status === EJobApplicationStatus.INTERVIEW &&
+          !dto.interviewType
+        ) {
+          throw new AppException(
+            ERROR_CODES.JOB_APPLICATION_INTERVIEW_TYPE_REQUIRED,
+          );
+        }
+
+        if (
+          dto.status === EJobApplicationStatus.INTERVIEW &&
+          dto.interviewType === EInterviewType.OFFLINE &&
+          !dto.scheduleLocation
+        ) {
+          throw new AppException(
+            ERROR_CODES.JOB_APPLICATION_INTERVIEW_LOCATION_OR_LINK_REQUIRED,
+          );
+        }
+
+        if (
+          dto.status === EJobApplicationStatus.INTERVIEW &&
+          dto.interviewType === EInterviewType.ONLINE &&
+          !dto.scheduleLink
+        ) {
+          throw new AppException(
+            ERROR_CODES.JOB_APPLICATION_INTERVIEW_LOCATION_OR_LINK_REQUIRED,
+          );
+        }
+
+        if (
+          dto.status === EJobApplicationStatus.REJECTED &&
+          !dto.rejectionReason?.trim()
+        ) {
+          throw new AppException(
+            ERROR_CODES.JOB_APPLICATION_REJECTION_REASON_REQUIRED,
+          );
+        }
+
+        if (
+          dto.status === EJobApplicationStatus.ACCEPTED &&
+          !dto.onboardingNotes?.trim()
+        ) {
+          throw new AppException(
+            ERROR_CODES.JOB_APPLICATION_ONBOARDING_NOTES_REQUIRED,
+          );
+        }
+
+        const statusPayload =
+          dto.status === EJobApplicationStatus.INTERVIEW
+            ? {
+                interviewType: dto.interviewType,
+                interviewStatus: EInterviewStatus.SCHEDULED,
+                interviewNotes: dto.interviewNotes,
+                scheduleTime: dto.scheduleTime,
+                scheduleLocation: dto.scheduleLocation,
+                scheduleLink: dto.scheduleLink,
+              }
+            : dto.status === EJobApplicationStatus.ACCEPTED
+              ? {
+                  interviewStatus: EInterviewStatus.COMPLETED,
+                  onboardingNotes: dto.onboardingNotes,
+                }
+              : dto.status === EJobApplicationStatus.REJECTED
+                ? {
+                    interviewStatus: EInterviewStatus.COMPLETED,
+                    rejectionReason: dto.rejectionReason,
+                  }
+                : {};
+
         const updated = await this.jobApplicationRepository.updateStatus(
           jobApplicationId,
           dto.status,
-          {
-            notes: dto.notes,
-            scheduleTime: dto.scheduleTime,
-            scheduleLocation: dto.scheduleLocation,
-            scheduleLink: dto.scheduleLink,
-          },
+          statusPayload,
         );
         await invalidateJobApplicationReadCaches(this.redis);
 
         if (
           updated.contactEmail &&
-          [
-            EJobApplicationStatus.INTERVIEW,
-            EJobApplicationStatus.REJECTED,
-            EJobApplicationStatus.OFFERED,
-          ].includes(updated.status)
+            [
+              EJobApplicationStatus.INTERVIEW,
+              EJobApplicationStatus.REJECTED,
+              EJobApplicationStatus.ACCEPTED,
+            ].includes(updated.status)
         ) {
           await this.queueDispatch.dispatchJobApplicationStatusEmail({
             aggregateId: updated.id,
@@ -118,12 +182,16 @@ export class UpdateJobApplicationStatusUseCase extends BaseUsecase {
             status: updated.status as
               | EJobApplicationStatus.INTERVIEW
               | EJobApplicationStatus.REJECTED
-              | EJobApplicationStatus.OFFERED,
+              | EJobApplicationStatus.ACCEPTED,
             jobTitle: job.title,
             name: company.name,
             scheduleTime: formatDateTimeVN(updated.scheduleTime) ?? undefined,
             scheduleLocation: updated.scheduleLocation,
             scheduleLink: updated.scheduleLink,
+            interviewType: updated.interviewType,
+            interviewNotes: updated.interviewNotes,
+            rejectionReason: updated.rejectionReason,
+            onboardingNotes: updated.onboardingNotes,
           });
         }
 

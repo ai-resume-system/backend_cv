@@ -14,7 +14,7 @@ import { IResponseApiNullDto } from 'src/common/interface/api-response.interface
 const ACTIVE_APPLICATION_STATUSES = [
   EJobApplicationStatus.APPLIED,
   EJobApplicationStatus.INTERVIEW,
-  EJobApplicationStatus.OFFERED,
+  EJobApplicationStatus.ACCEPTED,
 ];
 
 @Injectable()

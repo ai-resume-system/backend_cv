@@ -9,6 +9,7 @@ import { GetRecruiterJobApplicationsQuery } from 'src/application/queries/job-ap
 import { GetRecruiterNewApplicantsQuery } from 'src/application/queries/job-application/get-recruiter-new-applicants.query';
 import { RecruiterJobApplicationQuerySupport } from 'src/application/queries/job-application/recruiter-job-application-query.support';
 import { CreateJobApplicationUseCase } from 'src/application/use-cases/job-application/create-job-application.usecase';
+import { UpdateJobApplicationInterviewStatusUseCase } from 'src/application/use-cases/job-application/update-job-application-interview-status.usecase';
 import { UpdateJobApplicationStatusUseCase } from 'src/application/use-cases/job-application/update-job-application-status.usecase';
 import { WithdrawJobApplicationUseCase } from 'src/application/use-cases/job-application/withdraw-job-application.usecase';
 import { JwtAuthModule } from 'src/common/guards/jwt-auth.module';
@@ -59,6 +60,7 @@ import { UsersModule } from 'src/presentation/user/users.module';
     CreateJobApplicationUseCase,
     WithdrawJobApplicationUseCase,
     UpdateJobApplicationStatusUseCase,
+    UpdateJobApplicationInterviewStatusUseCase,
     GetJobApplicationByIdQuery,
     GetMyJobApplicationsQuery,
     GetJobApplicationsByJobQuery,

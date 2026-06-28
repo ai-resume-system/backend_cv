@@ -63,7 +63,6 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
           const activeStatuses = [
             EJobApplicationStatus.APPLIED,
             EJobApplicationStatus.INTERVIEW,
-            EJobApplicationStatus.OFFERED,
             EJobApplicationStatus.ACCEPTED,
           ];
           if (activeStatuses.includes(existing.status)) {

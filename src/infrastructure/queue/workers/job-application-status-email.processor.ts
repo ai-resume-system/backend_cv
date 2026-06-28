@@ -44,8 +44,10 @@ export class JobApplicationStatusEmailProcessor extends WorkerHost {
     switch (data.status) {
       case EJobApplicationStatus.INTERVIEW:
         return `Thư mời phỏng vấn - ${data.jobTitle}`;
-      case EJobApplicationStatus.OFFERED:
-        return `Thông báo kết quả tuyển dụng - ${data.jobTitle}`;
+      case EJobApplicationStatus.ACCEPTED:
+        return `Chúc mừng nhận việc - ${data.jobTitle}`;
+      case EJobApplicationStatus.REJECTED:
+        return `Thông báo kết quả ứng tuyển - ${data.jobTitle}`;
       default:
         return `Cập nhật hồ sơ ứng tuyển - ${data.jobTitle}`;
     }
@@ -59,21 +61,34 @@ export class JobApplicationStatusEmailProcessor extends WorkerHost {
     const headerTitle =
       data.status === EJobApplicationStatus.INTERVIEW
         ? 'Thư mời phỏng vấn'
-        : data.status === EJobApplicationStatus.OFFERED
-          ? 'Thông báo kết quả tuyển dụng'
-          : 'Cập nhật hồ sơ ứng tuyển';
+        : data.status === EJobApplicationStatus.ACCEPTED
+          ? 'Chúc mừng nhận việc'
+          : data.status === EJobApplicationStatus.REJECTED
+            ? 'Thông báo kết quả ứng tuyển'
+            : 'Cập nhật hồ sơ ứng tuyển';
     const intro =
       data.status === EJobApplicationStatus.INTERVIEW
         ? `Hồ sơ ứng tuyển vị trí <strong>${data.jobTitle}</strong> tại <strong>${companyName}</strong> của bạn đã được chuyển sang vòng phỏng vấn.`
-        : data.status === EJobApplicationStatus.OFFERED
-          ? `Chúc mừng bạn đã nhận được đề nghị tuyển dụng cho vị trí <strong>${data.jobTitle}</strong> tại <strong>${companyName}</strong>.`
-          : `Cảm ơn bạn đã quan tâm và ứng tuyển vị trí <strong>${data.jobTitle}</strong> tại <strong>${companyName}</strong>.`;
+        : data.status === EJobApplicationStatus.ACCEPTED
+          ? `Chúc mừng bạn đã đạt vòng phỏng vấn cho vị trí <strong>${data.jobTitle}</strong> tại <strong>${companyName}</strong>.`
+          : data.status === EJobApplicationStatus.REJECTED
+            ? `Cảm ơn bạn đã quan tâm và ứng tuyển vị trí <strong>${data.jobTitle}</strong> tại <strong>${companyName}</strong>. Sau quá trình xem xét, chúng tôi xin phép cập nhật kết quả hồ sơ của bạn như sau.`
+            : `Cảm ơn bạn đã quan tâm và ứng tuyển vị trí <strong>${data.jobTitle}</strong> tại <strong>${companyName}</strong>.`;
     const detailBlock =
       data.status === EJobApplicationStatus.INTERVIEW
         ? `
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;border-collapse:collapse;">
+            ${
+              data.interviewType
+                ? `<tr>
+              <td style="padding:14px 16px;border:1px solid #e5e7eb;background:#ffffff;font-size:14px;color:#334155;">
+                <strong>Hình thức:</strong> ${data.interviewType === 'online' ? 'Phỏng vấn online' : 'Phỏng vấn offline'}
+              </td>
+            </tr>`
+                : ''
+            }
             <tr>
-              <td style="padding:14px 16px;border:1px solid #e5e7eb;background:#f8fafc;font-size:14px;color:#334155;">
+              <td style="padding:14px 16px;border:1px solid #e5e7eb;${data.interviewType ? 'border-top:none;' : ''}background:#f8fafc;font-size:14px;color:#334155;">
                 <strong>Thời gian:</strong> ${data.scheduleTime || 'Sẽ được cập nhật sau'}
               </td>
             </tr>
@@ -93,20 +108,38 @@ export class JobApplicationStatusEmailProcessor extends WorkerHost {
                 : ''
             }
           </table>
-          <p style="margin:0;font-size:14px;line-height:1.7;color:#475569;">
+          ${
+            data.interviewNotes
+              ? `<div style="margin:0;font-size:14px;line-height:1.8;color:#475569;">${data.interviewNotes}</div>`
+              : `<p style="margin:0;font-size:14px;line-height:1.7;color:#475569;">
             Vui lòng sắp xếp thời gian và chuẩn bị đầy đủ để buổi phỏng vấn diễn ra thuận lợi.
-          </p>
+          </p>`
+          }
         `
-        : data.status === EJobApplicationStatus.OFFERED
+        : data.status === EJobApplicationStatus.ACCEPTED
           ? `
-          <p style="margin:0;font-size:14px;line-height:1.7;color:#475569;">
-            Vui lòng kiểm tra các kênh liên hệ từ nhà tuyển dụng để nắm thông tin chi tiết về đề nghị nhận việc và các bước tiếp theo.
-          </p>
+          ${
+            data.onboardingNotes
+              ? `<div style="margin:0;font-size:14px;line-height:1.8;color:#475569;">${data.onboardingNotes}</div>`
+              : `<p style="margin:0;font-size:14px;line-height:1.7;color:#475569;">
+            Vui lòng theo dõi email và điện thoại để nhận thêm thông tin nhận việc chi tiết từ nhà tuyển dụng.
+          </p>`
+          }
         `
           : `
-          <p style="margin:0;font-size:14px;line-height:1.7;color:#475569;">
-            Sau quá trình xem xét, nhà tuyển dụng hiện chưa thể tiếp tục với hồ sơ này. Hy vọng bạn sẽ sớm tìm được cơ hội phù hợp trong thời gian tới.
-          </p>
+          ${
+            data.rejectionReason
+              ? `<div style="padding:18px 20px;border:1px solid #f1d5db;border-radius:12px;background:#fff7f8;">
+            <div style="margin:0 0 10px;font-size:14px;font-weight:700;line-height:1.6;color:#b42318;">Lý do từ chối hồ sơ</div>
+            <div style="margin:0;font-size:14px;line-height:1.8;color:#475569;">${data.rejectionReason}</div>
+          </div>`
+              : `<div style="padding:18px 20px;border:1px solid #f1d5db;border-radius:12px;background:#fff7f8;">
+            <div style="margin:0 0 10px;font-size:14px;font-weight:700;line-height:1.6;color:#b42318;">Kết quả hồ sơ</div>
+            <p style="margin:0;font-size:14px;line-height:1.8;color:#475569;">
+              Hiện tại nhà tuyển dụng chưa thể tiếp tục với hồ sơ này. Chúng tôi ghi nhận sự quan tâm của bạn và hy vọng sẽ có cơ hội phù hợp hơn trong thời gian tới.
+            </p>
+          </div>`
+          }
         `;
 
     return `

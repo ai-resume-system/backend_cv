@@ -24,6 +24,7 @@ import { GetJobApplicationsByJobQuery } from 'src/application/queries/job-applic
 import { GetRecruiterInterviewsQuery } from 'src/application/queries/job-application/get-recruiter-interviews.query';
 import { GetRecruiterJobApplicationsQuery } from 'src/application/queries/job-application/get-recruiter-job-applications.query';
 import { GetRecruiterNewApplicantsQuery } from 'src/application/queries/job-application/get-recruiter-new-applicants.query';
+import { UpdateJobApplicationInterviewStatusUseCase } from 'src/application/use-cases/job-application/update-job-application-interview-status.usecase';
 import { UpdateJobApplicationStatusUseCase } from 'src/application/use-cases/job-application/update-job-application-status.usecase';
 import { BaseController } from 'src/common/base/base.controller';
 import { EUserRole } from 'src/common/constants/enum/user.enum';
@@ -35,6 +36,7 @@ import {
   RequestGetRecruiterInterviewsDto,
   RequestGetRecruiterJobApplicationsDto,
   RequestGetRecruiterNewApplicantsDto,
+  RequestUpdateJobApplicationInterviewStatusDto,
   RequestUpdateJobApplicationStatusDto,
 } from '../dtos/req.job-application.dto';
 import {
@@ -53,6 +55,7 @@ export class RecruiterJobApplicationController extends BaseController {
     private readonly getRecruiterJobApplicationsQuery: GetRecruiterJobApplicationsQuery,
     private readonly getRecruiterNewApplicantsQuery: GetRecruiterNewApplicantsQuery,
     private readonly getRecruiterInterviewsQuery: GetRecruiterInterviewsQuery,
+    private readonly updateJobApplicationInterviewStatusUseCase: UpdateJobApplicationInterviewStatusUseCase,
     private readonly getJobApplicationCVQuery: GetJobApplicationCVQuery,
   ) {
     super(new Logger(RecruiterJobApplicationController.name));
@@ -78,7 +81,8 @@ export class RecruiterJobApplicationController extends BaseController {
   @Get('new')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Lay danh sach ung vien moi ung tuyen trong cong ty. Truy cap: Recruiter.',
+    summary:
+      'Lay danh sach ung vien moi ung tuyen trong cong ty. Truy cap: Recruiter.',
   })
   @ApiResponse({
     status: 200,
@@ -180,6 +184,28 @@ export class RecruiterJobApplicationController extends BaseController {
     @Body() dto: RequestUpdateJobApplicationStatusDto,
   ): Promise<IResponseApiRecruiterJobApplicationDto> {
     return await this.updateJobApplicationStatusUseCase.execute(
+      user.id,
+      id,
+      dto,
+    );
+  }
+
+  @Patch(':id/interview-status')
+  @AuthRequired(EUserRole.RECRUITER)
+  @ApiOperation({
+    summary: 'Cap nhat tien do phong van. Truy cap: Recruiter.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Interview progress updated',
+    type: ResponseApiRecruiterJobApplicationDto,
+  })
+  async updateInterviewStatus(
+    @AuthCurrentUser() user: ICurrentUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RequestUpdateJobApplicationInterviewStatusDto,
+  ): Promise<IResponseApiRecruiterJobApplicationDto> {
+    return await this.updateJobApplicationInterviewStatusUseCase.execute(
       user.id,
       id,
       dto,

@@ -71,10 +71,12 @@ export class UpdateJobUseCase extends BaseUsecase {
         const shouldSubmitDraft =
           existing.status === EJobStatus.DRAFT &&
           jobAction === EJobAction.SUBMIT;
+        const isPublishingOrPublished =
+          existing.status !== EJobStatus.DRAFT || shouldSubmitDraft;
 
         this.validateSalaryRange(dto.salaryMin, dto.salaryMax);
         this.validateExpiredAt(dto.expiredAt);
-        this.validateSubmitRequirements(shouldSubmitDraft, dto, existing);
+        this.validateSubmitRequirements(isPublishingOrPublished, dto, existing);
 
         const { action: _action, skills: _skills, ...jobData } = dto;
         const updateData = {
@@ -265,17 +267,40 @@ export class UpdateJobUseCase extends BaseUsecase {
   }
 
   private validateSubmitRequirements(
-    shouldSubmitDraft: boolean,
+    isPublishingOrPublished: boolean,
     dto: IUpdateJobDto,
-    existing: { workArrangement?: string },
+    existing: {
+      title: string;
+      description?: string;
+      expiredAt?: Date;
+      vacancyCount?: number;
+      workArrangement?: string;
+    },
   ): void {
-    if (!shouldSubmitDraft) {
+    if (!isPublishingOrPublished) {
       return;
     }
 
-    const effectiveWorkArrangement =
-      dto.workArrangement ?? existing.workArrangement;
-    if (!effectiveWorkArrangement) {
+    const title = dto.title !== undefined ? dto.title : existing.title;
+    const description =
+      dto.description !== undefined ? dto.description : existing.description;
+    const expiredAt =
+      dto.expiredAt !== undefined ? dto.expiredAt : existing.expiredAt;
+    const vacancyCount =
+      dto.vacancyCount !== undefined ? dto.vacancyCount : existing.vacancyCount;
+    const workArrangement =
+      dto.workArrangement !== undefined
+        ? dto.workArrangement
+        : existing.workArrangement;
+
+    if (
+      !title?.trim() ||
+      !description?.trim() ||
+      !expiredAt ||
+      !workArrangement ||
+      vacancyCount === undefined ||
+      vacancyCount < 1
+    ) {
       throw new AppException(ERROR_CODES.VALIDATION_ERROR);
     }
   }

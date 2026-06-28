@@ -1,4 +1,8 @@
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewStatus,
+  EInterviewType,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 
 export interface IJobApplicationEntity {
   id: string;
@@ -10,8 +14,12 @@ export interface IJobApplicationEntity {
   contactPhone?: string;
   coverLetter?: string;
   matchingScore: number;
-  notes?: string;
+  rejectionReason?: string;
   status: EJobApplicationStatus;
+  interviewType?: EInterviewType;
+  interviewStatus: EInterviewStatus;
+  interviewNotes?: string;
+  onboardingNotes?: string;
   scheduleTime?: Date;
   scheduleLocation?: string;
   scheduleLink?: string;

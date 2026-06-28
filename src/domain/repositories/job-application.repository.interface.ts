@@ -1,4 +1,7 @@
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewStatus,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 import { IJobApplicationEntity } from '../entities/job-application.entity';
 import {
   IBaseRepository,
@@ -40,6 +43,10 @@ export interface IJobApplicationRepository
     id: string,
     status: EJobApplicationStatus,
     data?: Partial<IJobApplicationEntity>,
+  ): Promise<IJobApplicationEntity>;
+  updateInterviewStatus(
+    id: string,
+    interviewStatus: EInterviewStatus,
   ): Promise<IJobApplicationEntity>;
   findByCompanyId(
     companyId: string,

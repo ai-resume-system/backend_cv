@@ -14,7 +14,12 @@ import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ICurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AppException } from 'src/common/exceptions/app.exception';
-import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
+import {
+  resolveCompanyMedia,
+  resolveProfileAvatar,
+  toPreviewUrl,
+} from 'src/common/helpers/media-url.helper';
+import { EBucketType } from 'src/common/constants/enum/upload.enum';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
@@ -22,6 +27,7 @@ import type { ICVRepository } from 'src/domain/repositories/cv.repository.interf
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 import {
   toJobSeekerJobApplicationDto,
@@ -40,6 +46,8 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
     @Inject('IUserRepository') private readonly userRepository: IUserRepository,
+    @Inject('IUserProfileRepository')
+    private readonly userProfileRepository: IUserProfileRepository,
     private readonly redis: RedisAdapter,
     private readonly storage: S3StorageService,
   ) {
@@ -90,10 +98,11 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
       >(cacheKey);
       if (cached) return cached;
 
-      const [cv, user, company] = await Promise.all([
+      const [cv, user, company, profile] = await Promise.all([
         this.cvRepository.findById(application.cvId),
         this.userRepository.findById(application.userId),
         this.companyRepository.findById(job.companyId),
+        this.userProfileRepository.findByUserId(application.userId),
       ]);
       const parsedData = cv
         ? await this.cvParsedDataRepository.findLatestByCvId(cv.id)
@@ -115,16 +124,27 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
         address: job.address,
         company: companySummary,
       };
+
+      const resolvedCvUrl = cv
+        ? await toPreviewUrl(this.storage, cv.fileUrl, EBucketType.CV)
+        : null;
+
       const cvSummary = cv
         ? {
             id: cv.id,
             title: cv.title,
-            fileUrl: cv.fileUrl,
+            fileUrl: resolvedCvUrl ?? undefined,
             summary: parsedData?.summary,
             processingStatus:
               parsedData?.processingStatus || EProcessingStatus.PENDING,
           }
         : undefined;
+
+      const resolvedAvatar = profile
+        ? await resolveProfileAvatar(this.storage, {
+            avatarUrl: profile.avatarUrl,
+          })
+        : null;
 
       if (currentUser.role === EUserRole.RECRUITER) {
         const response = {
@@ -136,6 +156,7 @@ export class GetJobApplicationByIdQuery extends BaseUsecase {
                   id: user.id,
                   email: user.email,
                   phone: user.phone,
+                  avatarUrl: resolvedAvatar?.avatarUrl ?? null,
                 }
               : undefined,
           }),

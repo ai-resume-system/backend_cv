@@ -61,15 +61,20 @@ export class GetRecruiterInterviewsQuery extends BaseUsecase {
         company.id,
         {
           filter: {
+            q: query.q,
             jobId: query.jobId,
-            status: EJobApplicationStatus.INTERVIEW,
+            status: [
+              EJobApplicationStatus.INTERVIEW,
+              EJobApplicationStatus.ACCEPTED,
+              EJobApplicationStatus.REJECTED,
+            ],
             scheduledOnly: true,
             scheduleTimeFrom: query.from,
             scheduleTimeTo: query.to,
           },
           pagination: { page, limit },
           sort: {
-            sortBy: 'createdAt',
+            sortBy: query.sortBy || 'scheduleTime',
             sortOrder,
           },
         },

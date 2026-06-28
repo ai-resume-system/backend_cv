@@ -1,6 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewStatus,
+  EInterviewType,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 import { ApiResponseDto, PaginationDto } from 'src/common/dto/response.dto';
 
 export class ResponseJobApplicationCVDto {
@@ -99,6 +103,27 @@ export class ResponseJobSeekerJobApplicationDto {
   })
   status: EJobApplicationStatus;
 
+  @ApiPropertyOptional({
+    enum: Object.values(EInterviewType),
+    example: Object.values(EInterviewType).join(' | '),
+  })
+  interviewType?: EInterviewType;
+
+  @ApiProperty({
+    enum: Object.values(EInterviewStatus),
+    example: Object.values(EInterviewStatus).join(' | '),
+  })
+  interviewStatus: EInterviewStatus;
+
+  @ApiPropertyOptional()
+  interviewNotes?: string;
+
+  @ApiPropertyOptional()
+  onboardingNotes?: string;
+
+  @ApiPropertyOptional()
+  rejectionReason?: string;
+
   @ApiPropertyOptional()
   scheduleTime?: Date;
 
@@ -126,11 +151,6 @@ export class ResponseJobSeekerJobApplicationDto {
 }
 
 export class ResponseRecruiterJobApplicationDto extends ResponseJobSeekerJobApplicationDto {
-  @ApiPropertyOptional({
-    description: 'Recruiter internal notes',
-  })
-  notes?: string;
-
   @ApiPropertyOptional({ type: ResponseJobApplicationUserDto })
   user?: ResponseJobApplicationUserDto;
 }

@@ -56,7 +56,14 @@ export class CreateJobUseCase extends BaseUsecase {
 
         this.validateSalaryRange(dto.salaryMin, dto.salaryMax);
         this.validateExpiredAt(dto.expiredAt);
-        this.validateSubmitRequirements(isSubmitAction, dto.workArrangement);
+        this.validateSubmitRequirements(
+          isSubmitAction,
+          dto.workArrangement,
+          dto.title,
+          dto.description,
+          dto.expiredAt,
+          dto.vacancyCount,
+        );
 
         let careerCategory: Awaited<
           ReturnType<ICareerCategoryRepository['findById']>
@@ -165,8 +172,23 @@ export class CreateJobUseCase extends BaseUsecase {
   private validateSubmitRequirements(
     isSubmitAction: boolean,
     workArrangement?: string,
+    title?: string,
+    description?: string,
+    expiredAt?: Date,
+    vacancyCount?: number,
   ): void {
-    if (isSubmitAction && !workArrangement) {
+    if (!isSubmitAction) {
+      return;
+    }
+
+    if (
+      !title?.trim() ||
+      !description?.trim() ||
+      !expiredAt ||
+      !workArrangement ||
+      vacancyCount === undefined ||
+      vacancyCount < 1
+    ) {
       throw new AppException(ERROR_CODES.VALIDATION_ERROR);
     }
   }

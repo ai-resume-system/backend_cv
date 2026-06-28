@@ -1,4 +1,7 @@
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewType,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 import { EBucketType } from 'src/common/constants/enum/upload.enum';
 
 export const CV_PARSE_QUEUE = 'cv.parse';
@@ -50,10 +53,14 @@ export interface IJobApplicationStatusEmailJob {
   status:
     | EJobApplicationStatus.INTERVIEW
     | EJobApplicationStatus.REJECTED
-    | EJobApplicationStatus.OFFERED;
+    | EJobApplicationStatus.ACCEPTED;
   jobTitle: string;
   name?: string;
   scheduleTime?: string;
   scheduleLocation?: string;
   scheduleLink?: string;
+  interviewType?: EInterviewType;
+  interviewNotes?: string;
+  rejectionReason?: string;
+  onboardingNotes?: string;
 }

@@ -9,7 +9,11 @@ import {
   Index,
   JoinColumn,
 } from 'typeorm';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewStatus,
+  EInterviewType,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import { CVOrmEntity } from './cv.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
@@ -70,8 +74,8 @@ export class JobApplicationOrmEntity implements IJobApplicationEntity {
   @Column({ name: 'cover_letter', type: 'text', nullable: true })
   coverLetter?: string;
 
-  @Column({ name: 'notes', type: 'text', nullable: true })
-  notes?: string;
+  @Column({ name: 'rejection_reason', type: 'text', nullable: true })
+  rejectionReason?: string;
 
   @Column({
     name: 'status',
@@ -81,6 +85,28 @@ export class JobApplicationOrmEntity implements IJobApplicationEntity {
   })
   @Index()
   status: EJobApplicationStatus;
+
+  @Column({
+    name: 'interview_type',
+    type: 'enum',
+    enum: EInterviewType,
+    nullable: true,
+  })
+  interviewType?: EInterviewType;
+
+  @Column({
+    name: 'interview_status',
+    type: 'enum',
+    enum: EInterviewStatus,
+    default: EInterviewStatus.SCHEDULED,
+  })
+  interviewStatus: EInterviewStatus;
+
+  @Column({ name: 'interview_notes', type: 'text', nullable: true })
+  interviewNotes?: string;
+
+  @Column({ name: 'onboarding_notes', type: 'text', nullable: true })
+  onboardingNotes?: string;
 
   @Column({ name: 'schedule_time', type: 'timestamptz', nullable: true })
   scheduleTime?: Date;

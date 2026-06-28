@@ -27,6 +27,11 @@ export function toJobSeekerJobApplicationDto(
     coverLetter: application.coverLetter,
     matchingScore: application.matchingScore,
     status: application.status,
+    interviewType: application.interviewType,
+    interviewStatus: application.interviewStatus,
+    interviewNotes: application.interviewNotes,
+    onboardingNotes: application.onboardingNotes,
+    rejectionReason: application.rejectionReason,
     scheduleTime: application.scheduleTime,
     scheduleLocation: application.scheduleLocation,
     scheduleLink: application.scheduleLink,
@@ -48,7 +53,6 @@ export function toRecruiterJobApplicationDto(
 ): IRecruiterJobApplicationDto {
   return {
     ...toJobSeekerJobApplicationDto(application, options),
-    notes: application.notes,
     user: options.user,
   };
 }

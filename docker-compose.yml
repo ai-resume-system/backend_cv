@@ -1,0 +1,40 @@
+services:
+  backend_cv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend_cv_app
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      IP_ADDRESS: 0.0.0.0
+      WEB_PORT: 3003
+      WEB_ENV: production
+      APP_ENV: production
+      # Kết nối đến các dịch vụ phụ trợ qua host.docker.internal (được expose bởi folder docker/) xem lai docker chua build duoc
+      DB_HOST: host.docker.internal
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: 123456
+      DB_DATABASE: ai_resume_system_db
+      REDIS_HOST: host.docker.internal
+      REDIS_PORT: 6379
+      AI_SERVICE_BASE_URL: http://host.docker.internal:8001
+      MINIO_ENDPOINT: http://host.docker.internal:9000
+      MINIO_REGION: us-east-1
+      MINIO_S3_REGION: us-east-1
+      MINIO_ACCESS_KEY_ID: admin
+      MINIO_SECRET_ACCESS_KEY: admin123
+      MINIO_S3_BUCKET_CV: cv-files
+      MINIO_S3_BUCKET_LOGO: company-logos
+      MINIO_S3_BUCKET_AVATAR: avatars-profile
+      MINIO_S3_BUCKET_BANNER: company-banners
+      MINIO_FORCE_PATH_STYLE: 'true'
+      MINIO_PATH_STYLE: 'true'
+      S3_PRESIGNED_TTL_SECONDS: 900
+      MINIO_PRESIGNED_URL_TTL: 900
+    ports:
+      - '3003:3003'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'

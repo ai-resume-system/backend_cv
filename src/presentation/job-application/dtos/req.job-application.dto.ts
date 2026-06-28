@@ -13,7 +13,11 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewStatus,
+  EInterviewType,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { RequestPaginationDto } from 'src/common/dto/request.dto';
 import { transfomerPagination } from 'src/common/utils/request-pagination.utils';
@@ -63,10 +67,27 @@ export class RequestUpdateJobApplicationStatusDto {
   @IsEnum(EJobApplicationStatus)
   status: EJobApplicationStatus;
 
-  @ApiPropertyOptional({ description: 'Recruiter internal notes' })
+  @ApiPropertyOptional({
+    description: 'Rejection reason in HTML format',
+  })
   @IsOptional()
   @IsString()
-  notes?: string;
+  rejectionReason?: string;
+
+  @ApiPropertyOptional({ enum: EInterviewType, description: 'Interview type' })
+  @IsOptional()
+  @IsEnum(EInterviewType)
+  interviewType?: EInterviewType;
+
+  @ApiPropertyOptional({ description: 'Interview preparation notes in HTML format' })
+  @IsOptional()
+  @IsString()
+  interviewNotes?: string;
+
+  @ApiPropertyOptional({ description: 'Onboarding notes in HTML format' })
+  @IsOptional()
+  @IsString()
+  onboardingNotes?: string;
 
   @ApiPropertyOptional({
     description:
@@ -97,6 +118,15 @@ export class RequestUpdateJobApplicationStatusDto {
   @IsOptional()
   @IsString()
   scheduleLink?: string;
+}
+
+export class RequestUpdateJobApplicationInterviewStatusDto {
+  @ApiProperty({
+    enum: EInterviewStatus,
+    description: 'Interview progress status',
+  })
+  @IsEnum(EInterviewStatus)
+  interviewStatus: EInterviewStatus;
 }
 
 export class RequestGetJobApplicationsDto extends RequestPaginationDto {
@@ -213,6 +243,21 @@ export class RequestGetRecruiterInterviewsDto extends RequestPaginationDto {
   @IsOptional()
   @IsUUID()
   jobId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Search by applicant name, email, phone',
+  })
+  @IsOptional()
+  @IsString()
+  q?: string;
+
+  @ApiPropertyOptional({
+    enum: ['createdAt', 'matchingScore', 'scheduleTime'],
+    default: 'scheduleTime',
+  })
+  @IsOptional()
+  @IsIn(['createdAt', 'matchingScore', 'scheduleTime'])
+  sortBy?: 'createdAt' | 'matchingScore' | 'scheduleTime';
 
   @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'ASC' })
   @IsOptional()
