@@ -99,7 +99,6 @@ export interface IJobMatchBreakdownDto {
   careerCategoryMatch: number;
   experienceMatch: number;
   titleKeywordSimilarity: number;
-  preferenceMatch: number;
 }
 
 export interface IJobMatchSkillEvidenceDto {

@@ -143,6 +143,18 @@ export class GetCVAnalysisQuery extends BaseUsecase {
             skillId: skill.skillId,
           }))
         : [];
+      const otherDetectedSkills = Array.isArray(parsedJson.otherDetectedSkills)
+        ? parsedJson.otherDetectedSkills.map((skill) => ({
+            name: skill.name || skill.normalizedName || '',
+            normalizedName:
+              skill.normalizedName ||
+              String(skill.name || '')
+                .toLowerCase()
+                .trim(),
+            confidence: skill.confidence,
+            evidence: skill.evidence,
+          }))
+        : [];
 
       const response: IResponseApiCVAnalysisDto = {
         data: {
@@ -150,28 +162,32 @@ export class GetCVAnalysisQuery extends BaseUsecase {
           processingStatus:
             parsedData?.processingStatus || EProcessingStatus.PENDING,
           summary: parsedData?.summary,
-          resumeQualityScore:
-            parsedData?.score ??
-            (typeof parsedJson.resumeQualityScore === 'number'
-              ? parsedJson.resumeQualityScore
-              : undefined),
+          resumeQualityScore: this.normalizeStoredScore(
+            parsedData?.score ?? parsedJson.resumeQualityScore,
+          ),
           scoreBreakdown: parsedJson.scoreBreakdown
             ? {
-            roleClarity: Number(parsedJson.scoreBreakdown?.roleClarity || 0),
-            skillCoverage: Number(parsedJson.scoreBreakdown?.skillCoverage || 0),
-            experienceQuality: Number(
-              parsedJson.scoreBreakdown?.experienceQuality || 0,
-            ),
-            impactEvidence: Number(
-              parsedJson.scoreBreakdown?.impactEvidence || 0,
-            ),
-            educationRelevance: Number(
-              parsedJson.scoreBreakdown?.educationRelevance || 0,
-            ),
-            atsReadiness: Number(parsedJson.scoreBreakdown?.atsReadiness || 0),
-            presentationClarity: Number(
-              parsedJson.scoreBreakdown?.presentationClarity || 0,
-            ),
+                roleClarity: this.normalizeStoredScore(
+                  parsedJson.scoreBreakdown?.roleClarity,
+                ),
+                skillCoverage: this.normalizeStoredScore(
+                  parsedJson.scoreBreakdown?.skillCoverage,
+                ),
+                experienceQuality: this.normalizeStoredScore(
+                  parsedJson.scoreBreakdown?.experienceQuality,
+                ),
+                impactEvidence: this.normalizeStoredScore(
+                  parsedJson.scoreBreakdown?.impactEvidence,
+                ),
+                educationRelevance: this.normalizeStoredScore(
+                  parsedJson.scoreBreakdown?.educationRelevance,
+                ),
+                atsReadiness: this.normalizeStoredScore(
+                  parsedJson.scoreBreakdown?.atsReadiness,
+                ),
+                presentationClarity: this.normalizeStoredScore(
+                  parsedJson.scoreBreakdown?.presentationClarity,
+                ),
               }
             : EMPTY_SCORE_BREAKDOWN,
           matchedSkills: skillNames.length
@@ -181,6 +197,7 @@ export class GetCVAnalysisQuery extends BaseUsecase {
                 level: 'unknown' as const,
               }))
             : parsedSkills,
+          otherDetectedSkills,
           improvementSuggestions: Array.isArray(
             parsedJson.improvementSuggestions,
           )
@@ -199,5 +216,14 @@ export class GetCVAnalysisQuery extends BaseUsecase {
       await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.DETAIL);
       return response;
     });
+  }
+
+  private normalizeStoredScore(value: unknown): number {
+    const score = Number(value || 0);
+    if (Number.isNaN(score)) {
+      return 0;
+    }
+    const normalized = score > 0 && score <= 1 ? score * 100 : score;
+    return Math.max(0, Math.min(100, Number(normalized.toFixed(2))));
   }
 }

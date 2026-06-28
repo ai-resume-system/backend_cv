@@ -66,6 +66,16 @@ export class RedisAdapter extends BaseUsecase {
     }
   }
 
+  async safeSetNx(key: string, value: string, ttl: number): Promise<boolean> {
+    try {
+      const result = await this.redis.set(key, value, 'EX', ttl, 'NX');
+      return result === 'OK';
+    } catch (error) {
+      this.logger.warn(`Redis set NX failed for ${key}: ${error.message}`);
+      return true;
+    }
+  }
+
   async safeGetJson<T>(key: string): Promise<T | null> {
     const value = await this.safeGet(key);
     if (!value) return null;

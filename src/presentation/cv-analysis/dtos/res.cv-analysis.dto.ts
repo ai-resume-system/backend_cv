@@ -154,6 +154,9 @@ export class ResponseCVAnalysisDto {
   @ApiProperty({ type: [ResponseCVAnalysisMatchedSkillDto] })
   matchedSkills: ResponseCVAnalysisMatchedSkillDto[];
 
+  @ApiProperty({ type: [ResponseCVAnalysisOtherSkillDto] })
+  otherDetectedSkills: ResponseCVAnalysisOtherSkillDto[];
+
   @ApiProperty({ type: [String] })
   improvementSuggestions: string[];
 

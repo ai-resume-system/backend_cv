@@ -4,7 +4,6 @@ import { BaseUsecase } from 'src/common/base/base.usecase';
 import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
-import { TTL_10M } from 'src/common/constants/ttl.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
@@ -52,22 +51,49 @@ export class AnalyzeCVUseCase extends BaseUsecase {
           latestParsedData &&
           latestParsedData.processingStatus === EProcessingStatus.PROCESSING
         ) {
-          throw new AppException(
-            ERROR_CODES.CV_ANALYSIS_ALREADY_PROCESSING_ERROR,
-          );
+          return {
+            data: {
+              cvId: id,
+              processingStatus: EProcessingStatus.PROCESSING,
+              message: 'CV đang được phân tích.',
+              reusedExistingResult: true,
+            },
+          };
         }
 
-        const parsedData = await this.cvParsedDataRepository.create({
-          cvId: id,
-          processingStatus: EProcessingStatus.PROCESSING,
-        });
+        const lockKey = `lock:cv-analyze:${id}`;
+        const lockAcquired = await this.redis.safeSetNx(
+          lockKey,
+          new Date().toISOString(),
+          60,
+        );
+        if (!lockAcquired) {
+          return {
+            data: {
+              cvId: id,
+              processingStatus: EProcessingStatus.PROCESSING,
+              message: 'CV đang được phân tích.',
+              reusedExistingResult: true,
+            },
+          };
+        }
 
-        await this.queueDispatch.dispatchCvParse({
-          cvId: id,
-          parsedDataId: parsedData.id,
-          fileKey: cv.fileUrl,
-          extension: cv.fileExtension as 'pdf' | 'docx' | 'doc',
-        });
+        try {
+          const parsedData = await this.cvParsedDataRepository.create({
+            cvId: id,
+            processingStatus: EProcessingStatus.PROCESSING,
+          });
+
+          await this.queueDispatch.dispatchCvParse({
+            cvId: id,
+            parsedDataId: parsedData.id,
+            fileKey: cv.fileUrl,
+            extension: cv.fileExtension as 'pdf' | 'docx' | 'doc',
+          });
+        } catch (error) {
+          await this.redis.safeDel(lockKey);
+          throw error;
+        }
 
         // // Tránh spam phân tích CV liên tiếp.
         // await this.redis.safeSet(

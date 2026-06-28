@@ -37,6 +37,7 @@ export interface ICVAnalysisResultDto {
   resumeQualityScore?: number;
   scoreBreakdown: IAiAnalysisScoreBreakdown;
   matchedSkills: ICVAnalysisMatchedSkillDto[];
+  otherDetectedSkills: ICVAnalysisOtherSkillDto[];
   improvementSuggestions: string[];
   education: IAiAnalysisEducation[];
   experience: IAiAnalysisExperience[];

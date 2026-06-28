@@ -174,9 +174,6 @@ export class ResponseJobMatchBreakdownDto {
 
   @ApiProperty()
   titleKeywordSimilarity: number;
-
-  @ApiProperty()
-  preferenceMatch: number;
 }
 
 export class ResponseJobMatchSkillEvidenceDto {

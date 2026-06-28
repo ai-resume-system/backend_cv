@@ -7,6 +7,9 @@ export interface IAiSkillContext {
   name: string;
   slug: string;
   careerCategorySlug?: string;
+  careerCategoryName?: string;
+  parentSlug?: string;
+  parentName?: string;
   aliases?: string[];
 }
 

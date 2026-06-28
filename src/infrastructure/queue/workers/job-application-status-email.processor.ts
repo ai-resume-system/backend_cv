@@ -54,9 +54,7 @@ export class JobApplicationStatusEmailProcessor extends WorkerHost {
   }
 
   private buildHtml(data: IJobApplicationStatusEmailJob): string {
-    const greeting = data.fullName
-      ? `Chào ${data.fullName},`
-      : 'Chào bạn,';
+    const greeting = data.fullName ? `Chào ${data.fullName},` : 'Chào bạn,';
     const companyName = data.name || 'quý công ty';
     const headerTitle =
       data.status === EJobApplicationStatus.INTERVIEW

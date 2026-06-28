@@ -168,7 +168,8 @@ export class CVAnalysisNormalizerService {
     if (typeof score !== 'number' || Number.isNaN(score)) {
       return 0;
     }
-    return Math.max(0, Math.min(100, Number(score.toFixed(2))));
+    const normalized = score > 0 && score <= 1 ? score * 100 : score;
+    return Math.max(0, Math.min(100, Number(normalized.toFixed(2))));
   }
 
   private normalizeScoreBreakdown(

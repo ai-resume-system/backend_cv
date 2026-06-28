@@ -169,6 +169,7 @@ export class SaveTempCVAnalysisUseCase extends BaseUsecase {
       resumeQualityScore: analysis.resumeQualityScore,
       scoreBreakdown: analysis.scoreBreakdown,
       matchedSkills: analysis.matchedSkills,
+      otherDetectedSkills: analysis.otherDetectedSkills,
       improvementSuggestions: analysis.improvementSuggestions,
       education: analysis.education,
       experience: analysis.experience,

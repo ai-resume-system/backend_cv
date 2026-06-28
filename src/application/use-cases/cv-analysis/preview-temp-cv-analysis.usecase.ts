@@ -11,6 +11,8 @@ import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import { EBucketType } from 'src/common/constants/enum/upload.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import type { ICareerCategoryEntity } from 'src/domain/entities/career-category.entity';
+import type { ISkillEntity } from 'src/domain/entities/skill.entity';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
 import { AiCvAnalysisClient } from 'src/infrastructure/ai/ai-cv-analysis.client';
@@ -115,26 +117,71 @@ export class PreviewTempCVAnalysisUseCase extends BaseUsecase {
       }),
     ]);
 
-    const candidateSkills = this.selectCandidateSkills(rawText, allSkills).slice(
-      0,
-      300,
+    const topCategories = this.selectRelatedCategories(
+      rawText,
+      careerCategories.data,
+      allSkills,
     );
+    const topCategoryIds = new Set(topCategories.map((category) => category.id));
+    const candidateSkills = this.selectCandidateSkills(
+      rawText,
+      allSkills,
+      topCategoryIds,
+    ).slice(0, 150);
+    const categoryMap = new Map(
+      careerCategories.data.map((category) => [category.id, category]),
+    );
+    const skillMap = new Map(allSkills.map((skill) => [skill.id, skill]));
 
     return {
       cvId,
       rawText: this.parser.summarize(rawText, 12000),
       fileExtension,
       requestedProvider,
-      availableCareerCategories: careerCategories.data.map((category) => ({
+      availableCareerCategories: topCategories.map((category) => ({
         name: category.name,
         slug: category.slug,
       })),
-      availableSkills: candidateSkills.map((skill) => ({
-        name: skill.name,
-        slug: skill.slug,
-        aliases: this.buildSkillAliases(skill.name, skill.slug),
-      })),
+      availableSkills: candidateSkills.map((skill) => {
+        const category = categoryMap.get(skill.careerCategoryId);
+        const parent = skill.parentId ? skillMap.get(skill.parentId) : undefined;
+
+        return {
+          name: skill.name,
+          slug: skill.slug,
+          careerCategoryName: category?.name,
+          careerCategorySlug: category?.slug,
+          parentName: parent?.name,
+          parentSlug: parent?.slug,
+          aliases: this.buildSkillAliases(skill.name, skill.slug),
+        };
+      }),
     };
+  }
+
+  private selectRelatedCategories(
+    rawText: string,
+    categories: ICareerCategoryEntity[],
+    skills: ISkillEntity[],
+  ): ICareerCategoryEntity[] {
+    const haystack = rawText.toLowerCase();
+    const scores = new Map<string, number>();
+
+    for (const skill of skills) {
+      const aliases = this.buildSkillAliases(skill.name, skill.slug);
+      if (aliases.some((alias) => this.hasAlias(haystack, alias))) {
+        scores.set(
+          skill.careerCategoryId,
+          (scores.get(skill.careerCategoryId) || 0) + 1,
+        );
+      }
+    }
+
+    const ranked = [...categories].sort(
+      (a, b) => (scores.get(b.id) || 0) - (scores.get(a.id) || 0),
+    );
+    const matched = ranked.filter((category) => (scores.get(category.id) || 0) > 0);
+    return (matched.length ? matched : ranked).slice(0, 5);
   }
 
   private async getTempMetadata(
@@ -169,28 +216,54 @@ export class PreviewTempCVAnalysisUseCase extends BaseUsecase {
   private selectCandidateSkills(
     rawText: string,
     skills: Awaited<ReturnType<ISkillRepository['findAll']>>,
+    categoryIds?: Set<string>,
   ) {
     const haystack = rawText.toLowerCase();
-    const matched = skills.filter((skill) => {
+    const scopedSkills = categoryIds?.size
+      ? skills.filter((skill) => categoryIds.has(skill.careerCategoryId))
+      : skills;
+    const matched = scopedSkills.filter((skill) => {
       const aliases = this.buildSkillAliases(skill.name, skill.slug);
-      return aliases.some((alias) => haystack.includes(alias.toLowerCase()));
+      return aliases.some((alias) => this.hasAlias(haystack, alias));
     });
 
-    return matched.length ? matched : skills.slice(0, 300);
+    return matched.length ? matched : scopedSkills.slice(0, 150);
   }
 
   private buildSkillAliases(name: string, slug: string): string[] {
+    const normalizedSlug = slug.toLowerCase();
+    const normalizedName = name.toLowerCase();
     const aliases = new Set<string>([
       name,
       slug,
       slug.replace(/-/g, ' '),
-      name.toLowerCase(),
+      normalizedName,
     ]);
-    if (slug.endsWith('js')) {
-      aliases.add(slug.replace(/js$/, '.js'));
-      aliases.add(slug.replace(/js$/, ' js'));
+    if (normalizedSlug.endsWith('js')) {
+      aliases.add(normalizedSlug.replace(/js$/, '.js'));
+      aliases.add(normalizedSlug.replace(/js$/, ' js'));
+      aliases.add(normalizedSlug.replace(/js$/, ''));
     }
+    if (normalizedSlug.includes('javascript') || normalizedName.includes('javascript')) aliases.add('js');
+    if (normalizedSlug.includes('html')) aliases.add('html5');
+    if (normalizedSlug.includes('css')) aliases.add('css3');
+    if (normalizedSlug.includes('csharp')) aliases.add('c#');
+    if (normalizedSlug.includes('csharp')) aliases.add('c sharp');
+    if (normalizedSlug.includes('cplusplus')) aliases.add('c++');
+    if (normalizedSlug.includes('cplusplus')) aliases.add('cpp');
+    if (normalizedSlug.includes('sql-server')) aliases.add('sql server');
+    if (normalizedSlug.includes('sql-server')) aliases.add('mssql');
+    if (normalizedSlug.includes('mysql')) aliases.add('my sql');
+    if (normalizedSlug === 'git') aliases.add('github');
+    if (normalizedSlug === 'git') aliases.add('gitlab');
     return Array.from(aliases).filter(Boolean);
+  }
+
+  private hasAlias(haystack: string, alias: string): boolean {
+    const escaped = alias.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(^|[^a-z0-9+#.])${escaped}([^a-z0-9+#.]|$)`, 'i').test(
+      haystack,
+    );
   }
 
   private verifyAnalysis(
@@ -291,6 +364,7 @@ export class PreviewTempCVAnalysisUseCase extends BaseUsecase {
       resumeQualityScore: analysis.resumeQualityScore,
       scoreBreakdown: analysis.scoreBreakdown,
       matchedSkills: analysis.matchedSkills,
+      otherDetectedSkills: analysis.otherDetectedSkills,
       improvementSuggestions: analysis.improvementSuggestions,
       education: analysis.education,
       experience: analysis.experience,
