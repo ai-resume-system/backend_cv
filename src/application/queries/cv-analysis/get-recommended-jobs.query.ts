@@ -1,5 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IResponseListApiPublicJobDto, IPublicJobCompanyDto } from 'src/application/dtos/job/res.job.dto';
+import {
+  IResponseListApiPublicJobDto,
+  IPublicJobCompanyDto,
+} from 'src/application/dtos/job/res.job.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import {
   CACHE_KEYS,
@@ -7,15 +10,19 @@ import {
   CACHE_VERSION_KEYS,
 } from 'src/common/constants/cache-keys.constants';
 import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
+import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
+import { stableHash } from 'src/common/utils/hash.utils';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { ICVParsedDataRepository } from 'src/domain/repositories/cv-parsed-data.repository.interface';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
 import type { ICVSkillRepository } from 'src/domain/repositories/cv-skill.repository.interface';
+import type { IFavouriteJobRepository } from 'src/domain/repositories/favourite-job.repository.interface';
+import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import type { IJobSkillRepository } from 'src/domain/repositories/job-skill.repository.interface';
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
@@ -45,13 +52,20 @@ export class GetRecommendedJobsQuery extends BaseUsecase {
     private readonly jobSkillRepository: IJobSkillRepository,
     @Inject('ISkillRepository')
     private readonly skillRepository: ISkillRepository,
+    @Inject('IFavouriteJobRepository')
+    private readonly favouriteJobRepository: IFavouriteJobRepository,
+    @Inject('IJobApplicationRepository')
+    private readonly jobApplicationRepository: IJobApplicationRepository,
     private readonly redis: RedisAdapter,
     private readonly storage: S3StorageService,
   ) {
     super(new Logger(GetRecommendedJobsQuery.name));
   }
 
-  async execute(cvId: string, userId: string): Promise<IResponseListApiPublicJobDto> {
+  async execute(
+    cvId: string,
+    userId: string,
+  ): Promise<IResponseListApiPublicJobDto> {
     return this.runSafe('[Get Recommended Jobs]:', async () => {
       const cv = await this.cvRepository.findById(cvId);
       if (!cv || cv.userId !== userId) {
@@ -70,7 +84,10 @@ export class GetRecommendedJobsQuery extends BaseUsecase {
       const version = await this.redis.getVersion(CACHE_VERSION_KEYS.CV_DETAIL);
       const parsedJson = parsedData.parsedJson as IParsedJson;
       const fingerprint = parsedJson.fingerprint || parsedData.updatedAt.getTime();
-      const cacheKey = `${CACHE_KEYS.CV_DETAIL}:recommended:v${version}:${cvId}:${fingerprint}`;
+      const excludedJobIds = await this.getExcludedJobIds(userId);
+      const excludedJobSet = new Set(excludedJobIds);
+      const hiddenFingerprint = stableHash([...excludedJobSet].sort());
+      const cacheKey = `${CACHE_KEYS.CV_DETAIL}:recommended:v${version}:${userId}:${cvId}:${fingerprint}:${hiddenFingerprint}`;
       const cached =
         await this.redis.safeGetJson<IResponseListApiPublicJobDto>(cacheKey);
       if (cached) {
@@ -85,23 +102,56 @@ export class GetRecommendedJobsQuery extends BaseUsecase {
           )
         : null;
 
-      let candidateJobs = careerCategory
-        ? await this.jobRepository.findByCareerCategoryId(careerCategory.id)
-        : [];
-      candidateJobs = candidateJobs
-        .filter(
-          (job) =>
-            job.status === EJobStatus.OPEN &&
-            (!job.expiredAt || job.expiredAt > new Date()),
-        )
-        .slice(0, 40);
+      const [categoryJobsResult, skillJobsResult] = await Promise.all([
+        careerCategory
+          ? this.jobRepository.find({
+              pagination: { page: 1, limit: 40 },
+              filter: {
+                status: EJobStatus.OPEN,
+                careerCategoryId: careerCategory.id,
+                notExpired: true,
+                activeOwnerOnly: true,
+                excludedJobIds,
+              },
+              sort: { sortBy: 'createdAt', sortOrder: 'DESC' },
+            })
+          : Promise.resolve({ data: [], total: 0 }),
+        cvSkillIds.length
+          ? this.jobRepository.find({
+              pagination: { page: 1, limit: 40 },
+              filter: {
+                status: EJobStatus.OPEN,
+                skillIds: cvSkillIds,
+                notExpired: true,
+                activeOwnerOnly: true,
+                excludedJobIds,
+              },
+              sort: { sortBy: 'createdAt', sortOrder: 'DESC' },
+            })
+          : Promise.resolve({ data: [], total: 0 }),
+      ]);
+
+      const candidateJobMap = new Map(
+        [...categoryJobsResult.data, ...skillJobsResult.data]
+          .filter((job) => !excludedJobSet.has(job.id))
+          .map((job) => [job.id, job]),
+      );
+      const candidateJobs = [...candidateJobMap.values()].slice(0, 80);
 
       const jobIds = candidateJobs.map((job) => job.id);
-      const [jobSkills, companies] = await Promise.all([
+      const careerCategoryIds = [
+        ...new Set(
+          candidateJobs
+            .map((job) => job.careerCategoryId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      const [jobSkills, companies, careerCategories] = await Promise.all([
         this.jobSkillRepository.findByJobIds(jobIds),
         this.companyRepository.findPublicByIds(
           [...new Set(candidateJobs.map((job) => job.companyId))],
         ),
+        this.careerCategoryRepository.findByIds(careerCategoryIds),
       ]);
 
       const jobSkillMap = jobSkills.reduce<Map<string, typeof jobSkills>>(
@@ -137,6 +187,9 @@ export class GetRecommendedJobsQuery extends BaseUsecase {
         ),
       );
       const companyMap = new Map(companyEntries);
+      const careerCategoryMap = new Map(
+        careerCategories.map((category) => [category.id, category]),
+      );
 
       const skillIds = [...new Set(jobSkills.map((item) => item.skillId))];
       const skills = await this.skillRepository.findByIds(skillIds);
@@ -153,9 +206,18 @@ export class GetRecommendedJobsQuery extends BaseUsecase {
             .filter((item) => cvSkillIds.includes(item.skillId))
             .reduce((sum, item) => sum + Number(item.weight || 1), 0);
           const score = totalWeight > 0 ? matchedWeight / totalWeight : 0;
-          return { job, score };
+          const sameCategory =
+            careerCategory?.id && job.careerCategoryId === careerCategory.id
+              ? 1
+              : 0;
+          return { job, score, sameCategory };
         })
-        .sort((left, right) => right.score - left.score)
+        .sort(
+          (left, right) =>
+            right.score - left.score ||
+            right.sameCategory - left.sameCategory ||
+            right.job.createdAt.getTime() - left.job.createdAt.getTime(),
+        )
         .slice(0, 6);
 
       const response: IResponseListApiPublicJobDto = {
@@ -182,7 +244,9 @@ export class GetRecommendedJobsQuery extends BaseUsecase {
 
             return toPublicJobDto(job, {
               company,
-              careerCategory,
+              careerCategory: job.careerCategoryId
+                ? careerCategoryMap.get(job.careerCategoryId)
+                : undefined,
               skills: sortJobSkillsByWeight(mappedSkills),
               isFavourited: false,
             });
@@ -193,5 +257,26 @@ export class GetRecommendedJobsQuery extends BaseUsecase {
       await this.redis.safeSetJson(cacheKey, response, CACHE_TTL.LIST);
       return response;
     });
+  }
+
+  private async getExcludedJobIds(userId: string): Promise<string[]> {
+    const activeStatuses = new Set<EJobApplicationStatus>([
+      EJobApplicationStatus.APPLIED,
+      EJobApplicationStatus.INTERVIEW,
+      EJobApplicationStatus.ACCEPTED,
+    ]);
+    const [favouriteJobIds, applications] = await Promise.all([
+      this.favouriteJobRepository.findJobIdsByUserId(userId),
+      this.jobApplicationRepository.findByUserId(userId),
+    ]);
+
+    return [
+      ...new Set([
+        ...favouriteJobIds,
+        ...applications
+          .filter((application) => activeStatuses.has(application.status))
+          .map((application) => application.jobId),
+      ]),
+    ];
   }
 }

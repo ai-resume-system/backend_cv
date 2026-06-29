@@ -1,4 +1,3 @@
-import { EJobType } from 'src/common/constants/enum/job.enum';
 import { IJobEntity } from '../entities/job.entity';
 import { IBaseRepository } from './base.repository.interface';
 import { ISlugRepository } from './slug.repository.interface';
@@ -8,8 +7,6 @@ export interface IFindRelatedJobsOptions {
   excludedJobIds?: string[];
   limit: number;
   careerCategoryId?: string;
-  address?: string;
-  jobType?: EJobType;
   skillIds?: string[];
 }
 

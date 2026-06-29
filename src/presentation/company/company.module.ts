@@ -18,6 +18,8 @@ import { SkillTypeormRepository } from 'src/infrastructure/database/repositories
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
 import { StorageModule } from 'src/infrastructure/storage/storage.module';
 import { CompanyController } from './controller/company.controller';
+import { JobApplicationTypeormRepository } from 'src/infrastructure/database/repositories/job-application.typeorm-repository';
+import { JobApplicationOrmEntity } from 'src/infrastructure/database/entities/job-application.orm-entity';
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ import { CompanyController } from './controller/company.controller';
       CareerCategoryOrmEntity,
       FavouriteJobOrmEntity,
       SkillOrmEntity,
+      JobApplicationOrmEntity,
     ]),
     JwtAuthModule,
     RedisModule,
@@ -49,6 +52,10 @@ import { CompanyController } from './controller/company.controller';
       useClass: FavouriteJobTypeormRepository,
     },
     { provide: 'ISkillRepository', useClass: SkillTypeormRepository },
+    {
+      provide: 'IJobApplicationRepository',
+      useClass: JobApplicationTypeormRepository,
+    },
   ],
 })
 export class CompanyModule {}

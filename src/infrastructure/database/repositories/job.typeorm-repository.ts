@@ -162,6 +162,7 @@ export class JobTypeormRepository
       experienceYearsMax,
       address,
       excludedStatuses,
+      excludedJobIds,
       ...otherFilters
     } = options?.filter || {};
 
@@ -170,7 +171,8 @@ export class JobTypeormRepository
       skillIds ||
       q ||
       expiredAtBefore ||
-      (Array.isArray(excludedStatuses) && excludedStatuses.length > 0)
+      (Array.isArray(excludedStatuses) && excludedStatuses.length > 0) ||
+      (Array.isArray(excludedJobIds) && excludedJobIds.length > 0)
     ) {
       const now = new Date();
       const queryBuilder = this.ormRepository.createQueryBuilder('entity');
@@ -235,6 +237,11 @@ export class JobTypeormRepository
       if (Array.isArray(excludedStatuses) && excludedStatuses.length > 0) {
         queryBuilder.andWhere('entity.status NOT IN (:...excludedStatuses)', {
           excludedStatuses,
+        });
+      }
+      if (Array.isArray(excludedJobIds) && excludedJobIds.length > 0) {
+        queryBuilder.andWhere('entity.id NOT IN (:...excludedJobIds)', {
+          excludedJobIds,
         });
       }
 
@@ -372,12 +379,6 @@ export class JobTypeormRepository
     const sameCategoryExpr = options.careerCategoryId
       ? 'CASE WHEN job.career_category_id = :careerCategoryId THEN 1 ELSE 0 END'
       : '0';
-    const sameAddressExpr = options.address
-      ? 'CASE WHEN job.address = :address THEN 1 ELSE 0 END'
-      : '0';
-    const sameJobTypeExpr = options.jobType
-      ? 'CASE WHEN job.job_type = :jobType THEN 1 ELSE 0 END'
-      : '0';
 
     queryBuilder
       .innerJoin(
@@ -416,27 +417,12 @@ export class JobTypeormRepository
       );
     }
 
-    if (
-      options.careerCategoryId ||
-      options.address ||
-      options.jobType ||
-      options.skillIds?.length
-    ) {
+    if (options.careerCategoryId || options.skillIds?.length) {
       queryBuilder.andWhere(
         new Brackets((builder) => {
           if (options.careerCategoryId) {
-            builder.orWhere('job.career_category_id = :careerCategoryId', {
+            builder.where('job.career_category_id = :careerCategoryId', {
               careerCategoryId: options.careerCategoryId,
-            });
-          }
-          if (options.address) {
-            builder.orWhere('job.address = :address', {
-              address: options.address,
-            });
-          }
-          if (options.jobType) {
-            builder.orWhere('job.job_type = :jobType', {
-              jobType: options.jobType,
             });
           }
           if (options.skillIds?.length) {
@@ -444,20 +430,18 @@ export class JobTypeormRepository
           }
         }),
       );
+    } else {
+      return [];
     }
 
     queryBuilder
       .addSelect(overlapExpr, 'skill_overlap_count')
       .addSelect(sameCategoryExpr, 'same_category')
-      .addSelect(sameAddressExpr, 'same_address')
-      .addSelect(sameJobTypeExpr, 'same_job_type')
       .groupBy('job.id')
       .addGroupBy('company.id')
       .addGroupBy('owner.id')
       .orderBy('skill_overlap_count', 'DESC')
       .addOrderBy('same_category', 'DESC')
-      .addOrderBy('same_address', 'DESC')
-      .addOrderBy('same_job_type', 'DESC')
       .addOrderBy('job.created_at', 'DESC')
       .limit(options.limit);
 

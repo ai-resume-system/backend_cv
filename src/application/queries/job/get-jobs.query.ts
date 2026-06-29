@@ -12,6 +12,7 @@ import {
   CACHE_TTL,
   CACHE_VERSION_KEYS,
 } from 'src/common/constants/cache-keys.constants';
+import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
@@ -20,6 +21,7 @@ import { stableHash } from 'src/common/utils/hash.utils';
 import type { ICareerCategoryRepository } from 'src/domain/repositories/career-category.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IFavouriteJobRepository } from 'src/domain/repositories/favourite-job.repository.interface';
+import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import type { ISkillRepository } from 'src/domain/repositories/skill.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
@@ -41,6 +43,8 @@ export class GetJobsQuery extends BaseUsecase {
     private readonly careerCategoryRepository: ICareerCategoryRepository,
     @Inject('IFavouriteJobRepository')
     private readonly favouriteRepository: IFavouriteJobRepository,
+    @Inject('IJobApplicationRepository')
+    private readonly jobApplicationRepository: IJobApplicationRepository,
     @Inject('ISkillRepository')
     private readonly skillRepository: ISkillRepository,
     private readonly redis: RedisAdapter,
@@ -115,6 +119,10 @@ export class GetJobsQuery extends BaseUsecase {
 
     const excludedStatuses =
       scope === 'admin' ? [EJobStatus.DRAFT] : undefined;
+    const excludedJobIds =
+      scope === 'public' && userId
+        ? await this.getExcludedJobIds(userId)
+        : undefined;
     const version = await this.redis.getVersion(CACHE_VERSION_KEYS.JOB_LIST);
     const cacheScope =
       scope === 'company' && dto.companyId
@@ -131,12 +139,15 @@ export class GetJobsQuery extends BaseUsecase {
       careerCategorySlug: undefined,
       skillSlugs: undefined,
       excludedStatuses,
+      excludedJobIds,
       page,
       limit,
     };
-    const cacheKey = `${CACHE_KEYS.JOB_LIST}:v${version}:${cacheScope}:${stableHash(normalizedDto)}`;
+    const cacheKey = userId
+      ? null
+      : `${CACHE_KEYS.JOB_LIST}:v${version}:${cacheScope}:${stableHash(normalizedDto)}`;
 
-    const cached = await this.redis.safeGet(cacheKey);
+    const cached = cacheKey ? await this.redis.safeGet(cacheKey) : null;
     if (cached) {
       const parse = JSON.parse(cached) as
         | IResponseListApiPublicJobDto
@@ -174,7 +185,7 @@ export class GetJobsQuery extends BaseUsecase {
         educationLevel: dto.educationLevel,
         workArrangement: dto.workArrangement,
         ...(scope === 'public'
-          ? { notExpired: true, activeOwnerOnly: true }
+          ? { notExpired: true, activeOwnerOnly: true, excludedJobIds }
           : {}),
       },
       sort: { sortBy: dto.sortBy, sortOrder: dto.sortOrder },
@@ -279,11 +290,34 @@ export class GetJobsQuery extends BaseUsecase {
         isFavourited: false,
       }));
     }
-    await this.redis.safeSet(
-      cacheKey,
-      JSON.stringify(response),
-      CACHE_TTL.LIST,
-    );
+    if (cacheKey) {
+      await this.redis.safeSet(
+        cacheKey,
+        JSON.stringify(response),
+        CACHE_TTL.LIST,
+      );
+    }
     return response;
+  }
+
+  private async getExcludedJobIds(userId: string): Promise<string[]> {
+    const activeStatuses = new Set<EJobApplicationStatus>([
+      EJobApplicationStatus.APPLIED,
+      EJobApplicationStatus.INTERVIEW,
+      EJobApplicationStatus.ACCEPTED,
+    ]);
+    const [favouriteJobIds, applications] = await Promise.all([
+      this.favouriteRepository.findJobIdsByUserId(userId),
+      this.jobApplicationRepository.findByUserId(userId),
+    ]);
+
+    return [
+      ...new Set([
+        ...favouriteJobIds,
+        ...applications
+          .filter((application) => activeStatuses.has(application.status))
+          .map((application) => application.jobId),
+      ]),
+    ];
   }
 }

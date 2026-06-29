@@ -10,6 +10,7 @@ import {
   CACHE_TTL,
   CACHE_VERSION_KEYS,
 } from 'src/common/constants/cache-keys.constants';
+import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
@@ -94,8 +95,6 @@ export class GetRelatedJobsQuery extends BaseUsecase {
         excludedJobIds,
         limit,
         careerCategoryId: baseJob.careerCategoryId,
-        address: baseJob.address,
-        jobType: baseJob.jobType,
         skillIds: baseJobSkills.map((item) => item.skillId),
       });
 
@@ -212,11 +211,18 @@ export class GetRelatedJobsQuery extends BaseUsecase {
       this.favouriteJobRepository.findJobIdsByUserId(userId),
       this.jobApplicationRepository.findByUserId(userId),
     ]);
+    const activeStatuses = new Set<EJobApplicationStatus>([
+      EJobApplicationStatus.APPLIED,
+      EJobApplicationStatus.INTERVIEW,
+      EJobApplicationStatus.ACCEPTED,
+    ]);
 
     return [
       ...new Set([
         ...favouriteJobIds,
-        ...appliedApplications.map((application) => application.jobId),
+        ...appliedApplications
+          .filter((application) => activeStatuses.has(application.status))
+          .map((application) => application.jobId),
       ]),
     ];
   }

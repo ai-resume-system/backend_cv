@@ -12,6 +12,8 @@ import { CompanyOrmEntity } from 'src/infrastructure/database/entities/company.o
 import { CVParsedDataOrmEntity } from 'src/infrastructure/database/entities/cv-parsed-data.orm-entity';
 import { CVSkillOrmEntity } from 'src/infrastructure/database/entities/cv-skill.orm-entity';
 import { CVOrmEntity } from 'src/infrastructure/database/entities/cv.orm-entity';
+import { FavouriteJobOrmEntity } from 'src/infrastructure/database/entities/favourite-job.orm-entity';
+import { JobApplicationOrmEntity } from 'src/infrastructure/database/entities/job-application.orm-entity';
 import { JobOrmEntity } from 'src/infrastructure/database/entities/job.orm-entity';
 import { JobSkillOrmEntity } from 'src/infrastructure/database/entities/job-skill.orm-entity';
 import { SkillOrmEntity } from 'src/infrastructure/database/entities/skill.orm-entity';
@@ -20,6 +22,8 @@ import { CompanyTypeormRepository } from 'src/infrastructure/database/repositori
 import { CVParsedDataTypeormRepository } from 'src/infrastructure/database/repositories/cv-parsed-data.typeorm-repository';
 import { CVSkillTypeormRepository } from 'src/infrastructure/database/repositories/cv-skill.typeorm-repository';
 import { CVTypeormRepository } from 'src/infrastructure/database/repositories/cv.typeorm-repository';
+import { FavouriteJobTypeormRepository } from 'src/infrastructure/database/repositories/favourite-job.typeorm-repository';
+import { JobApplicationTypeormRepository } from 'src/infrastructure/database/repositories/job-application.typeorm-repository';
 import { JobSkillTypeormRepository } from 'src/infrastructure/database/repositories/job-skill.typeorm-repository';
 import { JobTypeormRepository } from 'src/infrastructure/database/repositories/job.typeorm-repository';
 import { SkillTypeormRepository } from 'src/infrastructure/database/repositories/skill.typeorm-repository';
@@ -36,6 +40,8 @@ import { CVAnalysisPreviewController } from './controller/cv-analysis-preview.co
       CareerCategoryOrmEntity,
       CVParsedDataOrmEntity,
       CVSkillOrmEntity,
+      FavouriteJobOrmEntity,
+      JobApplicationOrmEntity,
       JobOrmEntity,
       JobSkillOrmEntity,
       SkillOrmEntity,
@@ -66,6 +72,14 @@ import { CVAnalysisPreviewController } from './controller/cv-analysis-preview.co
     { provide: 'IJobRepository', useClass: JobTypeormRepository },
     { provide: 'IJobSkillRepository', useClass: JobSkillTypeormRepository },
     { provide: 'ISkillRepository', useClass: SkillTypeormRepository },
+    {
+      provide: 'IFavouriteJobRepository',
+      useClass: FavouriteJobTypeormRepository,
+    },
+    {
+      provide: 'IJobApplicationRepository',
+      useClass: JobApplicationTypeormRepository,
+    },
   ],
 })
 export class CVAnalysisModule {}
