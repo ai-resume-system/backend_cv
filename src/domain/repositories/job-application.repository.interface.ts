@@ -19,6 +19,16 @@ export interface IJobApplicationRepository
     endDate: Date,
     bucket: 'day' | 'month' | 'quarter',
   ): Promise<Array<{ bucket: string; total: number }>>;
+  countRecruiterDashboardApplicationSummary(companyId: string): Promise<{
+    totalApplications: number;
+    upcomingInterviews: number;
+  }>;
+  getRecruiterApplicationTrend(
+    companyId: string,
+    startDate: Date,
+    endDate: Date,
+    bucket: 'week' | 'month' | 'quarter' | 'year',
+  ): Promise<Array<{ bucket: string; total: number }>>;
   getRecentApplications(
     limit: number,
   ): Promise<

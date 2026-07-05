@@ -20,6 +20,7 @@ import type {
   IJobAnalyticsSummary,
   IJobRepository,
   IRecentJobActivity,
+  IRecruiterDashboardJobSummary,
 } from 'src/domain/repositories/job.repository.interface';
 import { Brackets, In, IsNull, Repository } from 'typeorm';
 import { JobOrmEntity } from '../entities/job.orm-entity';
@@ -71,6 +72,35 @@ export class JobTypeormRepository
       totalJobs: Number(rows?.totalJobs || 0),
       totalOpenJobs: Number(rows?.totalOpenJobs || 0),
       totalPendingJobs: Number(rows?.totalPendingJobs || 0),
+    };
+  }
+
+  async countRecruiterDashboardJobSummary(
+    companyId: string,
+  ): Promise<IRecruiterDashboardJobSummary> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('job')
+      .select('COUNT(job.id)', 'totalJobs')
+      .addSelect(
+        `COUNT(CASE WHEN job.status = :openStatus AND (job.expired_at > :now OR job.expired_at IS NULL) THEN 1 END)`,
+        'openJobs',
+      )
+      .where('job.deleted_at IS NULL')
+      .andWhere('job.company_id = :companyId', { companyId })
+      .andWhere('job.status != :draftStatus')
+      .setParameters({
+        now: new Date(),
+        draftStatus: EJobStatus.DRAFT,
+        openStatus: EJobStatus.OPEN,
+      })
+      .getRawOne<{
+        totalJobs: string;
+        openJobs: string;
+      }>();
+
+    return {
+      totalJobs: Number(rows?.totalJobs || 0),
+      openJobs: Number(rows?.openJobs || 0),
     };
   }
 

@@ -16,6 +16,11 @@ export interface IJobAnalyticsSummary {
   totalPendingJobs: number;
 }
 
+export interface IRecruiterDashboardJobSummary {
+  totalJobs: number;
+  openJobs: number;
+}
+
 export interface IRecentJobActivity {
   id: string;
   title: string;
@@ -27,6 +32,9 @@ export interface IRecentJobActivity {
 export interface IJobRepository
   extends IBaseRepository<IJobEntity>, ISlugRepository<IJobEntity> {
   countAnalyticsSummary(): Promise<IJobAnalyticsSummary>;
+  countRecruiterDashboardJobSummary(
+    companyId: string,
+  ): Promise<IRecruiterDashboardJobSummary>;
   getJobGrowthSeries(
     startDate: Date,
     endDate: Date,

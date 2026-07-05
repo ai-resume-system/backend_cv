@@ -76,6 +76,71 @@ export class JobApplicationTypeormRepository
     }));
   }
 
+  async countRecruiterDashboardApplicationSummary(companyId: string): Promise<{
+    totalApplications: number;
+    upcomingInterviews: number;
+  }> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('application')
+      .innerJoin(
+        'jobs',
+        'job',
+        'job.id = application.job_id AND job.deleted_at IS NULL',
+      )
+      .select('COUNT(application.id)', 'totalApplications')
+      .addSelect(
+        `COUNT(CASE WHEN application.status = :interviewStatus AND application.schedule_time >= :now THEN 1 END)`,
+        'upcomingInterviews',
+      )
+      .where('application.deleted_at IS NULL')
+      .andWhere('job.company_id = :companyId', { companyId })
+      .setParameters({
+        now: new Date(),
+        interviewStatus: EJobApplicationStatus.INTERVIEW,
+      })
+      .getRawOne<{
+        totalApplications: string;
+        upcomingInterviews: string;
+      }>();
+
+    return {
+      totalApplications: Number(rows?.totalApplications || 0),
+      upcomingInterviews: Number(rows?.upcomingInterviews || 0),
+    };
+  }
+
+  async getRecruiterApplicationTrend(
+    companyId: string,
+    startDate: Date,
+    endDate: Date,
+    bucket: 'week' | 'month' | 'quarter' | 'year',
+  ): Promise<Array<{ bucket: string; total: number }>> {
+    const bucketFormat = this.getRecruiterTrendBucketFormat(bucket);
+    const dateTruncExpression = `DATE_TRUNC('${bucket}', application.created_at AT TIME ZONE 'Asia/Saigon')`;
+
+    const rows = await this.ormRepository
+      .createQueryBuilder('application')
+      .innerJoin(
+        'jobs',
+        'job',
+        'job.id = application.job_id AND job.deleted_at IS NULL',
+      )
+      .select(`TO_CHAR(${dateTruncExpression}, '${bucketFormat}')`, 'bucket')
+      .addSelect('COUNT(application.id)', 'total')
+      .where('application.deleted_at IS NULL')
+      .andWhere('job.company_id = :companyId', { companyId })
+      .andWhere('application.created_at >= :startDate', { startDate })
+      .andWhere('application.created_at <= :endDate', { endDate })
+      .groupBy(dateTruncExpression)
+      .orderBy(dateTruncExpression, 'ASC')
+      .getRawMany<{ bucket: string; total: string }>();
+
+    return rows.map((row) => ({
+      bucket: row.bucket,
+      total: Number(row.total),
+    }));
+  }
+
   async getRecentApplications(limit: number): Promise<
     Array<{
       id: string;
@@ -298,6 +363,24 @@ export class JobApplicationTypeormRepository
   ): Promise<IJobApplicationEntity> {
     await this.ormRepository.update(id, { interviewStatus });
     return (await this.findById(id)) as IJobApplicationEntity;
+  }
+
+  private getRecruiterTrendBucketFormat(
+    bucket: 'week' | 'month' | 'quarter' | 'year',
+  ): string {
+    if (bucket === 'week') {
+      return 'IYYY-"W"IW';
+    }
+
+    if (bucket === 'month') {
+      return 'YYYY-MM';
+    }
+
+    if (bucket === 'quarter') {
+      return 'YYYY-"Q"Q';
+    }
+
+    return 'YYYY';
   }
 
   protected toDomain(orm: JobApplicationOrmEntity): IJobApplicationEntity {

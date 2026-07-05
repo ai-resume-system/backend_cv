@@ -22,6 +22,7 @@ import { SkillModule } from './presentation/skill/skill.module';
 import { FavouriteJobModule } from './presentation/favourite-job/favourite-job.module';
 import { CompanyModule } from './presentation/company/company.module';
 import { AdminAnalyticsModule } from './presentation/admin-analytics/admin-analytics.module';
+import { RecruiterAnalyticsModule } from './presentation/recruiter-analytics/recruiter-analytics.module';
 import { DatabaseCleanupModule } from './infrastructure/scheduler/database-cleanup.module';
 
 @Module({
@@ -48,6 +49,7 @@ import { DatabaseCleanupModule } from './infrastructure/scheduler/database-clean
     FavouriteJobModule,
     JobApplicationModule,
     AdminAnalyticsModule,
+    RecruiterAnalyticsModule,
   ],
   controllers: [],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
