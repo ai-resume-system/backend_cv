@@ -110,7 +110,7 @@ export class UploadFileUseCase extends BaseUsecase {
     await this.persistImageUrl(userId, type, objectKey);
 
     const expiresIn = this.configService.get<number>(
-      'S3_PRESIGNED_TTL_SECONDS',
+      'MINIO_PRESIGNED_URL_TTL',
       900,
     );
     const previewUrl = await this.storage.createPrivatePreviewUrl(

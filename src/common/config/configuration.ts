@@ -37,14 +37,14 @@ export const emailConfig = registerAs('email', () => ({
 
 export const minioConfig = registerAs('minio', () => ({
   endpoint: process.env.MINIO_ENDPOINT || 'localhost',
-  region: process.env.MINIO_REGION || 'us-east-1',
+  region: process.env.MINIO_S3_REGION || 'us-east-1',
   accessKeyId: process.env.MINIO_ACCESS_KEY_ID || 'admin',
   secretAccessKey: process.env.MINIO_SECRET_ACCESS_KEY || 'admin',
   cvBucket: process.env.MINIO_S3_BUCKET_CV || 'cv',
   logoBucket: process.env.MINIO_S3_BUCKET_LOGO || 'company-logos',
   avatarBucket: process.env.MINIO_S3_BUCKET_AVATAR || 'avatars',
   bannerBucket: process.env.MINIO_S3_BUCKET_BANNER || 'company-banners',
-  pathStyle: process.env.MINIO_PATH_STYLE || 'true',
+  pathStyle: process.env.MINIO_FORCE_PATH_STYLE || 'true',
   presignedUrlTtl: parseInt(process.env.MINIO_PRESIGNED_URL_TTL || '900', 10),
 }));
 

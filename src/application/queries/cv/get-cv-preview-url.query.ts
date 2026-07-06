@@ -28,7 +28,7 @@ export class GetCVPreviewUrlQuery extends BaseUsecase {
       }
 
       const previewTtlSeconds = this.configService.get<number>(
-        'S3_PRESIGNED_TTL_SECONDS',
+        'MINIO_PRESIGNED_URL_TTL',
         900,
       );
       const cacheKey = `cv:preview:${cv.id}:${cv.updatedAt.getTime()}`;

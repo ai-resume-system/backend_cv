@@ -161,7 +161,7 @@ async function bootstrap() {
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  if (process.env.APP_ENV !== 'production') {
+  if (process.env.WEB_ENV !== 'production') {
     setSwagger(app, logger);
   }
 
