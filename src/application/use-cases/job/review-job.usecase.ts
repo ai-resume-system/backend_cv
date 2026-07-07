@@ -59,6 +59,24 @@ export class ReviewJobUseCase
     });
   }
 
+  async closeByRecruiter(
+    id: string,
+    recruiterId: string,
+    dto: ICloseJobDto,
+  ): Promise<IResponseApiManagedJobDto> {
+    const company = await this.companyRepository.findByUserId(recruiterId);
+    if (!company) {
+      throw new AppException(ERROR_CODES.ROLE_INSUFFICIENT_PERMISSIONS);
+    }
+
+    return this.updateStatus(
+      id,
+      EJobStatus.CLOSED,
+      { closeReason: dto.closeReason },
+      company.id,
+    );
+  }
+
   async reject(
     id: string,
     dto: IRejectJobDto,
@@ -72,10 +90,14 @@ export class ReviewJobUseCase
     id: string,
     status: EJobStatus,
     metadata?: UpdateStatusMetadata,
+    expectedCompanyId?: string,
   ): Promise<IResponseApiManagedJobDto> {
     return this.runSafe('[Review Job]: ', async () => {
       const existing = await this.jobRepository.findById(id);
       if (!existing) {
+        throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
+      }
+      if (expectedCompanyId && existing.companyId !== expectedCompanyId) {
         throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
       }
       if (

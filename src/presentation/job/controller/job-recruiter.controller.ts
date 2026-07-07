@@ -69,7 +69,8 @@ export class JobRecruiterController extends BaseController {
   @Get(':slug')
   @AuthRequired(EUserRole.RECRUITER)
   @ApiOperation({
-    summary: 'Lay chi tiet mot job cua cong ty toi theo slug. Truy cap: Recruiter.',
+    summary:
+      'Lay chi tiet mot job cua cong ty toi theo slug. Truy cap: Recruiter.',
   })
   @ApiResponse({ status: 200, type: ResponseApiRecruiterJobDto })
   async getMyJobBySlug(
@@ -126,9 +127,10 @@ export class JobRecruiterController extends BaseController {
   })
   @ApiResponse({ status: 200, type: ResponseApiRecruiterJobDto })
   async closeJob(
+    @AuthCurrentUser() user: ICurrentUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestCloseJobDto,
   ): Promise<IResponseApiRecruiterJobDto> {
-    return await this.reviewJobUseCase.close(id, dto);
+    return await this.reviewJobUseCase.closeByRecruiter(id, user.id, dto);
   }
 }
