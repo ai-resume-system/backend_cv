@@ -5,7 +5,7 @@ import { PDFParse } from 'pdf-parse';
 @Injectable()
 export class CvParserService {
   async parse(
-    buffer: Buffer,
+    buffer: Buffer, // nd CV dạng binary
     extension: 'pdf' | 'docx' | 'doc',
   ): Promise<string> {
     if (extension === 'pdf') {

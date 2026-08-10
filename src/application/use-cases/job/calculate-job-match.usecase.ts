@@ -61,7 +61,8 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
     private readonly jobSkillRepository: IJobSkillRepository,
     @Inject('IJobMatchRepository')
     private readonly jobMatchRepository: IJobMatchRepository,
-    @Inject('ISkillRepository') private readonly skillRepository: ISkillRepository,
+    @Inject('ISkillRepository')
+    private readonly skillRepository: ISkillRepository,
     private readonly redis: RedisAdapter,
   ) {
     super(new Logger(CalculateJobMatchUseCase.name));
@@ -90,7 +91,9 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
         throw new AppException(ERROR_CODES.CV_NOT_FOUND);
       }
 
-      const parsedData = await this.cvParsedDataRepository.findLatestByCvId(cv.id);
+      const parsedData = await this.cvParsedDataRepository.findLatestByCvId(
+        cv.id,
+      );
       if (
         !parsedData ||
         parsedData.processingStatus !== EProcessingStatus.COMPLETED ||
@@ -106,14 +109,17 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
       const cvDetailVersion = await this.redis.getVersion(
         CACHE_VERSION_KEYS.CV_DETAIL,
       );
-      const fingerprint = parsedJson.fingerprint || parsedData.updatedAt.getTime();
+      const fingerprint =
+        parsedJson.fingerprint || parsedData.updatedAt.getTime();
       const cacheKey = `${CACHE_KEYS.JOB_DETAIL}:match:v${jobDetailVersion}:${cvDetailVersion}:${job.id}:${cv.id}:${fingerprint}`;
-      const cached = await this.redis.safeGetJson<IResponseApiJobMatchDto>(cacheKey);
+      const cached =
+        await this.redis.safeGetJson<IResponseApiJobMatchDto>(cacheKey);
       if (cached) {
         await this.saveMatchResult(cv.id, job.id, cached);
         return cached;
       }
 
+      // Ánh xạ (map) kỹ năng giữa CV và Job để so sánh
       const [cvSkills, jobSkills] = await Promise.all([
         this.cvSkillRepository.findByCvId(cv.id),
         this.jobSkillRepository.findByJobId(job.id),
@@ -129,6 +135,7 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
       const skills = await this.skillRepository.findByIds(allSkillIds);
       const skillMap = new Map(skills.map((skill) => [skill.id, skill]));
 
+      // Skill Match (chiếm 55%)
       const totalWeight = jobSkills.reduce(
         (sum, item) => sum + Number(item.weight || 1),
         0,
@@ -140,11 +147,15 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
         (sum, item) => sum + Number(item.weight || 1),
         0,
       );
-      const skillMatch = totalWeight > 0 ? (matchedWeight / totalWeight) * 100 : 0;
+      const skillMatch =
+        totalWeight > 0 ? (matchedWeight / totalWeight) * 100 : 0;
+
+      // Career Category Match (chiếm 15%)
       const jobCategory = job.careerCategoryId
         ? await this.careerCategoryRepository.findById(job.careerCategoryId)
         : null;
-      const hasCvSkillInJobCategory = !!job.careerCategoryId &&
+      const hasCvSkillInJobCategory =
+        !!job.careerCategoryId &&
         skills.some(
           (skill) =>
             skill.careerCategoryId === job.careerCategoryId &&
@@ -155,6 +166,8 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
         jobCategory?.slug,
         hasCvSkillInJobCategory,
       );
+
+      // Experience Match (chiếm 20%)
       const experienceMonths = (parsedJson.experience || []).reduce(
         (sum, item) => sum + Number(item.durationMonths || 0),
         0,
@@ -169,6 +182,8 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
             : (parsedJson.experience || []).length > 0
               ? 50
               : 0;
+
+      // Title & Keyword Match (chiếm 10%)
       const titleKeywordTokens = new Set<string>(
         [
           ...(parsedJson.relatedJobTitles || []),
@@ -199,6 +214,8 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
         titleKeywordTokens.size > 0
           ? Math.min(100, (keywordOverlap / titleKeywordTokens.size) * 100)
           : 0;
+
+      // Match Score tổng thể
       const matchScore =
         skillMatch * 0.55 +
         experienceMatch * 0.2 +
@@ -251,7 +268,10 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
             categoryMatch,
             experienceMatch,
           ),
-          risks: this.buildRisks(missingSkills.map((skill) => skill.name), experienceMatch),
+          risks: this.buildRisks(
+            missingSkills.map((skill) => skill.name),
+            experienceMatch,
+          ),
           improvementSuggestions: this.buildImprovementSuggestions(
             missingSkills.map((skill) => skill.name),
             experienceMatch,
@@ -271,7 +291,11 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
     jobCategorySlug?: string,
     hasCvSkillInJobCategory = false,
   ): number {
-    if (cvCategorySlug && jobCategorySlug && cvCategorySlug === jobCategorySlug) {
+    if (
+      cvCategorySlug &&
+      jobCategorySlug &&
+      cvCategorySlug === jobCategorySlug
+    ) {
       return 100;
     }
 
@@ -279,7 +303,11 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
       return 70;
     }
 
-    if (cvCategorySlug && jobCategorySlug && cvCategorySlug !== jobCategorySlug) {
+    if (
+      cvCategorySlug &&
+      jobCategorySlug &&
+      cvCategorySlug !== jobCategorySlug
+    ) {
       return 40;
     }
 
@@ -298,7 +326,9 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
       );
     }
     if (categoryMatch >= 70) {
-      strengths.push('Ngành nghề hoặc nhóm kỹ năng trong CV phù hợp với tin tuyển dụng.');
+      strengths.push(
+        'Ngành nghề hoặc nhóm kỹ năng trong CV phù hợp với tin tuyển dụng.',
+      );
     }
     if (experienceMatch >= 80) {
       strengths.push('Kinh nghiệm trong CV đáp ứng tốt yêu cầu của công việc.');
@@ -306,7 +336,10 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
     return strengths;
   }
 
-  private buildRisks(missingSkillNames: string[], experienceMatch: number): string[] {
+  private buildRisks(
+    missingSkillNames: string[],
+    experienceMatch: number,
+  ): string[] {
     const risks: string[] = [];
     if (missingSkillNames.length) {
       risks.push(
@@ -332,7 +365,9 @@ export class CalculateJobMatchUseCase extends BaseUsecase {
       );
     }
     if (experienceMatch < 60) {
-      suggestions.push('Làm rõ thời gian, vai trò và kết quả đạt được trong các kinh nghiệm liên quan.');
+      suggestions.push(
+        'Làm rõ thời gian, vai trò và kết quả đạt được trong các kinh nghiệm liên quan.',
+      );
     }
     return suggestions;
   }
