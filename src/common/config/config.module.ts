@@ -52,7 +52,7 @@ import {
         MAIL_FROM_ADDRESS: Joi.string().email().required(),
 
         MINIO_ENDPOINT: Joi.string().default('http://localhost:9000'),
-        MINIO_REGION: Joi.string().default('us-east-1'),
+        MINIO_S3_REGION: Joi.string().default('us-east-1'),
         MINIO_ACCESS_KEY_ID: Joi.string().default('admin'),
         MINIO_SECRET_ACCESS_KEY: Joi.string().default('admin123'),
         MINIO_S3_BUCKET_CV: Joi.string().default('cv-files'),
@@ -60,7 +60,7 @@ import {
         MINIO_S3_BUCKET_AVATAR: Joi.string().default('avatars-profile'),
         MINIO_S3_BUCKET_BANNER: Joi.string().default('company-banners'),
         MINIO_FORCE_PATH_STYLE: Joi.boolean().default(true),
-        S3_PRESIGNED_TTL_SECONDS: Joi.number().default(900),
+        MINIO_PRESIGNED_URL_TTL: Joi.number().default(900),
 
         REDIS_HOST: Joi.string().required(),
         REDIS_PORT: Joi.number().required(),

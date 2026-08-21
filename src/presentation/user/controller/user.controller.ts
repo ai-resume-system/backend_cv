@@ -5,10 +5,10 @@ import {
   Logger,
   Param,
   Patch,
+  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { IGetUserByIdResponseDto } from 'src/application/dtos/user/res.user.dto';
 import { GetUserByIdQuery } from 'src/application/queries/user/get-user-by-id.query';
 import { GetUsersQuery } from 'src/application/queries/user/get-users.query';
 import { UpdateUserStatusUseCase } from 'src/application/use-cases/user/update-user-status.usecase';
@@ -21,12 +21,17 @@ import {
   RequestUpdateUserStatusDto,
 } from '../dtos/req.user.dto';
 import {
-  ResponseApiUserDto,
+  ResponseApiUserDetailDto,
   ResponseListApiUserDto,
 } from '../dtos/res.user.dto';
+import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
+import {
+  IResponseApiUserDetailDto,
+  IResponseListApiUserDto,
+} from 'src/application/dtos/user/res.user.dto';
 
-@Controller({ path: 'users', version: '1' })
-@ApiTags('Users')
+@Controller({ path: 'admin/users', version: '1' })
+@ApiTags('Users - Admin')
 export class UserController extends BaseController {
   constructor(
     private readonly getUsersQuery: GetUsersQuery,
@@ -37,7 +42,9 @@ export class UserController extends BaseController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all users with pagination and filters' })
+  @ApiOperation({
+    summary: 'Lay danh sach nguoi dung he thong. Truy cap: Admin.',
+  })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
     status: 200,
@@ -46,26 +53,30 @@ export class UserController extends BaseController {
   })
   async getAllUsers(
     @Query() dto: RequestGetAllUsersDto,
-  ): Promise<ResponseListApiUserDto> {
+  ): Promise<IResponseListApiUserDto> {
     return await this.getUsersQuery.execute(dto);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get user by id' })
+  @ApiOperation({
+    summary: 'Lay chi tiet nguoi dung theo id. Truy cap: Admin.',
+  })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
     status: 200,
     description: 'Get user successfully',
-    type: ResponseApiUserDto,
+    type: ResponseApiUserDetailDto,
   })
   async getUserById(
-    @Param('id') id: string,
-  ): Promise<IGetUserByIdResponseDto> {
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<IResponseApiUserDetailDto> {
     return await this.getUserByIdQuery.execute(id);
   }
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update user status (lock/unlock)' })
+  @ApiOperation({
+    summary: 'Khoa hoac mo khoa tai khoan nguoi dung. Truy cap: Admin.',
+  })
   @AuthRequired(EUserRole.ADMIN)
   @ApiResponse({
     status: 200,
@@ -73,9 +84,9 @@ export class UserController extends BaseController {
     type: ResponseApiNullDto,
   })
   async updateUserStatus(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RequestUpdateUserStatusDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.updateUserStatusUseCase.execute(id, dto);
   }
 }

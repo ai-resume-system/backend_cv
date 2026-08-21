@@ -14,7 +14,8 @@ export interface IValidatedImageFile {
   mime: string;
 }
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_CV_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024;
 @Injectable()
 export class FileValidationService {
   async validateCvFile(file: Express.Multer.File): Promise<IValidatedFile> {
@@ -22,7 +23,7 @@ export class FileValidationService {
       throw new AppException(ERROR_CODES.VALIDATION_ERROR);
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_CV_FILE_SIZE) {
       throw new AppException(ERROR_CODES.CV_FILE_TOO_LARGE);
     }
 
@@ -75,7 +76,7 @@ export class FileValidationService {
       throw new AppException(ERROR_CODES.MEDIA_FILE_REQUIRED);
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
       throw new AppException(ERROR_CODES.MEDIA_FILE_TOO_LARGE);
     }
 

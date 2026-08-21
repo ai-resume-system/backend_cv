@@ -27,8 +27,10 @@ export interface IFindOptions {
 export interface IBaseRepository<T> {
   find(options?: IFindOptions): Promise<IPaginatedResult<T>>;
   findById(id: string): Promise<T | null>;
+  findByIdWithDeleted(id: string): Promise<T | null>;
   create(data: Partial<T>): Promise<T>;
   update(id: string, data: Partial<T>): Promise<T>;
   delete(id: string): Promise<void>;
   softDelete(id: string): Promise<void>;
+  restore(id: string): Promise<void>;
 }

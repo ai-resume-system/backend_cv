@@ -1,9 +1,27 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import { IRequestGetJobApplicationsDto } from 'src/application/dtos/job-application/req.job-application.dto';
+import {
+  IJobSeekerJobApplicationDto,
+  IResponseApiJobSeekerJobApplicationDto,
+  IResponseListApiJobSeekerJobApplicationDto,
+} from 'src/application/dtos/job-application/res.job-application.dto';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import { AppException } from 'src/common/exceptions/app.exception';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
+import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
+import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+  CACHE_VERSION_KEYS,
+} from 'src/common/constants/cache-keys.constants';
+import { resolveCompanyMedia } from 'src/common/helpers/media-url.helper';
+import { stableHash } from 'src/common/utils/hash.utils';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
+import { toJobSeekerJobApplicationDto } from './job-application-response.mapper';
 
 @Injectable()
 export class GetMyJobApplicationsQuery {
@@ -12,36 +30,70 @@ export class GetMyJobApplicationsQuery {
   constructor(
     @Inject('IJobApplicationRepository')
     private readonly jobApplicationRepository: IJobApplicationRepository,
+    @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
+    @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
+    @Inject('ICompanyRepository')
+    private readonly companyRepository: ICompanyRepository,
+    private readonly redis: RedisAdapter,
+    private readonly storage: S3StorageService,
   ) {}
 
   async execute(
     userId: string,
-    query: { page?: number; limit?: number },
-  ): Promise<{ data: any[]; pagination: any }> {
+    query: IRequestGetJobApplicationsDto,
+  ): Promise<IResponseListApiJobSeekerJobApplicationDto> {
     try {
       const page = query.page || 1;
       const limit = query.limit || 10;
-      const skip = (page - 1) * limit;
+      const sortBy = query.sortBy || 'createdAt';
+      const sortOrder = query.sortOrder || 'DESC';
+      const version = await this.redis.getVersion(
+        CACHE_VERSION_KEYS.JOB_APPLICATION_LIST,
+      );
+      const cacheKey = `${CACHE_KEYS.JOB_APPLICATION_LIST}:v${version}:job-seeker:${userId}:${stableHash({
+        ...query,
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+      })}`;
+      const cached =
+        await this.redis.safeGetJson<IResponseListApiJobSeekerJobApplicationDto>(
+          cacheKey,
+        );
+      if (cached) return cached;
 
-      // TODO: Add proper pagination using repository
-      const jobApplications =
-        await this.jobApplicationRepository.findByUserId(userId);
+      const result = await this.jobApplicationRepository.find({
+        filter: {
+          q: query.q,
+          userId,
+          status: query.status,
+        },
+        pagination: { page, limit },
+        sort: {
+          sortBy,
+          sortOrder,
+        },
+      });
+      const data = await Promise.all(
+        result.data.map((app) => this.toResponseDto(app)),
+      );
 
-      // Apply pagination
-      const paginatedData = jobApplications.slice(skip, skip + limit);
-
-      // Map to response DTO
-      const data = paginatedData.map((app) => this.toResponseDto(app));
-
-      return {
+      const response = {
         data,
         pagination: {
           page,
           limit,
-          totalItems: jobApplications.length,
-          totalPages: Math.ceil(jobApplications.length / limit),
+          totalItems: result.total,
+          totalPages: Math.ceil(result.total / limit),
         },
       };
+      await this.redis.safeSetJson(
+        cacheKey,
+        response,
+        CACHE_TTL.JOB_APPLICATION_LIST,
+      );
+      return response;
     } catch (error) {
       this.logger.error('[GetMyJobApplications]:', error);
       throw new AppException(ERROR_CODES.INTERNAL_SERVER_ERROR);
@@ -51,7 +103,7 @@ export class GetMyJobApplicationsQuery {
   async executeById(
     jobApplicationId: string,
     userId: string,
-  ): Promise<{ data: any }> {
+  ): Promise<IResponseApiJobSeekerJobApplicationDto> {
     try {
       const application =
         await this.jobApplicationRepository.findById(jobApplicationId);
@@ -61,10 +113,10 @@ export class GetMyJobApplicationsQuery {
       }
 
       if (application.userId !== userId) {
-        throw new AppException(ERROR_CODES.CV_ACCESS_DENIED);
+        throw new AppException(ERROR_CODES.JOB_APPLICATION_ACCESS_DENIED);
       }
 
-      return { data: this.toResponseDto(application) };
+      return { data: await this.toResponseDto(application) };
     } catch (error) {
       if (error instanceof AppException) throw error;
       this.logger.error('[GetMyJobApplicationsById]:', error);
@@ -72,17 +124,43 @@ export class GetMyJobApplicationsQuery {
     }
   }
 
-  private toResponseDto(app: IJobApplicationEntity): any {
-    return {
-      id: app.id,
-      cvId: app.cvId,
-      userId: app.userId,
-      jobId: app.jobId,
-      matchingScore: app.matchingScore,
-      notes: app.notes,
-      status: app.status,
-      createdAt: app.createdAt,
-      updatedAt: app.updatedAt,
-    };
+  private async toResponseDto(
+    app: IJobApplicationEntity,
+  ): Promise<IJobSeekerJobApplicationDto> {
+    const [cv, job] = await Promise.all([
+      this.cvRepository.findById(app.cvId),
+      this.jobRepository.findById(app.jobId),
+    ]);
+    const company =
+      job && job.companyId
+        ? await this.companyRepository.findById(job.companyId)
+        : null;
+
+    const companySummary = company
+      ? await resolveCompanyMedia(this.storage, {
+          id: company.id,
+          name: company.name,
+          slug: company.slug,
+          logoUrl: company.logoUrl,
+        })
+      : undefined;
+
+    return toJobSeekerJobApplicationDto(app, {
+      cv: cv
+        ? {
+            id: cv.id,
+            title: cv.title,
+          }
+        : undefined,
+      job: job
+        ? {
+            id: job.id,
+            slug: job.slug,
+            title: job.title,
+            address: job.address,
+            company: companySummary,
+          }
+        : undefined,
+    });
   }
 }

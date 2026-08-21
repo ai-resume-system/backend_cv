@@ -1,7 +1,6 @@
 import { EUserStatus, EUserRole } from 'src/common/constants/enum/user.enum';
 import { IUserEntity, IUserWithPasswordEntity } from '../entities/user.entity';
 import { IBaseRepository } from './base.repository.interface';
-import { IPaginatedResult } from './base.repository.interface';
 
 export interface ICreateUserDto {
   email: string;
@@ -12,6 +11,22 @@ export interface ICreateUserDto {
 }
 
 export interface IUserRepository extends IBaseRepository<IUserEntity> {
+  countAnalyticsSummary(): Promise<{
+    totalUsers: number;
+    totalRecruiters: number;
+    totalJobSeekers: number;
+  }>;
+  getUserGrowthSeries(
+    startDate: Date,
+    endDate: Date,
+    bucket: 'day' | 'month' | 'quarter',
+  ): Promise<Array<{ bucket: string; total: number }>>;
+  getRecentRegisteredUsers(
+    limit: number,
+  ): Promise<
+    Array<{ id: string; email: string; role: EUserRole; createdAt: Date }>
+  >;
+  findByIds(ids: string[]): Promise<IUserEntity[]>;
   findByEmail(email: string): Promise<IUserEntity | null>;
   findByEmailWithPassword(
     email: string,
@@ -21,10 +36,4 @@ export interface IUserRepository extends IBaseRepository<IUserEntity> {
   updateStatus(id: string, status: EUserStatus): Promise<void>;
   updatePassword(id: string, password: string): Promise<void>;
   updateProfile(id: string, data: { phone?: string }): Promise<IUserEntity>;
-  // findWithPagination(params: {
-  //   skip: number;
-  //   take: number;
-  //   role?: EUserRole;
-  //   status?: EUserStatus;
-  // }): Promise<IPaginatedResult<IUserEntity>>;
 }

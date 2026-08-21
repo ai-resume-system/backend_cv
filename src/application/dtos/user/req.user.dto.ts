@@ -5,28 +5,10 @@ export interface IRequestGetUsersDto extends IApiRequestPagination {
   q?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
-  role?: EUserRole;
+  role?: EUserRole[];
   status?: EUserStatus;
 }
 
-export interface IUpdateUserStatusDto {
+export interface IRequestUpdateUserStatusDto {
   status: EUserStatus;
-}
-
-export interface IUpdateProfileDto {
-  fullName?: string;
-  avatarUrl?: string;
-  bio?: string;
-}
-
-export interface IUpdateCompanyDto {
-  careerCategoriesId?: string;
-  companyName?: string;
-  taxCode?: string;
-  logoUrl?: string;
-  location?: string;
-  description?: string;
-  websiteUrl?: string;
-  companySizeMin?: number;
-  companySizeMax?: number;
 }

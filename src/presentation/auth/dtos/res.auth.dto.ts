@@ -4,6 +4,12 @@ import { ApiResponseDto } from 'src/common/dto/response.dto';
 export class ResponseAuthDto {
   @ApiProperty()
   accessToken: string;
+
+  @ApiProperty()
+  expiresIn: number;
+
+  @ApiProperty()
+  expiresAt: string;
 }
 
 export class ResponseVerifyOtpDto {

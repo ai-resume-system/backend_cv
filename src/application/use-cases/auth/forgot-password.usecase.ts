@@ -1,15 +1,16 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { IForgotPasswordDto } from 'src/application/dtos/auth/req.auth.dto';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
+import { BaseUsecase } from 'src/common/base/base.usecase';
+import { EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
-import { IForgotPasswordDto } from 'src/application/dtos/auth/req.auth.dto';
-import { EUserStatus } from 'src/common/constants/enum/user.enum';
-import { BaseUsecase } from 'src/common/base/base.usecase';
+import { hashToken } from 'src/common/utils/hash.utils';
+import type { IPasswordResetTokenRepository } from 'src/domain/repositories/password-reset-token.repository.interface';
 import type { IRefreshTokenRepository } from 'src/domain/repositories/refresh-token.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
-import type { IPasswordResetTokenRepository } from 'src/domain/repositories/password-reset-token.repository.interface';
-import { hashToken } from 'src/common/utils/hash.utils';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class ForgotPasswordUseCase extends BaseUsecase {
@@ -24,13 +25,13 @@ export class ForgotPasswordUseCase extends BaseUsecase {
     super(new Logger(ForgotPasswordUseCase.name));
   }
 
-  async execute(dto: IForgotPasswordDto) {
+  async execute(dto: IForgotPasswordDto): Promise<IResponseApiNullDto> {
     return this.runSafe(
       'ForgotPassword',
       async () => {
         let savedSignKey: string | null = null;
         try {
-          savedSignKey = await this.redis.getSignKey(dto.email);
+          savedSignKey = await this.redis.getScopedSignKey(dto.email, dto.role);
         } catch (error) {
           this.logger.warn(
             `Redis reset signKey unavailable for ${dto.email}: ${error.message}`,
@@ -51,6 +52,9 @@ export class ForgotPasswordUseCase extends BaseUsecase {
         if (!user) {
           throw new AppException(ERROR_CODES.USER_NOT_FOUND);
         }
+        if (user.role !== dto.role) {
+          throw new AppException(ERROR_CODES.AUTH_ACCOUNT_ROLE_MISMATCH);
+        }
 
         if (user.status !== EUserStatus.ACTIVE) {
           throw new AppException(ERROR_CODES.AUTH_USER_UNVERIFIED);
@@ -60,7 +64,7 @@ export class ForgotPasswordUseCase extends BaseUsecase {
         await this.userRepository.updatePassword(user.id, hashedPassword);
 
         try {
-          await this.redis.clearSignKey(dto.email);
+          await this.redis.clearScopedSignKey(dto.email, dto.role);
         } catch (error) {
           this.logger.warn(
             `Redis reset signKey clear failed for ${dto.email}: ${error.message}`,
@@ -73,10 +77,7 @@ export class ForgotPasswordUseCase extends BaseUsecase {
           dto.email,
         );
 
-        return {
-          message:
-            'Đặt lại mật khẩu thành công. Tất cả phiên đăng nhập đã bị vô hiệu hóa.',
-        };
+        return { data: null };
       },
       ERROR_CODES.INTERNAL_SERVER_ERROR,
     );

@@ -1,16 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRequestCreateJobApplicationDto } from 'src/application/dtos/job-application/req.job-application.dto';
-import { IJobApplicationResponseDto } from 'src/application/dtos/job-application/res.job-application.dto';
+import { IResponseApiJobSeekerJobApplicationDto } from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
-import { ECVStatus } from 'src/common/constants/enum/cv.enum';
-import { EJobStatus } from 'src/common/constants/enum/job.enum';
-import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
+import { invalidateAdminAnalyticsCache } from 'src/common/utils/admin-analytics-cache.utils';
+import { invalidateJobApplicationReadCaches } from 'src/common/utils/job-application-cache.utils';
 import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
-import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
 import type { IJobMatchRepository } from 'src/domain/repositories/job-match.repository.interface';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
+import { toJobSeekerJobApplicationDto } from 'src/application/queries/job-application/job-application-response.mapper';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class CreateJobApplicationUseCase extends BaseUsecase {
@@ -19,8 +22,9 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
     private readonly jobApplicationRepository: IJobApplicationRepository,
     @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
-    // @Inject('IJobMatchRepository')
-    // private readonly jobMatchRepository: IJobMatchRepository,
+    @Inject('IJobMatchRepository')
+    private readonly jobMatchRepository: IJobMatchRepository,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(CreateJobApplicationUseCase.name));
   }
@@ -28,7 +32,7 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
   async execute(
     userId: string,
     dto: IRequestCreateJobApplicationDto,
-  ): Promise<{ data: IJobApplicationResponseDto }> {
+  ): Promise<IResponseApiJobSeekerJobApplicationDto> {
     return this.runSafe(
       '[Create Job Application]',
       async () => {
@@ -40,7 +44,6 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
           throw new AppException(ERROR_CODES.CV_ACCESS_DENIED);
         }
 
-        // Kiểm tra job có tồn tại và còn hạn không
         const job = await this.jobRepository.findById(dto.jobId);
         if (!job) {
           throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
@@ -52,44 +55,42 @@ export class CreateJobApplicationUseCase extends BaseUsecase {
           throw new AppException(ERROR_CODES.JOB_APPLICATION_JOB_EXPIRED);
         }
 
-        const existingJobApplication =
-          await this.jobApplicationRepository.findByJobIdAndUserId(
-            dto.jobId,
-            userId,
-          );
-        // Kiểm tra chưa ứng tuyển (trùng lặp)
-        if (existingJobApplication) {
+        const existing = await this.jobApplicationRepository.findByJobIdAndUserId(
+          dto.jobId,
+          userId,
+        );
+        if (existing) {
           const activeStatuses = [
             EJobApplicationStatus.APPLIED,
-            EJobApplicationStatus.REVIEWING,
             EJobApplicationStatus.INTERVIEW,
-            EJobApplicationStatus.OFFERED,
             EJobApplicationStatus.ACCEPTED,
           ];
-          if (activeStatuses.includes(existingJobApplication.status)) {
+          if (activeStatuses.includes(existing.status)) {
             throw new AppException(ERROR_CODES.JOB_APPLICATION_ALREADY_EXISTS);
           }
         }
 
-        let matchingScore: number | undefined;
-        // const jobMatch = await this.jobMatchRepository.findByCvIdAndJobId(
-        //   dto.cvId,
-        //   dto.jobId,
-        // );
-        // if (jobMatch) {
-        //   matchingScore = jobMatch.matchScore;
-        // }
+        const savedMatch = await this.jobMatchRepository.findByCvIdAndJobId(
+          dto.cvId,
+          dto.jobId,
+        );
 
         const application = await this.jobApplicationRepository.create({
           cvId: dto.cvId,
-          userId: userId,
+          userId,
           jobId: dto.jobId,
-          matchingScore: matchingScore,
+          matchingScore: savedMatch?.matchScore ?? 0,
+          fullName: dto.fullName,
+          contactEmail: dto.contactEmail,
+          contactPhone: dto.contactPhone,
+          coverLetter: dto.coverLetter,
         });
+        await Promise.all([
+          invalidateJobApplicationReadCaches(this.redis),
+          invalidateAdminAnalyticsCache(this.redis),
+        ]);
 
-        await this.cvRepository.update(dto.cvId, { status: ECVStatus.IN_USE });
-
-        return { data: application };
+        return { data: toJobSeekerJobApplicationDto(application) };
       },
       ERROR_CODES.JOB_APPLICATION_CREATE_FAILED,
     );

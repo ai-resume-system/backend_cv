@@ -9,6 +9,9 @@ import { IVerifyOtpDto } from 'src/application/dtos/auth/req.auth.dto';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { TTL_10M } from 'src/common/constants/ttl.constants';
+import { invalidateCompanyReadCaches } from 'src/common/utils/company-cache.utils';
+import { generateUniqueSlug } from 'src/common/utils/generate-unique-slug.utils';
+import { invalidateUserReadCaches } from 'src/common/utils/user-cache.utils';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
@@ -16,6 +19,7 @@ import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.reposi
 import type { IRegistrationSessionRepository } from 'src/domain/repositories/registration-session.repository.interface';
 import type { IPasswordResetTokenRepository } from 'src/domain/repositories/password-reset-token.repository.interface';
 import { hashOtp, hashToken } from 'src/common/utils/hash.utils';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 
 @Injectable()
 export class VerifyOtpUseCase extends BaseUsecase {
@@ -36,9 +40,11 @@ export class VerifyOtpUseCase extends BaseUsecase {
     super(new Logger(VerifyOtpUseCase.name));
   }
 
-  async execute(dto: IVerifyOtpDto) {
+  async execute(
+    dto: IVerifyOtpDto,
+  ): Promise<IResponseApiNullDto | { data: { signKey: string } }> {
     return this.runSafe(
-      'VerifyOtp',
+      '[VerifyOtp]: ',
       async () => {
         try {
           const isLocked = await this.redis.isOtpLocked(dto.email);
@@ -56,7 +62,10 @@ export class VerifyOtpUseCase extends BaseUsecase {
 
         let storedHash: string | null = null;
         try {
-          storedHash = await this.redis.getOtpCache(dto.email);
+          storedHash =
+            dto.type === EOtpType.FORGOT_PASSWORD && dto.role
+              ? await this.redis.getScopedOtpCache(dto.email, dto.role)
+              : await this.redis.getOtpCache(dto.email);
         } catch (error) {
           this.logger.warn(
             `Redis OTP cache unavailable for ${dto.email}: ${error.message}`,
@@ -99,6 +108,13 @@ export class VerifyOtpUseCase extends BaseUsecase {
         if (!user) {
           throw new AppException(ERROR_CODES.USER_NOT_FOUND);
         }
+        if (
+          dto.type === EOtpType.FORGOT_PASSWORD &&
+          dto.role &&
+          user.role !== dto.role
+        ) {
+          throw new AppException(ERROR_CODES.AUTH_ACCOUNT_ROLE_MISMATCH);
+        }
 
         otpRecord =
           otpRecord ??
@@ -139,12 +155,20 @@ export class VerifyOtpUseCase extends BaseUsecase {
                   userId: user.id,
                   fullName: tempProfile.fullName,
                 });
+                await invalidateUserReadCaches(this.redis);
               } else if (tempProfile.role === EUserRole.RECRUITER) {
+                const slug = await generateUniqueSlug(
+                  tempProfile.name || 'company',
+                  'company',
+                  (candidate) => this.companyRepository.isSlugTaken(candidate),
+                );
                 await this.companyRepository.create({
                   userId: user.id,
-                  companyName: tempProfile.company_name,
-                  location: tempProfile.location,
+                  name: tempProfile.name,
+                  address: tempProfile.address,
+                  slug,
                 });
+                await invalidateCompanyReadCaches(this.redis);
               }
               try {
                 await this.redis.clearTempProfile(dto.email);
@@ -170,9 +194,7 @@ export class VerifyOtpUseCase extends BaseUsecase {
                 `Redis OTP cache delete failed for ${dto.email}: ${error.message}`,
               );
             }
-            return {
-              message: 'Xác thực thành công. Tài khoản đã được kích hoạt.',
-            };
+            return { data: null };
           case EOtpType.FORGOT_PASSWORD:
             if (user.status !== EUserStatus.ACTIVE) {
               throw new AppException(ERROR_CODES.AUTH_USER_UNVERIFIED);
@@ -184,18 +206,25 @@ export class VerifyOtpUseCase extends BaseUsecase {
               expiresAt: new Date(Date.now() + 600 * 1000),
             });
             try {
-              await this.redis.setSignKey(dto.email, signKey, 600);
-              await this.redis.deleteOtpCache(dto.email);
+              if (dto.role) {
+                await this.redis.setScopedSignKey(
+                  dto.email,
+                  dto.role,
+                  signKey,
+                  600,
+                );
+                await this.redis.deleteScopedOtpCache(dto.email, dto.role);
+              } else {
+                await this.redis.setSignKey(dto.email, signKey, 600);
+                await this.redis.deleteOtpCache(dto.email);
+              }
             } catch (error) {
               this.logger.warn(
                 `Redis reset signKey unavailable for ${dto.email}: ${error.message}`,
               );
             }
 
-            return {
-              signKey,
-              message: 'Xác thực OTP thành công. Vui lòng đặt lại mật khẩu.',
-            };
+            return { data: { signKey } };
           default:
             throw new AppException(ERROR_CODES.INVALID_OTP_TYPE);
         }

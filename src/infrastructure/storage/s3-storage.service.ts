@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   ListObjectsV2Command,
@@ -79,11 +80,14 @@ export class S3StorageService {
     return this.toPublicUrl(params.key, params.bucketType || EBucketType.CV);
   }
 
-  async getPrivateObjectBuffer(key: string): Promise<Buffer> {
+  async getPrivateObjectBuffer(
+    key: string,
+    bucketType: EBucketType = EBucketType.CV,
+  ): Promise<Buffer> {
     const result = await this.s3.send(
       new GetObjectCommand({
-        Bucket: this.getBucket(EBucketType.CV),
-        Key: this.normalizeObjectKey(key, EBucketType.CV),
+        Bucket: this.getBucket(bucketType),
+        Key: this.normalizeObjectKey(key, bucketType),
       }),
     );
     const body = result.Body;
@@ -164,6 +168,29 @@ export class S3StorageService {
     } while (continuationToken);
 
     return objects;
+  }
+
+  async moveObject(
+    sourceKey: string,
+    destinationKey: string,
+    bucketType: EBucketType = EBucketType.CV,
+  ): Promise<void> {
+    const bucket = this.getBucket(bucketType);
+    const normalizedSource = this.normalizeObjectKey(sourceKey, bucketType);
+    const normalizedDestination = this.normalizeObjectKey(
+      destinationKey,
+      bucketType,
+    );
+
+    await this.s3.send(
+      new CopyObjectCommand({
+        Bucket: bucket,
+        CopySource: `${bucket}/${normalizedSource}`,
+        Key: normalizedDestination,
+      }),
+    );
+
+    await this.deleteObject(normalizedSource, bucketType);
   }
 
   normalizeObjectKey(

@@ -1,9 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsEmail,
+  IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   MinLength,
 } from 'class-validator';
@@ -40,25 +42,37 @@ export class RequestUpdateMyProfileDto extends RequestUpdateProfileBaseDto {
 export class RequestUpdateMyCompanyDto extends RequestUpdateProfileBaseDto {
   @ApiPropertyOptional({ example: 'uuid-of-career-category' })
   @IsOptional()
-  @IsString()
-  careerCategoriesId?: string;
+  @IsUUID()
+  careerCategoryId?: string;
 
   @ApiPropertyOptional({ example: 'Tech Company' })
   @IsOptional()
   @IsString()
-  companyName?: string;
+  name?: string;
+
+  @ApiPropertyOptional({ example: 'Hanoi' })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional({ example: 10.802192 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  latitude?: number;
+
+  @ApiPropertyOptional({ example: 106.677087 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  longitude?: number;
 
   @ApiPropertyOptional({ example: '0123456789' })
   @IsOptional()
   @IsString()
   taxCode?: string;
 
-  @ApiPropertyOptional({ example: 'Hanoi' })
-  @IsOptional()
-  @IsString()
-  location?: string;
-
-  @ApiPropertyOptional({ example: 'Leading tech company...' })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   description?: string;
@@ -67,6 +81,18 @@ export class RequestUpdateMyCompanyDto extends RequestUpdateProfileBaseDto {
   @IsOptional()
   @IsString()
   websiteUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  employeeMin?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  employeeMax?: number;
 }
 
 export class RequestChangePasswordDto {

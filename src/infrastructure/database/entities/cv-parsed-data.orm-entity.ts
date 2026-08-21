@@ -1,4 +1,5 @@
 import type { ICVParsedDataEntity } from 'src/domain/entities/cv-parsed-data.entity';
+import { EProcessingStatus } from 'src/common/constants/enum/cv.enum';
 import {
   Column,
   CreateDateColumn,
@@ -13,13 +14,26 @@ import {
 import { CVOrmEntity } from './cv.orm-entity';
 
 @Entity({ name: 'cv_parsed_data' })
-@Index('idx_cv_parsed_data_cv_id', ['cvId'], { unique: true })
+@Index('idx_cv_parsed_data_cv_id_created_at', ['cvId', 'createdAt'], {
+  unique: false,
+})
 export class CVParsedDataOrmEntity implements ICVParsedDataEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'cv_id', type: 'uuid' })
   cvId: string;
+
+  @Column({
+    name: 'processing_status',
+    type: 'enum',
+    enum: EProcessingStatus,
+    default: EProcessingStatus.PENDING,
+  })
+  processingStatus: EProcessingStatus;
+
+  @Column({ name: 'summary', type: 'text', nullable: true })
+  summary?: string;
 
   @Column({ name: 'raw_text', type: 'text', nullable: true })
   rawText?: string;
@@ -36,24 +50,30 @@ export class CVParsedDataOrmEntity implements ICVParsedDataEntity {
   })
   score: number;
 
+  @Column({ name: 'provider', type: 'varchar', length: 100, nullable: true })
+  provider?: string;
+
+  @Column({ name: 'model', type: 'varchar', length: 255, nullable: true })
+  model?: string;
+
+  @Column({ name: 'confidence_flags', type: 'jsonb', nullable: true })
+  confidenceFlags?: string[];
+
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   updatedAt: Date;
 
   @DeleteDateColumn({
     name: 'deleted_at',
-    type: 'timestamp',
+    type: 'timestamptz',
     nullable: true,
   })
   deletedAt?: Date;

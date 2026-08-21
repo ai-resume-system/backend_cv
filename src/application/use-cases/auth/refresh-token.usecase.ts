@@ -71,7 +71,7 @@ export class RefreshTokenUseCase extends BaseUsecase {
                   id: dbToken.id,
                   userId: dbToken.userId,
                   tokenHash: dbToken.tokenHash,
-                  expiresAt: dbToken.expiresAt.toString(),
+                  expiresAt: dbToken.expiresAt.toISOString(),
                   deviceInfo: dbToken.deviceInfo,
                   ipAddress: dbToken.ipAddress,
                 },
@@ -107,7 +107,12 @@ export class RefreshTokenUseCase extends BaseUsecase {
           );
         }
 
-        const { accessToken, refreshToken: newRefreshToken } =
+        const {
+          accessToken,
+          refreshToken: newRefreshToken,
+          expiresAt: accessTokenExpiresAt,
+          expiresIn,
+        } =
           await this.jwtTokenService.generateTokens({
             id: existingUser.id,
             role: existingUser.role,
@@ -139,7 +144,7 @@ export class RefreshTokenUseCase extends BaseUsecase {
               id: savedRefreshToken.id,
               userId: existingUser.id,
               tokenHash: newTokenHash,
-              expiresAt: expiresAt.toString(),
+              expiresAt: expiresAt.toISOString(),
               deviceInfo: cachedToken?.deviceInfo || 'unknown',
               ipAddress: cachedToken?.ipAddress,
             },
@@ -154,6 +159,8 @@ export class RefreshTokenUseCase extends BaseUsecase {
         return {
           accessToken,
           refreshToken: newRefreshToken,
+          expiresAt: accessTokenExpiresAt,
+          expiresIn,
         };
       },
       ERROR_CODES.INTERNAL_SERVER_ERROR,

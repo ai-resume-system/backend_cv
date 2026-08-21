@@ -1,24 +1,26 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { invalidateCompanyReadCaches } from 'src/common/utils/company-cache.utils';
 import { EBucketType } from 'src/common/constants/enum/upload.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 
 @Injectable()
 export class DeleteCompanyBannerUseCase extends BaseUsecase {
   constructor(
     @Inject('ICompanyRepository')
     private readonly companyRepository: ICompanyRepository,
+    private readonly redis: RedisAdapter,
     private readonly queueDispatch: QueueDispatchService,
   ) {
     super(new Logger(DeleteCompanyBannerUseCase.name));
   }
 
-  async execute(
-    userId: string,
-  ): Promise<{ data: { success: boolean; message: string } }> {
+  async execute(userId: string): Promise<IResponseApiNullDto> {
     return this.runSafe('[Delete Company Banner]:', async () => {
       const company = await this.companyRepository.findByUserId(userId);
       if (!company) {
@@ -30,6 +32,8 @@ export class DeleteCompanyBannerUseCase extends BaseUsecase {
       await this.companyRepository.updateWithUserId(userId, {
         bannerUrl: null,
       });
+
+      await invalidateCompanyReadCaches(this.redis);
 
       await this.queueDispatch.dispatchCacheInvalidation({
         keys: [`account:profile:${userId}`],
@@ -45,12 +49,7 @@ export class DeleteCompanyBannerUseCase extends BaseUsecase {
         });
       }
 
-      return {
-        data: {
-          success: true,
-          message: 'Deleted company banner successfully',
-        },
-      };
+      return { data: null };
     });
   }
 }

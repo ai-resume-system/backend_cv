@@ -1,9 +1,17 @@
 export enum EJobApplicationStatus {
-  APPLIED = 'APPLIED', // vừa apply
-  REVIEWING = 'REVIEWING', // HR đang xem
-  INTERVIEW = 'INTERVIEW', // đã lên lịch phỏng vấn
-  REJECTED = 'REJECTED', // bị từ chối
-  OFFERED = 'OFFERED', // HR gửi offer
-  ACCEPTED = 'ACCEPTED', // ứng viên nhận việc
-  WITHDRAWN = 'WITHDRAWN', // ứng viên rút CV
+  APPLIED = 'applied', // vừa apply
+  INTERVIEW = 'interview', // đã lên lịch phỏng vấn
+  ACCEPTED = 'accepted', // đạt phỏng vấn và nhận việc
+  REJECTED = 'rejected', // bị từ chối
+  WITHDRAWN = 'withdrawn', // ứng viên rút CV
+}
+
+export enum EInterviewType {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+}
+
+export enum EInterviewStatus {
+  SCHEDULED = 'scheduled',
+  COMPLETED = 'completed',
 }

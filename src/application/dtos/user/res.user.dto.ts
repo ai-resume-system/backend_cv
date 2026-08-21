@@ -1,7 +1,17 @@
 import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { IApiResponse } from 'src/common/interface/api-response.interface';
 
-export interface IUserDto {
+export interface IUserListProfileResponseDto {
+  fullName?: string;
+  avatarUrl?: string | null;
+}
+
+export interface IUserListCompanyResponseDto {
+  name?: string;
+  logoUrl?: string | null;
+}
+
+export interface IUserListResponseDto {
   id: string;
   email: string;
   phone?: string;
@@ -9,9 +19,32 @@ export interface IUserDto {
   status: EUserStatus;
   createdAt: Date;
   updatedAt: Date;
+  profile?: IUserListProfileResponseDto;
+  company?: IUserListCompanyResponseDto;
 }
 
-export interface IGetUserByIdResponseDto {
+export interface IUserDetailProfileResponseDto {
+  fullName?: string;
+  avatarUrl?: string | null;
+  bio?: string;
+}
+
+export interface IUserDetailCompanyResponseDto {
+  careerCategoryId?: string;
+  name?: string;
+  taxCode?: string;
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  description?: string;
+  websiteUrl?: string;
+  employeeMin?: number;
+  employeeMax?: number;
+}
+
+export interface IUserDetailResponseDto {
   id: string;
   email: string;
   phone?: string;
@@ -19,23 +52,12 @@ export interface IGetUserByIdResponseDto {
   status: EUserStatus;
   createdAt: Date;
   updatedAt: Date;
-  profile?: {
-    id: string;
-    fullName?: string;
-    avatarUrl?: string | null;
-    bio?: string;
-  };
-  company?: {
-    id: string;
-    careerCategoriesId?: string;
-    companyName?: string;
-    taxCode?: string;
-    logoUrl?: string | null;
-    bannerUrl?: string | null;
-    location?: string;
-    description?: string;
-    websiteUrl?: string;
-  };
+  profile?: IUserDetailProfileResponseDto;
+  company?: IUserDetailCompanyResponseDto;
 }
 
-export interface IResponseListApiUserDto extends IApiResponse<IUserDto[]> {}
+export interface IResponseApiUserDetailDto
+  extends IApiResponse<IUserDetailResponseDto> {}
+
+export interface IResponseListApiUserDto
+  extends IApiResponse<IUserListResponseDto[]> {}

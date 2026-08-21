@@ -1,8 +1,9 @@
 export interface ISkillEntity {
   id: string;
-  careerCategoriesId?: string;
+  careerCategoryId: string;
   parentId?: string;
   name: string;
+  slug: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;

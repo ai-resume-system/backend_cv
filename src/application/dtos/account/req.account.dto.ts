@@ -3,18 +3,23 @@ export interface IRequestUpdateProfileBaseDto {
 }
 
 export interface IRequestUpdateMyProfileDto extends IRequestUpdateProfileBaseDto {
-  phone?: string;
   fullName?: string;
   bio?: string;
 }
 
-export interface IRequestUpdateMyCompanyDto extends IRequestUpdateProfileBaseDto {
-  careerCategoriesId?: string;
-  companyName?: string;
+export interface IRequestUpdateMyCompanyProfileDto extends IRequestUpdateProfileBaseDto {
+  careerCategoryId?: string;
+  name?: string;
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   taxCode?: string;
-  location?: string;
   description?: string;
   websiteUrl?: string;
+  employeeMin?: number;
+  employeeMax?: number;
 }
 
 export interface IChangePasswordDto {

@@ -3,6 +3,10 @@ import {
   IFindOptions,
   IPaginatedResult,
 } from 'src/domain/repositories/base.repository.interface';
+import {
+  buildNormalizedContainsCondition,
+  normalizeSearchKeyword,
+} from 'src/common/utils/text-search.utils';
 import { DeepPartial, In, IsNull, Repository } from 'typeorm';
 
 export abstract class BaseTypeormRepository<
@@ -64,12 +68,15 @@ export abstract class BaseTypeormRepository<
         const searchableColumns = this.getSearchableColumns();
 
         if (searchableColumns.length) {
+          const normalizedKeyword = normalizeSearchKeyword(q);
           const searchConditions = searchableColumns
-            .map((column) => `CAST(entity.${column} AS text) ILIKE :q`)
+            .map((column) =>
+              buildNormalizedContainsCondition(`entity.${column}`),
+            )
             .join(' OR ');
 
           queryBuilder.andWhere(`(${searchConditions})`, {
-            q: `%${q}%`,
+            qNormalized: `%${normalizedKeyword}%`,
           });
         }
       }
@@ -87,7 +94,17 @@ export abstract class BaseTypeormRepository<
   }
 
   async findById(id: string): Promise<TDomainEntity | null> {
-    const orm = await this.ormRepository.findOne({ where: { id } as any });
+    const orm = await this.ormRepository.findOne({
+      where: { id, deletedAt: IsNull() } as any,
+    });
+    return orm ? this.toDomain(orm) : null;
+  }
+
+  async findByIdWithDeleted(id: string): Promise<TDomainEntity | null> {
+    const orm = await this.ormRepository.findOne({
+      where: { id } as any,
+      withDeleted: true,
+    });
     return orm ? this.toDomain(orm) : null;
   }
 
@@ -111,6 +128,10 @@ export abstract class BaseTypeormRepository<
 
   async softDelete(id: string): Promise<void> {
     await this.ormRepository.softDelete(id);
+  }
+
+  async restore(id: string): Promise<void> {
+    await this.ormRepository.restore(id);
   }
 
   protected abstract toDomain(orm: TOrmEntity): TDomainEntity;

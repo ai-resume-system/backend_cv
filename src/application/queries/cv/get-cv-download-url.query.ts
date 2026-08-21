@@ -32,7 +32,7 @@ export class GetCVDownloadUrlQuery extends BaseUsecase {
       const cacheKey = `cv:download:${cv.id}:${cv.updatedAt.getTime()}`;
       const cached = await this.redis.safeGet(cacheKey);
       const downloadTtlSeconds = this.configService.get<number>(
-        'S3_PRESIGNED_TTL_SECONDS',
+        'MINIO_PRESIGNED_URL_TTL',
         900,
       );
       if (cached) {

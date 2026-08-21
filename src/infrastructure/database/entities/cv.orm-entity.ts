@@ -1,7 +1,4 @@
-import {
-  ECVStatus,
-  EProcessingStatus,
-} from 'src/common/constants/enum/cv.enum';
+import { ECVStatus } from 'src/common/constants/enum/cv.enum';
 import { ICVEntity } from 'src/domain/entities/cv.entity';
 import {
   Column,
@@ -22,7 +19,6 @@ import { JobApplicationOrmEntity } from './job-application.orm-entity';
 @Index(['userId', 'isDefault'])
 @Index(['userId', 'createdAt'])
 @Index('idx_cvs_user_status', ['userId', 'status'], { unique: false })
-@Index('idx_cvs_processing_status', ['processingStatus'], { unique: false })
 export class CVOrmEntity implements ICVEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -45,19 +41,8 @@ export class CVOrmEntity implements ICVEntity {
   })
   fileExtension?: string;
 
-  @Column({
-    name: 'processing_status',
-    type: 'enum',
-    enum: EProcessingStatus,
-    default: EProcessingStatus.PENDING,
-  })
-  processingStatus: EProcessingStatus;
-
   @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault?: boolean;
-
-  @Column({ name: 'summary', type: 'text', nullable: true })
-  summary?: string;
 
   @Column({
     type: 'enum',
@@ -68,22 +53,19 @@ export class CVOrmEntity implements ICVEntity {
 
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   updatedAt: Date;
 
   @DeleteDateColumn({
     name: 'deleted_at',
-    type: 'timestamp',
+    type: 'timestamptz',
     nullable: true,
   })
   deletedAt?: Date;

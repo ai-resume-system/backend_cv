@@ -12,6 +12,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
+import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 
 export class RequestRegisterDto {
@@ -23,7 +24,7 @@ export class RequestRegisterDto {
   @ApiProperty({ example: '123456' })
   @IsNotEmpty()
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/, ERROR_CODES.AUTH_PASSWORD_WEAK)
   password: string;
 }
@@ -53,12 +54,12 @@ export class RequestRegisterRecruiterDto extends RequestRegisterDto {
   @ApiProperty({ example: 'Tech Company' })
   @IsNotEmpty()
   @IsString()
-  company_name: string;
+  name: string;
 
   @ApiProperty({ example: 'Hanoi' })
   @IsNotEmpty()
   @IsString()
-  location: string;
+  address: string;
 }
 
 export class RequestVerifyOtpDto {
@@ -75,6 +76,15 @@ export class RequestVerifyOtpDto {
   @IsNotEmpty()
   @IsEnum(EOtpType)
   type: EOtpType;
+
+  @ApiProperty({
+    example: EUserRole.JOB_SEEKER,
+    enum: EUserRole,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(EUserRole)
+  role?: EUserRole;
 }
 
 export class RequestSendOtpDto {
@@ -86,6 +96,15 @@ export class RequestSendOtpDto {
   @IsNotEmpty()
   @IsEnum(EOtpType)
   type: EOtpType;
+
+  @ApiProperty({
+    example: EUserRole.JOB_SEEKER,
+    enum: EUserRole,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(EUserRole)
+  role?: EUserRole;
 }
 
 export class RequestLoginDto {
@@ -105,7 +124,7 @@ export class RequestLoginDto {
 }
 
 export class RequestRefreshTokenDto {
-  @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
+  @ApiProperty() // Nếu không có mới cần truyền
   @IsOptional()
   @IsString()
   refreshToken?: string;
@@ -114,13 +133,13 @@ export class RequestRefreshTokenDto {
 export class RequestChangePasswordDto {
   @ApiProperty({ example: '123456' })
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   oldPassword: string;
 
   @ApiProperty({ example: 'NewPassword@123' })
   @IsNotEmpty()
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/, ERROR_CODES.AUTH_PASSWORD_WEAK)
   newPassword: string;
 }
@@ -138,7 +157,12 @@ export class RequestForgotPasswordDto {
   @ApiProperty({ example: 'NewPassword@123' })
   @IsNotEmpty()
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/, ERROR_CODES.AUTH_PASSWORD_WEAK)
   newPassword: string;
+
+  @ApiProperty({ example: EUserRole.JOB_SEEKER, enum: EUserRole })
+  @IsNotEmpty()
+  @IsEnum(EUserRole)
+  role: EUserRole;
 }

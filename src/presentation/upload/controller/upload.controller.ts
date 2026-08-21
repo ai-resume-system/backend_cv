@@ -23,7 +23,7 @@ import { RequestUploadFileDto } from '../dtos/req.upload.dto';
 import { IResponseApiUploadDto } from 'src/application/dtos/upload/res.upload.dto';
 import { ResponseApiUploadFileDto } from '../dtos/res.upload.dto';
 
-const MAX_UPLOAD_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_UPLOAD_FILE_SIZE = 10 * 1024 * 1024;
 
 @Controller({ path: 'uploads', version: '1' })
 @ApiTags('Uploads')
@@ -34,7 +34,10 @@ export class UploadController extends BaseController {
 
   @Post()
   @AuthRequired()
-  @ApiOperation({ summary: 'Upload CV/avatar/logo/banner to private storage' })
+  @ApiOperation({
+    summary:
+      'Tai len CV, avatar, logo hoac banner vao kho rieng tu. Truy cap: Nguoi dung da xac thuc.',
+  })
   @UseInterceptors(
     FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_FILE_SIZE } }),
   )

@@ -7,15 +7,17 @@ export interface IRequestGetCareerCategoriesDto extends IApiRequestPagination {
   sortOrder?: 'ASC' | 'DESC';
 }
 
+export interface IRequestGetTopCareerCategoriesDto {
+  limit?: number;
+}
+
 export interface IRequestCreateCareerCategoryDto {
   name: string;
-  slug: string;
   description?: string;
 }
 
 export interface IRequestUpdateCareerCategoryDto {
   name?: string;
-  slug?: string;
   description?: string;
   status?: ECareerCategoriesStatus;
 }

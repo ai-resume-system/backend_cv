@@ -1,45 +1,80 @@
 import { IApiRequestPagination } from 'src/common/interface/api-request.interface';
-import { EJobStatus } from 'src/common/constants/enum/job.enum';
+import {
+  EJobAction,
+  EJobEducationLevel,
+  EJobStatus,
+  EJobType,
+  EJobWorkArrangement,
+} from 'src/common/constants/enum/job.enum';
 
 export interface IGetJobsDto extends IApiRequestPagination {
   q?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
-  location?: string;
+  address?: string;
   companyId?: string;
-  // public
+  companySlug?: string;
+  skillIds?: string[];
+  skillSlugs?: string[];
+  salaryMin?: number;
+  salaryMax?: number;
+  experienceYearsMin?: number;
+  experienceYearsMax?: number;
+  jobType?: EJobType;
+  educationLevel?: EJobEducationLevel;
+  workArrangement?: EJobWorkArrangement;
   careerCategorySlug?: string;
-
-  // internal/admin
   careerCategoryId?: string;
   status?: EJobStatus;
 }
 
-export interface ICreateJobDto {
+export interface IGetRelatedJobsDto {
+  limit?: number;
+}
+
+export interface IGetJobMatchDto {
+  cvId: string;
+}
+
+export interface ICalculateJobMatchDto {
+  cvId: string;
+}
+
+export interface IJobSkillInputDto {
+  skillId: string;
+  weight?: number;
+}
+
+export interface ICreateJobBaseDto {
+  action?: EJobAction;
+  careerCategoryId?: string;
   title: string;
   description?: string;
   shortDescription?: string;
-  location?: string;
+  address?: string;
   salaryMin?: number;
   salaryMax?: number;
   experienceYears?: number;
-  companyId: string;
-  careerCategoryId?: string;
+  vacancyCount?: number;
   expiredAt?: Date;
+  jobType?: EJobType;
+  educationLevel?: EJobEducationLevel;
+  workArrangement?: EJobWorkArrangement;
+  skills?: IJobSkillInputDto[];
 }
 
-export interface IUpdateJobDto {
-  title?: string;
-  description?: string;
-  location?: string;
-  salaryMin?: number;
-  salaryMax?: number;
-  experienceYears?: number;
-  careerCategoryId?: string;
-  expiredAt?: Date;
-  status?: EJobStatus;
+export interface ICreateJobDto extends ICreateJobBaseDto {
+  companyId: string;
 }
+
+export type IUpdateJobDto = Partial<Omit<ICreateJobDto, 'companyId'>> & {
+  status?: EJobStatus;
+};
 
 export interface IRejectJobDto {
   rejectReason: string;
+}
+
+export interface ICloseJobDto {
+  closeReason: string;
 }

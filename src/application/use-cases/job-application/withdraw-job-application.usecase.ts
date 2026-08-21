@@ -1,19 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IJobApplicationResponseDto } from 'src/application/dtos/job-application/res.job-application.dto';
+import { IResponseApiJobSeekerJobApplicationDto } from 'src/application/dtos/job-application/res.job-application.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
-import { ECVStatus } from 'src/common/constants/enum/cv.enum';
 import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import { invalidateJobApplicationReadCaches } from 'src/common/utils/job-application-cache.utils';
 import type { IJobApplicationRepository } from 'src/domain/repositories/job-application.repository.interface';
-import type { ICVRepository } from 'src/domain/repositories/cv.repository.interface';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
+import { toJobSeekerJobApplicationDto } from 'src/application/queries/job-application/job-application-response.mapper';
 
 @Injectable()
 export class WithdrawJobApplicationUseCase extends BaseUsecase {
   constructor(
     @Inject('IJobApplicationRepository')
     private readonly jobApplicationRepository: IJobApplicationRepository,
-    @Inject('ICVRepository') private readonly cvRepository: ICVRepository,
+    private readonly redis: RedisAdapter,
   ) {
     super(new Logger(WithdrawJobApplicationUseCase.name));
   }
@@ -21,7 +22,7 @@ export class WithdrawJobApplicationUseCase extends BaseUsecase {
   async execute(
     userId: string,
     jobApplicationId: string,
-  ): Promise<{ data: IJobApplicationResponseDto }> {
+  ): Promise<IResponseApiJobSeekerJobApplicationDto> {
     return this.runSafe(
       '[Withdraw Job Application]',
       async () => {
@@ -31,7 +32,7 @@ export class WithdrawJobApplicationUseCase extends BaseUsecase {
           throw new AppException(ERROR_CODES.JOB_APPLICATION_NOT_FOUND);
         }
         if (application.userId !== userId) {
-          throw new AppException(ERROR_CODES.CV_ACCESS_DENIED);
+          throw new AppException(ERROR_CODES.JOB_APPLICATION_ACCESS_DENIED);
         }
 
         const withdrawableStatuses = [EJobApplicationStatus.APPLIED];
@@ -43,18 +44,9 @@ export class WithdrawJobApplicationUseCase extends BaseUsecase {
           jobApplicationId,
           EJobApplicationStatus.WITHDRAWN,
         );
+        await invalidateJobApplicationReadCaches(this.redis);
 
-        const activeJobApplications =
-          await this.jobApplicationRepository.findActiveByCvId(
-            application.cvId,
-          );
-        if (activeJobApplications.length === 0) {
-          await this.cvRepository.update(application.cvId, {
-            status: ECVStatus.ACTIVE,
-          });
-        }
-
-        return { data: updated };
+        return { data: toJobSeekerJobApplicationDto(updated) };
       },
       ERROR_CODES.JOB_APPLICATION_WITHDRAW_FAILED,
     );

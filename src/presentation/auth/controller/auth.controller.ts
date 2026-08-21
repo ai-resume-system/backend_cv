@@ -5,6 +5,7 @@ import type {
   IPublicAuthResponseDto,
   IResponseAuthDto,
 } from 'src/application/dtos/auth/res.auth.dto';
+import type { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 import { LoginUseCase } from 'src/application/use-cases/auth/login.usecase';
 import { LogoutUseCase } from 'src/application/use-cases/auth/logout.usecase';
 import { RefreshTokenUseCase } from 'src/application/use-cases/auth/refresh-token.usecase';
@@ -35,9 +36,10 @@ import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import {
   clearRefreshTokenCookie,
-  REFRESH_TOKEN_COOKIE_NAME,
   setRefreshTokenCookie,
 } from 'src/common/utils/cookie.utils';
+import { resolveAuthClient } from 'src/common/utils/auth-client.utils';
+import { AUTH_CLIENT_COOKIE_NAMES } from 'src/common/constants/auth-client.constants';
 
 @Controller({
   path: 'auth',
@@ -62,11 +64,15 @@ export class AuthController extends BaseController {
   ): IPublicAuthResponseDto {
     return {
       accessToken: payload.accessToken,
+      expiresIn: payload.expiresIn,
+      expiresAt: payload.expiresAt,
     };
   }
 
   @Post('register/job-seeker')
-  @ApiOperation({ summary: 'Register account with role job seeker' })
+  @ApiOperation({
+    summary: 'Dang ky tai khoan ung vien moi. Truy cap: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Register successfully',
@@ -74,7 +80,7 @@ export class AuthController extends BaseController {
   })
   async registerJobSeeker(
     @Body() dto: RequestRegisterJobSeekerDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.registerUseCase.execute({
       ...dto,
       role: EUserRole.JOB_SEEKER,
@@ -82,7 +88,9 @@ export class AuthController extends BaseController {
   }
 
   @Post('register/recruiter')
-  @ApiOperation({ summary: 'Register account with role recruiter' })
+  @ApiOperation({
+    summary: 'Dang ky tai khoan recruiter moi. Truy cap: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Register successfully',
@@ -90,7 +98,7 @@ export class AuthController extends BaseController {
   })
   async registerRecruiter(
     @Body() dto: RequestRegisterRecruiterDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.registerUseCase.execute({
       ...dto,
       role: EUserRole.RECRUITER,
@@ -98,7 +106,9 @@ export class AuthController extends BaseController {
   }
 
   @Post('send-otp')
-  @ApiOperation({ summary: 'Send OTP to email (register/forgot password)' })
+  @ApiOperation({
+    summary: 'Gui OTP den email cho luong dang ky hoac quen mat khau. Truy cap: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'OTP sent successfully',
@@ -107,16 +117,17 @@ export class AuthController extends BaseController {
   async sendOtp(
     @Body() dto: RequestSendOtpDto,
     @Req() req: Request,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     const ip =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
-    console.log('ip', ip);
     return await this.sendOtpUseCase.execute(dto, ip!);
   }
 
   @Post('verify-otp')
-  @ApiOperation({ summary: 'Verify OTP' })
+  @ApiOperation({
+    summary: 'Xac thuc ma OTP cho luong dang ky hoac quen mat khau. Truy cap: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'OTP verified successfully',
@@ -124,12 +135,14 @@ export class AuthController extends BaseController {
   })
   async verifyOtp(
     @Body() dto: RequestVerifyOtpDto,
-  ): Promise<{ message: string; signKey?: string }> {
+  ): Promise<IResponseApiNullDto | { data: { signKey: string } }> {
     return await this.verifyOtpUseCase.execute(dto);
   }
 
   @Post('login')
-  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiOperation({
+    summary: 'Dang nhap bang email va mat khau. Truy cap: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Login successfully',
@@ -140,21 +153,22 @@ export class AuthController extends BaseController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<IPublicAuthResponseDto> {
+    const authClient = resolveAuthClient(req);
     const ip =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
       req.socket.remoteAddress;
     const result = await this.loginUseCase.execute(dto, ip!);
 
-    const cookieMaxAge = dto.rememberMe
-      ? 30 * 24 * 60 * 60 * 1000
-      : undefined;
-    setRefreshTokenCookie(res, result.refreshToken, cookieMaxAge);
+    const cookieMaxAge = dto.rememberMe ? 30 * 24 * 60 * 60 * 1000 : undefined;
+    setRefreshTokenCookie(res, authClient, result.refreshToken, cookieMaxAge);
 
     return this.toPublicAuthResponse(result);
   }
 
   @Post('refresh-token')
-  @ApiOperation({ summary: 'Refresh token' })
+  @ApiOperation({
+    summary: 'Lam moi access token bang refresh token hoac auth cookie. Truy cap: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Refresh token successfully',
@@ -165,8 +179,9 @@ export class AuthController extends BaseController {
     @Body() dto: RequestRefreshTokenDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<IPublicAuthResponseDto> {
+    const authClient = resolveAuthClient(req);
     const refreshToken =
-      req.cookies?.[REFRESH_TOKEN_COOKIE_NAME] ?? dto.refreshToken;
+      req.cookies?.[AUTH_CLIENT_COOKIE_NAMES[authClient]] ?? dto.refreshToken;
 
     if (!refreshToken) {
       throw new AppException(ERROR_CODES.AUTH_REFRESH_TOKEN_INVALID_OR_EXPIRED);
@@ -174,13 +189,15 @@ export class AuthController extends BaseController {
 
     const result = await this.refreshTokenUseCase.execute({ refreshToken });
 
-    setRefreshTokenCookie(res, result.refreshToken);
+    setRefreshTokenCookie(res, authClient, result.refreshToken);
 
     return this.toPublicAuthResponse(result);
   }
 
   @Post('forgot-password')
-  @ApiOperation({ summary: 'Reset password with email OTP signKey' })
+  @ApiOperation({
+    summary: 'Dat lai mat khau bang signKey OTP email da xac thuc. Truy cap: Public.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Password reset successfully',
@@ -188,12 +205,14 @@ export class AuthController extends BaseController {
   })
   async forgotPassword(
     @Body() dto: RequestForgotPasswordDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     return await this.forgotPasswordUseCase.execute(dto);
   }
 
   @Post('logout')
-  @ApiOperation({ summary: 'Logout account' })
+  @ApiOperation({
+    summary: 'Dang xuat tai khoan hien tai va xoa refresh cookie. Truy cap: Nguoi dung da xac thuc.',
+  })
   @AuthRequired()
   @ApiResponse({
     status: 201,
@@ -204,10 +223,10 @@ export class AuthController extends BaseController {
     @AuthCurrentUser() user: ICurrentUser,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponseApiNullDto> {
     const authHeader = req.headers['authorization'] as string;
     const accessToken = authHeader?.replace('Bearer ', '');
-    clearRefreshTokenCookie(res);
+    clearRefreshTokenCookie(res, resolveAuthClient(req));
     return await this.logoutUseCase.execute({
       userId: user.id,
       accessToken,

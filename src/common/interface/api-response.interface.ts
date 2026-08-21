@@ -16,3 +16,5 @@ export interface IApiErrorResponse {
   status: 'error';
   message: string;
 }
+
+export interface IResponseApiNullDto extends IApiResponse<null> {}

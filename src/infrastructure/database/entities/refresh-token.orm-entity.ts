@@ -34,11 +34,10 @@ export class RefreshTokenOrmEntity implements IRefreshTokenEntity {
 
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   createdAt: Date;
 
-  @Column({ name: 'last_used_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'last_used_at', type: 'timestamptz', nullable: true })
   lastUsedAt?: Date;
 }

@@ -2,11 +2,13 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IRequestUpdateMyProfileDto } from 'src/application/dtos/account/req.account.dto';
 import type { IResponseMyProfileDto } from 'src/application/dtos/account/res.account.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { invalidateUserReadCaches } from 'src/common/utils/user-cache.utils';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
 import type { IUserProfileRepository } from 'src/domain/repositories/user-profile.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { QueueDispatchService } from 'src/infrastructure/queue/queue-dispatch.service';
+import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
 
 @Injectable()
 export class UpdateMyProfileUseCase extends BaseUsecase {
@@ -15,6 +17,7 @@ export class UpdateMyProfileUseCase extends BaseUsecase {
     private readonly userRepository: IUserRepository,
     @Inject('IUserProfileRepository')
     private readonly profileRepository: IUserProfileRepository,
+    private readonly redis: RedisAdapter,
     private readonly queueDispatch: QueueDispatchService,
   ) {
     super(new Logger(UpdateMyProfileUseCase.name));
@@ -51,9 +54,13 @@ export class UpdateMyProfileUseCase extends BaseUsecase {
           })
         : profile;
 
+      if (phone !== undefined || hasProfileFields) {
+        await invalidateUserReadCaches(this.redis);
+      }
+
       await this.queueDispatch.dispatchCacheInvalidation({
-        keys: [`account:profile:${userId}`, `user:detail:${userId}`],
-        prefixes: ['user:list:'],
+        keys: [`account:profile:${userId}`],
+        prefixes: [],
       });
 
       return {

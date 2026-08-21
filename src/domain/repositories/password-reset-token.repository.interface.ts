@@ -9,11 +9,11 @@ export interface ICreatePasswordResetTokenData {
 export interface IPasswordResetTokenRepository {
   create(
     data: ICreatePasswordResetTokenData,
-  ): Promise<IPasswordResetTokenEntity>;
+  ): Promise<IPasswordResetTokenEntity>; // Tạo password reset token
   findValidByEmailAndHash(
     email: string,
     signKeyHash: string,
-  ): Promise<IPasswordResetTokenEntity | null>;
-  markUsed(id: string): Promise<void>;
-  markActiveAsUsedByEmail(email: string): Promise<void>;
+  ): Promise<IPasswordResetTokenEntity | null>; // Tìm theo email và sign key hash
+  markUsed(id: string): Promise<void>; // Đánh dấu token đã sử dụng
+  markActiveAsUsedByEmail(email: string): Promise<void>; // Đánh dấu token đã sử dụng
 }

@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { EUserRole } from 'src/common/constants/enum/user.enum';
 import { TTL_10M, TTL_1M } from 'src/common/constants/ttl.constants';
 
 @Injectable()
@@ -62,6 +63,16 @@ export class RedisAdapter extends BaseUsecase {
       await this.set(key, value, ttl);
     } catch (error) {
       this.logger.warn(`Redis set failed for ${key}: ${error.message}`);
+    }
+  }
+
+  async safeSetNx(key: string, value: string, ttl: number): Promise<boolean> {
+    try {
+      const result = await this.redis.set(key, value, 'EX', ttl, 'NX');
+      return result === 'OK';
+    } catch (error) {
+      this.logger.warn(`Redis set NX failed for ${key}: ${error.message}`);
+      return true;
     }
   }
 
@@ -388,12 +399,37 @@ export class RedisAdapter extends BaseUsecase {
     await this.redis.set(this.buildKey('otp:cache', email), otp, 'EX', ttl);
   }
 
+  async setScopedOtpCache(
+    email: string,
+    role: EUserRole,
+    otp: string,
+    ttl: number,
+  ): Promise<void> {
+    await this.redis.set(
+      this.buildKey('otp:cache', `${role}:${email}`),
+      otp,
+      'EX',
+      ttl,
+    );
+  }
+
   async getOtpCache(email: string): Promise<string | null> {
     return this.redis.get(this.buildKey('otp:cache', email));
   }
 
+  async getScopedOtpCache(
+    email: string,
+    role: EUserRole,
+  ): Promise<string | null> {
+    return this.redis.get(this.buildKey('otp:cache', `${role}:${email}`));
+  }
+
   async deleteOtpCache(email: string): Promise<void> {
     await this.redis.del(this.buildKey('otp:cache', email));
+  }
+
+  async deleteScopedOtpCache(email: string, role: EUserRole): Promise<void> {
+    await this.redis.del(this.buildKey('otp:cache', `${role}:${email}`));
   }
 
   async increaseOtpFailCount(email: string): Promise<number> {
@@ -482,12 +518,32 @@ export class RedisAdapter extends BaseUsecase {
     await this.redis.set(this.buildKey('reset_token', key), signKey, 'EX', ttl);
   }
 
+  async setScopedSignKey(
+    email: string,
+    role: EUserRole,
+    signKey: string,
+    ttl: number,
+  ): Promise<void> {
+    await this.setSignKey(`${role}:${email}`, signKey, ttl);
+  }
+
   async getSignKey(key: string): Promise<string | null> {
     return this.redis.get(this.buildKey('reset_token', key));
   }
 
+  async getScopedSignKey(
+    email: string,
+    role: EUserRole,
+  ): Promise<string | null> {
+    return this.getSignKey(`${role}:${email}`);
+  }
+
   async clearSignKey(key: string): Promise<void> {
     await this.redis.del(this.buildKey('reset_token', key));
+  }
+
+  async clearScopedSignKey(email: string, role: EUserRole): Promise<void> {
+    await this.clearSignKey(`${role}:${email}`);
   }
 
   // =======================

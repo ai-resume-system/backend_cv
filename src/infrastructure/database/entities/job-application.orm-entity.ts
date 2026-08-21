@@ -9,7 +9,11 @@ import {
   Index,
   JoinColumn,
 } from 'typeorm';
-import { EJobApplicationStatus } from 'src/common/constants/enum/job-application.enum';
+import {
+  EInterviewStatus,
+  EInterviewType,
+  EJobApplicationStatus,
+} from 'src/common/constants/enum/job-application.enum';
 import type { IJobApplicationEntity } from 'src/domain/entities/job-application.entity';
 import { CVOrmEntity } from './cv.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
@@ -44,12 +48,34 @@ export class JobApplicationOrmEntity implements IJobApplicationEntity {
     type: 'decimal',
     precision: 5,
     scale: 2,
+    default: 0,
+  })
+  matchingScore: number;
+
+  @Column({ name: 'full_name', type: 'varchar', length: 255, nullable: true })
+  fullName?: string;
+
+  @Column({
+    name: 'contact_email',
+    type: 'varchar',
+    length: 255,
     nullable: true,
   })
-  matchingScore?: number;
+  contactEmail?: string;
 
-  @Column({ name: 'notes', type: 'text', nullable: true })
-  notes?: string;
+  @Column({
+    name: 'contact_phone',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  contactPhone?: string;
+
+  @Column({ name: 'cover_letter', type: 'text', nullable: true })
+  coverLetter?: string;
+
+  @Column({ name: 'rejection_reason', type: 'text', nullable: true })
+  rejectionReason?: string;
 
   @Column({
     name: 'status',
@@ -59,6 +85,28 @@ export class JobApplicationOrmEntity implements IJobApplicationEntity {
   })
   @Index()
   status: EJobApplicationStatus;
+
+  @Column({
+    name: 'interview_type',
+    type: 'enum',
+    enum: EInterviewType,
+    nullable: true,
+  })
+  interviewType?: EInterviewType;
+
+  @Column({
+    name: 'interview_status',
+    type: 'enum',
+    enum: EInterviewStatus,
+    default: EInterviewStatus.SCHEDULED,
+  })
+  interviewStatus: EInterviewStatus;
+
+  @Column({ name: 'interview_notes', type: 'text', nullable: true })
+  interviewNotes?: string;
+
+  @Column({ name: 'onboarding_notes', type: 'text', nullable: true })
+  onboardingNotes?: string;
 
   @Column({ name: 'schedule_time', type: 'timestamptz', nullable: true })
   scheduleTime?: Date;
@@ -76,22 +124,19 @@ export class JobApplicationOrmEntity implements IJobApplicationEntity {
 
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    type: 'timestamptz',
   })
   updatedAt: Date;
 
   @DeleteDateColumn({
     name: 'deleted_at',
-    type: 'timestamp',
+    type: 'timestamptz',
     nullable: true,
   })
   deletedAt?: Date;

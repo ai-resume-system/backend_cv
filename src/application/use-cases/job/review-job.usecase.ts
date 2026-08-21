@@ -1,18 +1,38 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IRejectJobDto } from 'src/application/dtos/job/req.job.dto';
-import { IResponseApiJobDto } from 'src/application/dtos/job/res.job.dto';
-import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import {
+  ICloseJobDto,
+  IRejectJobDto,
+} from 'src/application/dtos/job/req.job.dto';
+import { IResponseApiManagedJobDto } from 'src/application/dtos/job/res.job.dto';
+import { toManagedJobDto } from 'src/application/queries/job/job-response.mapper';
 import { BaseUsecase } from 'src/common/base/base.usecase';
+import { CACHE_VERSION_KEYS } from 'src/common/constants/cache-keys.constants';
 import { EJobStatus } from 'src/common/constants/enum/job.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { invalidateAdminAnalyticsCache } from 'src/common/utils/admin-analytics-cache.utils';
 import type { ICompanyRepository } from 'src/domain/repositories/company.repository.interface';
 import type { IJobRepository } from 'src/domain/repositories/job.repository.interface';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
-import { Cron, CronExpression } from '@nestjs/schedule';
+
+type UpdateStatusMetadata = {
+  rejectReason?: string;
+  closeReason?: string;
+};
 
 @Injectable()
-export class ReviewJobUseCase extends BaseUsecase {
+export class ReviewJobUseCase
+  extends BaseUsecase
+  implements OnApplicationBootstrap
+{
+  private static readonly AUTO_EXPIRE_BATCH_SIZE = 1000;
+
   constructor(
     @Inject('IJobRepository') private readonly jobRepository: IJobRepository,
     @Inject('ICompanyRepository')
@@ -22,89 +42,148 @@ export class ReviewJobUseCase extends BaseUsecase {
     super(new Logger(ReviewJobUseCase.name));
   }
 
-  async approve(id: string): Promise<IResponseApiJobDto> {
+  async onApplicationBootstrap(): Promise<void> {
+    await this.expireJobs('bootstrap');
+  }
+
+  async approve(id: string): Promise<IResponseApiManagedJobDto> {
     return this.updateStatus(id, EJobStatus.OPEN);
   }
 
-  async close(id: string): Promise<IResponseApiJobDto> {
-    return this.updateStatus(id, EJobStatus.CLOSED);
+  async close(
+    id: string,
+    dto: ICloseJobDto,
+  ): Promise<IResponseApiManagedJobDto> {
+    return this.updateStatus(id, EJobStatus.CLOSED, {
+      closeReason: dto.closeReason,
+    });
   }
 
-  async reject(id: string, dto: IRejectJobDto): Promise<IResponseApiJobDto> {
-    return this.updateStatus(id, EJobStatus.REJECTED, dto.rejectReason);
+  async closeByRecruiter(
+    id: string,
+    recruiterId: string,
+    dto: ICloseJobDto,
+  ): Promise<IResponseApiManagedJobDto> {
+    const company = await this.companyRepository.findByUserId(recruiterId);
+    if (!company) {
+      throw new AppException(ERROR_CODES.ROLE_INSUFFICIENT_PERMISSIONS);
+    }
+
+    return this.updateStatus(
+      id,
+      EJobStatus.CLOSED,
+      { closeReason: dto.closeReason },
+      company.id,
+    );
+  }
+
+  async reject(
+    id: string,
+    dto: IRejectJobDto,
+  ): Promise<IResponseApiManagedJobDto> {
+    return this.updateStatus(id, EJobStatus.REJECTED, {
+      rejectReason: dto.rejectReason,
+    });
   }
 
   private async updateStatus(
     id: string,
     status: EJobStatus,
-    rejectReason?: string,
-  ): Promise<IResponseApiJobDto> {
+    metadata?: UpdateStatusMetadata,
+    expectedCompanyId?: string,
+  ): Promise<IResponseApiManagedJobDto> {
     return this.runSafe('[Review Job]: ', async () => {
       const existing = await this.jobRepository.findById(id);
       if (!existing) {
         throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
       }
+      if (expectedCompanyId && existing.companyId !== expectedCompanyId) {
+        throw new AppException(ERROR_CODES.JOB_NOT_FOUND);
+      }
+      if (
+        (status === EJobStatus.OPEN || status === EJobStatus.REJECTED) &&
+        existing.status !== EJobStatus.PENDING
+      ) {
+        throw new AppException(ERROR_CODES.JOB_INVALID_STATUS_TRANSITION);
+      }
+      if (status === EJobStatus.CLOSED && existing.status !== EJobStatus.OPEN) {
+        throw new AppException(ERROR_CODES.JOB_INVALID_STATUS_TRANSITION);
+      }
+      if (status === EJobStatus.CLOSED && !metadata?.closeReason?.trim()) {
+        throw new AppException(ERROR_CODES.VALIDATION_ERROR);
+      }
+
       const job = await this.jobRepository.update(id, {
         status,
-        rejectReason,
+        rejectReason: metadata?.rejectReason,
+        closeReason: metadata?.closeReason,
       });
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_LIST);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_DETAIL);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+      await invalidateAdminAnalyticsCache(this.redis);
 
       const company = await this.companyRepository.findById(job.companyId);
-      const data = {
-        id: job.id,
-        title: job.title,
-        shortDescription: job.shortDescription,
-        location: job.location,
-        salaryMin: job.salaryMin,
-        salaryMax: job.salaryMax,
-        experienceYears: job.experienceYears,
-        expiredAt: job.expiredAt,
-        status: job.status,
-        createdAt: job.createdAt,
-        updatedAt: job.updatedAt,
-        company: {
-          id: company?.id || job.companyId,
-          companyName: company?.companyName,
-          logoUrl: company?.logoUrl,
-          location: company?.location,
-          websiteUrl: company?.websiteUrl,
+      const data = toManagedJobDto(job, {
+        company: company ?? {
+          id: job.companyId,
+          userId: '',
+          name: '',
+          slug: '',
+          createdAt: job.createdAt,
+          updatedAt: job.updatedAt,
         },
-        careerCategory: undefined,
-      };
+      });
       return { data };
     });
   }
 
-  //Hàm tự động kiểm tra trạng thái hết hạn của job
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async autoExpireJobs(): Promise<void> {
-    this.logger.log('[Auto Expire Jobs] Startting...');
+    await this.expireJobs('cron');
+  }
+
+  private async expireJobs(trigger: 'bootstrap' | 'cron'): Promise<void> {
+    this.logger.log(`[Auto Expire Jobs] Trigger=${trigger} starting...`);
     try {
-      const expireJobs = await this.jobRepository.find({
-        pagination: { page: 1, limit: 1000 },
+      const expiredJobs = await this.jobRepository.find({
+        pagination: {
+          page: 1,
+          limit: ReviewJobUseCase.AUTO_EXPIRE_BATCH_SIZE,
+        },
         filter: {
           status: EJobStatus.OPEN,
           expiredAtBefore: new Date(),
         },
       });
-      if (expireJobs.data.length === 0) {
-        this.logger.log('[Auto Expire Jobs] No jobs to expire');
+
+      if (expiredJobs.data.length === 0) {
+        this.logger.log(
+          `[Auto Expire Jobs] Trigger=${trigger} no jobs to expire`,
+        );
         return;
       }
-      for (const job of expireJobs.data) {
+
+      for (const job of expiredJobs.data) {
         await this.jobRepository.update(job.id, { status: EJobStatus.EXPIRED });
       }
+
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_LIST);
       await this.redis.bumpVersion(CACHE_VERSION_KEYS.JOB_DETAIL);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_LIST);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.COMPANY_DETAIL);
+      await this.redis.bumpVersion(CACHE_VERSION_KEYS.CAREER_CATEGORY_TOP);
+      await invalidateAdminAnalyticsCache(this.redis);
       this.logger.log(
-        `[Auto Expire Jobs] Expired ${expireJobs.data.length} jobs`,
+        `[Auto Expire Jobs] Trigger=${trigger} expired ${expiredJobs.data.length} jobs`,
       );
     } catch (error) {
+      const resolvedError = error as Error;
       this.logger.error(
-        `[Auto Expire Jobs] Failed: ${error.message}`,
-        error.stack,
+        `[Auto Expire Jobs] Trigger=${trigger} failed: ${resolvedError.message}`,
+        resolvedError.stack,
       );
     }
   }

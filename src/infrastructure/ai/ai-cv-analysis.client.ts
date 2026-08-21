@@ -71,7 +71,7 @@ export class AiCvAnalysisClient {
       throw new AppException(ERROR_CODES.SYSTEM_BUSY);
     }
 
-    if (!Array.isArray(data.skills)) {
+    if (!Array.isArray(data.matchedSkills)) {
       throw new AppException(ERROR_CODES.SYSTEM_BUSY);
     }
 
@@ -79,17 +79,45 @@ export class AiCvAnalysisClient {
       throw new AppException(ERROR_CODES.SYSTEM_BUSY);
     }
 
-    if (!Array.isArray(data.suggestions)) {
+    if (
+      !Array.isArray(data.improvementSuggestions) ||
+      !Array.isArray(data.otherDetectedSkills) ||
+      !Array.isArray(data.projects)
+    ) {
       throw new AppException(ERROR_CODES.SYSTEM_BUSY);
     }
 
     return {
       summary: String(data.summary || ''),
-      score: typeof data.score === 'number' ? data.score : 0,
-      skills: data.skills,
+      resumeQualityScore:
+        typeof data.resumeQualityScore === 'number'
+          ? data.resumeQualityScore
+          : 0,
+      scoreBreakdown: data.scoreBreakdown || {
+        roleClarity: 0,
+        skillCoverage: 0,
+        experienceQuality: 0,
+        impactEvidence: 0,
+        educationRelevance: 0,
+        atsReadiness: 0,
+        presentationClarity: 0,
+      },
+      primaryRole: data.primaryRole,
+      seniorityLevel: data.seniorityLevel,
+      careerCategorySuggestion: data.careerCategorySuggestion,
+      matchedSkills: data.matchedSkills,
+      otherDetectedSkills: data.otherDetectedSkills,
+      keywords: Array.isArray(data.keywords) ? data.keywords : [],
+      relatedJobTitles: Array.isArray(data.relatedJobTitles)
+        ? data.relatedJobTitles
+        : [],
+      strengths: Array.isArray(data.strengths) ? data.strengths : [],
+      weaknesses: Array.isArray(data.weaknesses) ? data.weaknesses : [],
+      improvementSuggestions: data.improvementSuggestions,
       education: data.education,
       experience: data.experience,
-      suggestions: data.suggestions,
+      projects: data.projects,
+      atsNotes: Array.isArray(data.atsNotes) ? data.atsNotes : [],
       provider: data.provider,
       model: data.model,
       confidenceFlags: data.confidenceFlags,

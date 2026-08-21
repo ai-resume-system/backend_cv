@@ -13,19 +13,21 @@ export interface IRegisterJobSeekerDto extends IBaseRegisterDto {
 
 export interface IRegisterRecruiterDto extends IBaseRegisterDto {
   phone?: string;
-  company_name: string;
-  location: string;
+  name: string;
+  address: string;
 }
 
 export interface IVerifyOtpDto {
   email: string;
   otp: string;
   type: EOtpType;
+  role?: EUserRole;
 }
 
 export interface ISendOtpDto {
   email: string;
   type: EOtpType;
+  role?: EUserRole;
 }
 
 export interface ILoginDto {
@@ -47,6 +49,7 @@ export interface IForgotPasswordDto {
   email: string;
   signKey: string;
   newPassword: string;
+  role: EUserRole;
 }
 
 export interface ILogoutDto {

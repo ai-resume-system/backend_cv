@@ -3,12 +3,14 @@ import { randomInt } from 'crypto';
 import { ISendOtpDto } from 'src/application/dtos/auth/req.auth.dto';
 import { BaseUsecase } from 'src/common/base/base.usecase';
 import { EOtpType } from 'src/common/constants/enum/otp.enum';
-import { EUserStatus } from 'src/common/constants/enum/user.enum';
+import { EUserRole, EUserStatus } from 'src/common/constants/enum/user.enum';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { TTL_10M, TTL_1M, TTL_30S } from 'src/common/constants/ttl.constants';
 import { AppException } from 'src/common/exceptions/app.exception';
+import { IResponseApiNullDto } from 'src/common/interface/api-response.interface';
 import { hashOtp } from 'src/common/utils/hash.utils';
 import type { IOtpCodeRepository } from 'src/domain/repositories/otp-code.repository.interface';
+import type { IRegistrationSessionRepository } from 'src/domain/repositories/registration-session.repository.interface';
 import type { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { MailService } from 'src/infrastructure/mail/mail.service';
 import { RedisAdapter } from 'src/infrastructure/redis/redis.adapter';
@@ -22,6 +24,8 @@ export class SendOtpUseCase extends BaseUsecase {
     private readonly userRepository: IUserRepository,
     @Inject('IOtpCodeRepository')
     private readonly otpCodeRepository: IOtpCodeRepository,
+    @Inject('IRegistrationSessionRepository')
+    private readonly registrationSessionRepository: IRegistrationSessionRepository,
     private readonly redis: RedisAdapter,
     private readonly mailService: MailService,
   ) {
@@ -44,6 +48,15 @@ export class SendOtpUseCase extends BaseUsecase {
             throw new AppException(ERROR_CODES.AUTH_USER_LOCKED);
         }
         break;
+    }
+  }
+
+  private validateForgotPasswordRole(
+    actualRole: EUserRole,
+    requestedRole?: EUserRole,
+  ): void {
+    if (requestedRole && actualRole !== requestedRole) {
+      throw new AppException(ERROR_CODES.AUTH_ACCOUNT_ROLE_MISMATCH);
     }
   }
 
@@ -89,7 +102,7 @@ export class SendOtpUseCase extends BaseUsecase {
     }
   }
 
-  async execute(dto: ISendOtpDto, ip: string): Promise<{ message: string }> {
+  async execute(dto: ISendOtpDto, ip: string): Promise<IResponseApiNullDto> {
     return this.runSafe(
       'SendOtp',
       async () => {
@@ -99,6 +112,9 @@ export class SendOtpUseCase extends BaseUsecase {
         }
 
         this.validateUserForOtp(user, dto.type);
+        if (dto.type === EOtpType.FORGOT_PASSWORD) {
+          this.validateForgotPasswordRole(user.role, dto.role);
+        }
 
         try {
           const isLocked = await this.redis.isOtpLocked(dto.email);
@@ -129,11 +145,20 @@ export class SendOtpUseCase extends BaseUsecase {
 
         const cooldownTtl = dto.type === EOtpType.REGISTER ? TTL_30S : TTL_1M;
         try {
-          await this.redis.setOtpCache(
-            dto.email,
-            codeHash,
-            OTP_EXPIRES_IN_SECONDS,
-          );
+          if (dto.type === EOtpType.FORGOT_PASSWORD && dto.role) {
+            await this.redis.setScopedOtpCache(
+              dto.email,
+              dto.role,
+              codeHash,
+              OTP_EXPIRES_IN_SECONDS,
+            );
+          } else {
+            await this.redis.setOtpCache(
+              dto.email,
+              codeHash,
+              OTP_EXPIRES_IN_SECONDS,
+            );
+          }
           await this.redis.setCooldown(dto.email, cooldownTtl);
         } catch (error) {
           this.logger.warn(
@@ -141,11 +166,38 @@ export class SendOtpUseCase extends BaseUsecase {
           );
         }
 
-        await this.mailService.sendOtp(dto.email, otp);
+        if (dto.type === EOtpType.REGISTER) {
+          try {
+            const session =
+              await this.registrationSessionRepository.findLatestUnusedByEmail(
+                dto.email,
+              );
 
-        return {
-          message: 'Đã gửi mã xác thực, vui lòng kiểm tra email.',
-        };
+            if (session) {
+              await this.registrationSessionRepository.refreshExpiresAt(
+                session.id,
+                expiresAt,
+              );
+              await this.redis.setTempProfile(
+                dto.email,
+                session.payload,
+                OTP_EXPIRES_IN_SECONDS,
+              );
+            }
+          } catch (error) {
+            this.logger.warn(
+              `Failed to refresh temp profile for ${dto.email}: ${error.message}`,
+            );
+          }
+        }
+
+        if (dto.type === EOtpType.FORGOT_PASSWORD) {
+          await this.mailService.sendForgotPasswordOtp(dto.email, otp);
+        } else {
+          await this.mailService.sendOtp(dto.email, otp);
+        }
+
+        return { data: null };
       },
       ERROR_CODES.INTERNAL_SERVER_ERROR,
     );

@@ -41,18 +41,18 @@ export class OutboxEventOrmEntity implements IOutboxEventEntity {
   @Column({ name: 'max_attempts', type: 'int', default: 3 })
   maxAttempts: number;
 
-  @Column({ name: 'next_retry_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'next_retry_at', type: 'timestamptz', nullable: true })
   nextRetryAt?: Date;
 
-  @Column({ name: 'locked_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'locked_at', type: 'timestamptz', nullable: true })
   lockedAt?: Date;
 
   @Column({ name: 'last_error', type: 'text', nullable: true })
   lastError?: string;
 
-  @Column({ name: 'processed_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'processed_at', type: 'timestamptz', nullable: true })
   processedAt?: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }
